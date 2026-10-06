@@ -207,6 +207,15 @@ export default function Details(props: Props) {
           <IconContainer>
             <Icon
               src="/assets/wxHoprIcon.svg"
+              alt="wxHOPR Icon"
+            />
+          </IconContainer>
+          <Text>wxHOPR: Node earned</Text>
+        </IconAndText>
+        <IconAndText>
+          <IconContainer>
+            <Icon
+              src="/assets/wxHoprIcon.svg"
               alt="xDai Icon"
             />
           </IconContainer>
@@ -240,6 +249,9 @@ export default function Details(props: Props) {
             title={safeChannelsOut?.formatted && safeChannelsOut.formatted !== '0' ? safeChannelsOut.formatted : null}
           >
             <p className="double">{safeChannelsOut?.formatted ? safeChannelsOut.formatted : '-'}</p>
+          </Tooltip>
+          <Tooltip title={redeemed && redeemed !== '0' ? redeemed : null}>
+            <p className="double">{redeemed ? redeemed : '-'}</p>
           </Tooltip>
           <Tooltip title={totalwxHOPR && totalwxHOPR !== '0' ? totalwxHOPR : null}>
             <p className="double">{totalwxHOPR ?? '-'}</p>
