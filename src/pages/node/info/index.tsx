@@ -32,6 +32,7 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 //Info Components
 import NodeUptime from './node-uptime';
 import Packets from './packets';
+import Throughput from './throughput';
 
 const TdActionIcons = styled.td`
   display: flex;
@@ -98,22 +99,6 @@ function InfoPage() {
       set_providerShort('***Invalid URL***');
     }
   }, [provider]);
-
-  useEffect(() => {
-    const watchSync = setInterval(() => {
-      if (!apiEndpoint || (nodeSync && nodeSync === 1)) return;
-      return dispatch(
-        nodeActionsAsync.getPrometheusMetricsThunk({
-          apiEndpoint,
-          apiToken: apiToken ? apiToken : '',
-        }),
-      );
-    }, 5_000);
-
-    return () => {
-      clearInterval(watchSync);
-    };
-  }, [nodeSync, apiEndpoint, apiToken]);
 
   const fetchInfoData = () => {
     if (!apiEndpoint) return;
@@ -761,6 +746,7 @@ function InfoPage() {
           </tbody>
         </TableExtended>
 
+        <Throughput />
         <Packets />
 
         <TableExtended

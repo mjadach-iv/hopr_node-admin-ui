@@ -16,13 +16,8 @@ const formatCount = (value: string | null): string => {
 };
 
 const formatPacketStats = (stats: PacketStats) => {
-  const newest = stats.history[stats.history.length - 1];
-  const total = formatCount(newest?.data ?? null);
-  const rates: string[] = [];
-  if (stats.averages.oneMin !== null) rates.push(`${stats.averages.oneMin.toFixed(2)} (1m)`);
-  if (stats.averages.fiveMin !== null) rates.push(`${stats.averages.fiveMin.toFixed(2)} (5m)`);
-  if (stats.averages.fifteenMin !== null) rates.push(`${stats.averages.fifteenMin.toFixed(2)} (15m)`);
-  return rates.length === 0 ? `Total: ${total}` : `Total: ${total} / ${rates.join(' / ')} p/s`;
+  const total = formatCount(stats.latest?.data ?? null);
+  return stats.perSecond === null ? `Total: ${total}` : `Total: ${total} / ${stats.perSecond.toFixed(2)} p/s`;
 };
 
 function Packets() {
@@ -39,7 +34,7 @@ function Packets() {
         <tr>
           <th>
             <Tooltip
-              title="Packets sent — total followed by per-second rates over 1min / 5min / 15min"
+              title="Packets sent — total followed by the average per-second rate over the last 5 seconds"
               notWide
             >
               <span>Sent</span>
@@ -50,7 +45,7 @@ function Packets() {
         <tr>
           <th>
             <Tooltip
-              title="Packets received — total followed by per-second rates over 1min / 5min / 15min"
+              title="Packets received — total followed by the average per-second rate over the last 5 seconds"
               notWide
             >
               <span>Received</span>
@@ -61,7 +56,7 @@ function Packets() {
         <tr>
           <th>
             <Tooltip
-              title="Packets relayed — total followed by per-second rates over 1min / 5min / 15min"
+              title="Packets relayed — total followed by the average per-second rate over the last 5 seconds"
               notWide
             >
               <span>Relayed</span>

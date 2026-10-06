@@ -59,20 +59,14 @@ export type ParsedStrategiesType = {
 type WebsocketConnectionStatus = 'connecting' | 'connected' | 'error' | null;
 
 export type PacketCounter = {
-  data: string | null;
-  timestamp: number | null;
-};
-
-export type PacketAverages = {
-  now: number | null;
-  oneMin: number | null;
-  fiveMin: number | null;
-  fifteenMin: number | null;
+  data: string;
+  timestamp: number;
 };
 
 export type PacketStats = {
-  history: PacketCounter[];
-  averages: PacketAverages;
+  latest: PacketCounter | null;
+  // between the two most recent samples
+  perSecond: number | null;
 };
 
 type InitialState = {
@@ -413,9 +407,9 @@ export const initialState: InitialState = {
       },
     },
     packets: {
-      sent: { history: [], averages: { now: null, oneMin: null, fiveMin: null, fifteenMin: null } },
-      received: { history: [], averages: { now: null, oneMin: null, fiveMin: null, fifteenMin: null } },
-      forwarded: { history: [], averages: { now: null, oneMin: null, fiveMin: null, fifteenMin: null } },
+      sent: { latest: null, perSecond: null },
+      received: { latest: null, perSecond: null },
+      forwarded: { latest: null, perSecond: null },
     },
     nodeStartEpoch: null,
     checksum: null,

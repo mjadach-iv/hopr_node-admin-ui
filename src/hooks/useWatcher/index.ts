@@ -114,16 +114,6 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
       });
     }, intervalDuration);
 
-    const watchMetricsInterval = setInterval(() => {
-      if (!apiEndpoint) return;
-      return dispatch(
-        nodeActionsAsync.getPrometheusMetricsThunk({
-          apiEndpoint,
-          apiToken: apiToken ? apiToken : '',
-        }),
-      );
-    }, intervalDuration);
-
     const watchSessionsInterval = setInterval(() => {
       if (!apiEndpoint) return;
       return dispatch(
@@ -148,7 +138,6 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
     return () => {
       clearInterval(watchIsNodeReadyInterval);
       clearInterval(watchChannelsInterval);
-      clearInterval(watchMetricsInterval);
       clearInterval(watchNodeInfoInterval);
       clearInterval(watchNodeBalancesInterval);
       clearInterval(watchSessionsInterval);
@@ -164,6 +153,27 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
     prevNodeInfo,
     prevOutgoingChannels,
   ]);
+
+  // packet rates: login sample comes from fetchNodeData, then +2s and every 5s; separate so other deps can't restart it
+  useEffect(() => {
+    if (!connected || !apiEndpoint) return;
+    const fetchMetrics = () =>
+      dispatch(
+        nodeActionsAsync.getPrometheusMetricsThunk({
+          apiEndpoint,
+          apiToken: apiToken ? apiToken : '',
+        }),
+      );
+    let watchMetricsInterval: ReturnType<typeof setInterval> | undefined;
+    const secondSampleTimeout = setTimeout(() => {
+      fetchMetrics();
+      watchMetricsInterval = setInterval(fetchMetrics, 5_000);
+    }, 2_000);
+    return () => {
+      clearTimeout(secondSampleTimeout);
+      clearInterval(watchMetricsInterval);
+    };
+  }, [connected, apiEndpoint, apiToken]);
 
   // Messages
   // useEffect(() => {

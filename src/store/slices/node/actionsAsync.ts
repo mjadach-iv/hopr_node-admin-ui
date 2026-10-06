@@ -32,7 +32,7 @@ import {
   type GetAnnouncedResponseType,
   RedeemAllTicketsPayloadType,
 } from '@hoprnet/hopr-sdk';
-import { parseMetrics, computePacketAverages, PACKET_HISTORY_MAX_MS } from '../../../utils/metrics';
+import { parseMetrics, packetRate } from '../../../utils/metrics';
 import { RootState } from '../..';
 import { formatEther, parseEther } from 'viem';
 import { sendNotification } from '../../../hooks/useWatcher/notifications';
@@ -570,12 +570,18 @@ const redeemAllTicketsThunk = createAsyncThunk<boolean | undefined, BasePayloadT
 //   },
 // );
 
-const getPrometheusMetricsThunk = createAsyncThunk<string | undefined, BasePayloadType, { state: RootState }>(
+const getPrometheusMetricsThunk = createAsyncThunk<
+  { raw: string; requestedAt: number } | undefined,
+  BasePayloadType,
+  { state: RootState }
+>(
   'node/getPrometheusMetrics',
   async (payload, { rejectWithValue }) => {
     try {
-      const res = await getMetrics(payload);
-      return res;
+      // the node reads its counters when the request arrives, so time samples by request start
+      const requestedAt = Date.now();
+      const raw = await getMetrics(payload);
+      return { raw, requestedAt };
     } catch (e) {
       if (e instanceof sdkApiError) {
         return rejectWithValue(e);
@@ -1123,9 +1129,9 @@ export const createAsyncReducer = (builder: ActionReducerMapBuilder<typeof initi
   builder.addCase(getPrometheusMetricsThunk.fulfilled, (state, action) => {
     if (action.meta.arg.apiEndpoint !== state.apiEndpoint) return;
     if (action.payload) {
-      const now = Date.now();
-      state.metrics.data.raw = action.payload;
-      const jsonMetrics = parseMetrics(action.payload);
+      const { raw, requestedAt } = action.payload;
+      state.metrics.data.raw = raw;
+      const jsonMetrics = parseMetrics(raw);
       state.metrics.data.parsed = jsonMetrics;
 
       // count tickets
@@ -1190,14 +1196,9 @@ export const createAsyncReducer = (builder: ActionReducerMapBuilder<typeof initi
             const value = data[i];
             if (value === undefined || value === null) continue;
             const slot = state.metricsParsed.packets[kind];
-            const newest = slot.history[slot.history.length - 1];
-            if (newest && newest.timestamp !== null && now - newest.timestamp < 30_000) continue;
-            slot.history.push({ data: value.toString(), timestamp: now });
-            const cutoff = now - PACKET_HISTORY_MAX_MS;
-            while (slot.history.length > 0 && (slot.history[0].timestamp ?? 0) < cutoff) {
-              slot.history.shift();
-            }
-            slot.averages = computePacketAverages(slot.history);
+            const sample = { data: value.toString(), timestamp: requestedAt };
+            slot.perSecond = slot.latest ? packetRate(slot.latest, sample) : null;
+            slot.latest = sample;
           }
         }
       } catch (e) {
