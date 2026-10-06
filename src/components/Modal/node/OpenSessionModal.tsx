@@ -4,7 +4,7 @@ import { sendNotification } from '../../../hooks/useWatcher/notifications';
 
 // HOPRd SDK
 import { utils as hoprdUtils } from '@hoprnet/hopr-sdk';
-import type { OpenSessionPayloadType } from '@hoprnet/hopr-sdk';
+import type { OpenSessionPayloadType, SessionFlowControlType } from '@hoprnet/hopr-sdk';
 const { sdkApiError } = hoprdUtils;
 
 // HOPR Components
@@ -124,6 +124,8 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
   const [noDelay, set_noDelay] = useState<boolean>(false);
   const [noRateControl, set_noRateControl] = useState<boolean>(false);
   const [segmentation, set_segmentation] = useState<boolean>(true);
+  const [usePix, set_usePix] = useState<boolean>(false);
+  const [flowControl, set_flowControl] = useState<SessionFlowControlType | 'default'>('default');
   const [openModal, set_openModal] = useState<boolean>(false);
   const loginData = useAppSelector((store) => store.auth.loginData);
   const aliases = useAppSelector((store) => store.node.aliases);
@@ -188,12 +190,13 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
   };
   useEffect(setProppeerAddress, [props.destination]);
 
+  // re-registered every render so Enter never submits a stale payload
   useEffect(() => {
     window.addEventListener('keydown', handleEnter as EventListener);
     return () => {
       window.removeEventListener('keydown', handleEnter as EventListener);
     };
-  }, [loginData, destination, sendForwardMode, sendReturnMode]);
+  });
 
   useEffect(() => {
     switch (sendForwardMode) {
@@ -231,8 +234,16 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
       },
       capabilities: [],
       protocol,
-      forwardPath: { Hops: numberOfForwardHops },
-      returnPath: { Hops: numberOfReturnHops },
+      // canOpenSession guarantees no empty path nodes
+      forwardPath:
+        sendForwardMode === 'path'
+          ? { IntermediatePath: intermediateForwardPath as string[] }
+          : { Hops: numberOfForwardHops },
+      returnPath:
+        sendReturnMode === 'path'
+          ? { IntermediatePath: intermediateReturnPath as string[] }
+          : { Hops: numberOfReturnHops },
+      flowControl: flowControl === 'default' ? undefined : flowControl,
       responseBuffer: `${responseBuffer} kB`,
       maxSurbUpstream: `${maxSurbUpstream} kb/s`,
       maxClientSessions: maxClientSessions,
@@ -240,20 +251,6 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
 
     // ts fix
     if (!sessionPayload.capabilities) return;
-
-    // sendForwardMode == 'path' got temporary? removed
-    // if (sendForwardMode == 'path' && intermediateForwardPath.length > 0 && !intermediateForwardPath.includes(null)) {
-    //   sessionPayload.forwardPath = {
-    //     IntermediatePath: intermediateForwardPath as string[],
-    //   };
-    // }
-
-    // sendReturnMode == 'path' got temporary? removed
-    // if (sendReturnMode == 'path' && intermediateReturnPath.length > 0 && !intermediateReturnPath.includes(null)) {
-    //   sessionPayload.returnPath = {
-    //     IntermediatePath: intermediateReturnPath as string[],
-    //   };
-    // }
 
     if (retransmission) {
       sessionPayload.capabilities.push('Retransmission');
@@ -269,6 +266,9 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
     }
     if (noRateControl) {
       sessionPayload.capabilities.push('NoRateControl');
+    }
+    if (usePix) {
+      sessionPayload.capabilities.push('UsePIX');
     }
 
     dispatch(actionsAsync.openSessionThunk(sessionPayload))
@@ -359,7 +359,7 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
   };
 
   function handleEnter(event: KeyboardEvent) {
-    if (canOpenSession && (event as KeyboardEvent)?.key === 'Enter') {
+    if (openModal && canOpenSession && (event as KeyboardEvent)?.key === 'Enter') {
       console.log('OpenSessionModal event');
       handleOpenSession();
     }
@@ -586,6 +586,15 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
                     });
                   }}
                 />
+                <FormControlLabel
+                  control={<Checkbox checked={usePix} />}
+                  label="UsePIX"
+                  onChange={() => {
+                    set_usePix((usePix) => {
+                      return !usePix;
+                    });
+                  }}
+                />
               </SFormGroup>
             </div>
             <div>
@@ -606,6 +615,22 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
                   }}
                 />
               </SFormGroup>
+              <Tooltip title="Pacing of the sending side. Robust suits throttled or high-latency multi-hop paths.">
+                <span style={{ margin: '0px 0px -2px' }}>Flow control:</span>
+              </Tooltip>
+              <Select
+                value={flowControl}
+                onChange={(event) => {
+                  set_flowControl(event.target.value as SessionFlowControlType | 'default');
+                }}
+                size="small"
+                fullWidth
+              >
+                <MenuItem value="default">Node default</MenuItem>
+                <MenuItem value="off">Off</MenuItem>
+                <MenuItem value="clean">Clean</MenuItem>
+                <MenuItem value="robust">Robust</MenuItem>
+              </Select>
             </div>
           </Splitscreen>
 
@@ -617,12 +642,7 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
               className={sendForwardMode === 'numberOfHops' ? 'numerOfHops' : 'noNumberOfHops'}
             >
               <MenuItem value="numberOfHops">Number of hops</MenuItem>
-              <MenuItem
-                value="path"
-                disabled
-              >
-                Intermediate Path
-              </MenuItem>
+              <MenuItem value="path">Intermediate Path</MenuItem>
             </Select>
             {sendForwardMode === 'numberOfHops' && (
               <TextField
@@ -707,12 +727,7 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
               className={sendReturnMode === 'numberOfHops' ? 'numerOfHops' : 'noNumberOfHops'}
             >
               <MenuItem value="numberOfHops">Number of hops</MenuItem>
-              <MenuItem
-                value="path"
-                disabled
-              >
-                Intermediate Path
-              </MenuItem>
+              <MenuItem value="path">Intermediate Path</MenuItem>
             </Select>
             {sendReturnMode === 'numberOfHops' && (
               <TextField

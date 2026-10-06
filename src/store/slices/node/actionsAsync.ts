@@ -13,6 +13,7 @@ import {
   type WithdrawPayloadType,
   type GetPeerPayloadType,
   type GetInfoResponseType,
+  type GetTicketStatisticsPayloadType,
   type GetTicketStatisticsResponseType,
   type GetChannelsResponseType,
   type IsNodeReadyResponseType,
@@ -294,6 +295,20 @@ const getAnnouncedPeersThunk = createAsyncThunk<
         return false;
       }
     },
+  },
+);
+
+const getChannelTicketStatisticsThunk = createAsyncThunk(
+  'node/getChannelTicketStatistics',
+  async (payload: GetTicketStatisticsPayloadType, { rejectWithValue }) => {
+    try {
+      return await getTicketStatistics(payload);
+    } catch (e) {
+      if (e instanceof sdkApiError) {
+        return rejectWithValue(e);
+      }
+      return rejectWithValue({ status: JSON.stringify(e) });
+    }
   },
 );
 
@@ -1252,6 +1267,7 @@ export const actionsAsync = {
   getConnectedPeersThunk,
   getAnnouncedPeersThunk,
   getTicketStatisticsThunk,
+  getChannelTicketStatisticsThunk,
   getPrometheusMetricsThunk,
   getVersionThunk,
   withdrawThunk,
