@@ -1,2 +1,17 @@
+# Only what the build needs goes into the context
+.git
+.github
+.vscode
+.claude
 node_modules
 build
+*.log
+.env*
+.DS_Store
+Dockerfile
+.dockerignore
+README.md
+flake.nix
+flake.lock
+shell.nix
+vercel.json
