@@ -12,7 +12,7 @@ No one — neither the authors nor the contributors — is responsible for any l
 Prebuilt images for `linux/amd64` and `linux/arm64` are published to Docker Hub.
 
 ```sh
-docker run -d --name hopr-node-admin-ui -p 4677:4677 <dockerhub-user>/hopr-node-admin-ui:latest
+docker run -d --name hopr-node-admin-ui -p 4677:4677 0xmj/hopr-node-admin-ui:latest
 ```
 
 Then open [http://localhost:4677](http://localhost:4677) and connect to your node with its API endpoint and token.
