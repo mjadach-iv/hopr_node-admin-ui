@@ -1,12 +1,9 @@
+## Disclaimer
+
+**This is a community project, provided "as is", without warranty of any kind. Use it at your own risk.
+No one — neither the authors nor the contributors — is responsible for any loss of funds or other damages resulting from its use.**
+
 ## Available Scripts
-
-To login to GCP registry, do
-
-`gcloud auth list`
-
-and then
-
-`npm run login`
 
 In the project directory, you can run:
 
@@ -37,6 +34,6 @@ Builds the Node Admin docker image with the name `node-admin`.
 Runs the Node Admin container exposing the 4677 port.
 To access the Node Admin you should go to `http://localhost:4677/`
 
-## Deployment process
+## Contributing
 
-To contribute to this repository you will need to create a pull request. More information about the existing automated workflows can be found in [GitHub Actions](./.github/workflows/README.md)
+To contribute to this repository you will need to create a pull request.
