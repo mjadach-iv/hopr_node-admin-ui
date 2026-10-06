@@ -73,9 +73,30 @@ const Logo = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   img {
     height: 40px;
     width: auto;
+  }
+`;
+
+// drawn over the bottom of the logo, starting just right of the "p" tail
+const Edition = styled.span`
+  position: absolute;
+  top: 33px;
+  left: 55px;
+  color: #a00000;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  @media screen and (max-width: 600px) {
+    top: 30px;
+    font-size: 6px;
+    white-space: normal;
+    width: min-content;
   }
 `;
 
@@ -147,6 +168,7 @@ const NavBar: React.FC<{
                 src={mainLogo}
               />
               {/* </a> */}
+              <Edition>Community edition</Edition>
             </Logo>
           </FlexBox>
           <div
