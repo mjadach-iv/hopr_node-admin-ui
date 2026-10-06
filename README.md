@@ -1,39 +1,100 @@
+# HOPR Node Admin UI
+
+A web UI for managing a HOPR node: balances, channels, peers, aliases, sessions, tickets and configuration.
+
 ## Disclaimer
 
 **This is a community project, provided "as is", without warranty of any kind. Use it at your own risk.
 No one — neither the authors nor the contributors — is responsible for any loss of funds or other damages resulting from its use.**
 
-## Available Scripts
+## Run with Docker
 
-In the project directory, you can run:
+Prebuilt images for `linux/amd64` and `linux/arm64` are published to Docker Hub.
 
-### `pnpm install`
+```sh
+docker run -d --name hopr-node-admin-ui -p 4677:4677 <dockerhub-user>/hopr-node-admin-ui:latest
+```
 
-Install all the dependencies.
+Then open [http://localhost:4677](http://localhost:4677) and connect to your node with its API endpoint and token.
+The node's API must be reachable from your browser, since the UI calls it directly.
 
-### `pnpm dev`
+## Development
 
-Runs the app in the development mode.\
-Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+Requirements:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Node.js 22.13 or newer (CI uses Node 24)
+- pnpm, enabled through Corepack. The exact version is pinned in the `packageManager` field of `package.json`.
 
-### `pnpm build`
+```sh
+corepack enable
+pnpm install
+pnpm dev
+```
 
-Builds the Node Admin.
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The dev server runs at [http://localhost:5173](http://localhost:5173) and reloads on changes.
 
-### `docker build --platform linux/amd64 -t europe-west3-docker.pkg.dev/hoprassociation/docker-images/hopr-admin .`
+Other scripts:
 
-Builds the Node Admin docker image with the name `node-admin`.
+| Command       | What it does                                 |
+| ------------- | -------------------------------------------- |
+| `pnpm build`  | Type-checks and builds the app into `build/` |
+| `pnpm serve`  | Serves the production build on port 3000     |
+| `pnpm lint`   | Runs ESLint with autofix                     |
+| `pnpm format` | Formats the code with Prettier               |
 
-### `docker run -d -p 4677:4677 --name hopr-admin --platform linux/amd64 europe-west3-docker.pkg.dev/hoprassociation/docker-images/hopr-admin`
+## Build the Docker image
 
-Runs the Node Admin container exposing the 4677 port.
-To access the Node Admin you should go to `http://localhost:4677/`
+```sh
+docker build -t hopr-node-admin-ui .
+docker run -d --name hopr-node-admin-ui -p 4677:4677 hopr-node-admin-ui
+```
+
+The image is built in three stages:
+
+1. **deps** installs dependencies with pnpm on Node 24.
+2. **build** runs `pnpm build` and writes the app version to `version.txt`.
+3. **runtime** serves the static files with nginx on port 4677, using `nginx.conf`.
+
+The first two stages always run on the builder's native platform, because their output is plain static files.
+That makes multi-architecture builds fast, since nothing is emulated:
+
+```sh
+docker buildx build --platform linux/amd64,linux/arm64 -t hopr-node-admin-ui .
+```
+
+The running container reports its version at `/version.txt`.
+
+## Continuous integration
+
+| Workflow                               | Trigger                                    | What it does                                                  |
+| -------------------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
+| [Docker](.github/workflows/docker.yml) | Push to `main`, `v*` tags, PRs, manual run | Builds the image and pushes it to Docker Hub (PRs only build) |
+| [Deploy](.github/workflows/deploy.yml) | Manual run                                 | Builds the app and uploads `build/` to a web server over FTP  |
+
+### Docker Hub publishing
+
+Set these under **Settings > Secrets and variables > Actions** in the GitHub repository:
+
+- **Variable `DOCKERHUB_USERNAME`**: the Docker Hub account or organisation that owns the image. Falls back to the GitHub owner name.
+- **Secret `DOCKERHUB_TOKEN`**: a Docker Hub access token with Read & Write scope.
+
+Image tags:
+
+- A push to `main` publishes `latest` and `sha-<commit>`.
+- A tag such as `v5.0.0` publishes `5.0.0`, `5.0` and `sha-<commit>`.
+
+To release a version, bump `version` in `package.json`, then tag and push:
+
+```sh
+git tag v5.0.0
+git push origin v5.0.0
+```
+
+### FTP deploy
+
+The Deploy workflow needs the secrets `FTP_SERVER`, `FTP_USERNAME` and `FTP_PASSWORD`.
+The web server must serve `index.html` for unknown paths, because the app uses client-side routing.
 
 ## Contributing
 
-To contribute to this repository you will need to create a pull request.
+To contribute to this repository, open a pull request.
