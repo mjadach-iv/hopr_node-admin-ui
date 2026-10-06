@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { trackGoal } from 'fathom-client';
 
 import { environment } from '../config';
 import { parseAndFormatUrl } from './utils/parseAndFormatUrl';
@@ -77,7 +76,6 @@ const LayoutEnhanced = () => {
           }),
         ).unwrap();
         if (loginInfo) {
-          trackGoal('Y641EPNA', 1); // LOGIN_TO_NODE_BY_URL
           fetchNodeData({
             apiEndpoint: formattedApiEndpoint,
             apiToken,
@@ -85,7 +83,7 @@ const LayoutEnhanced = () => {
           });
         }
       } catch (e) {
-        trackGoal('ZUIBL4M8', 1); // FAILED_CONNECT_TO_NODE_BY_URL
+        // error is handled in redux
       }
     };
     useNode();

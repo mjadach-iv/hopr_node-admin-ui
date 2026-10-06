@@ -44,7 +44,6 @@ const Head = () => {
         httpEquiv="expires"
         content="43200"
       />
-      {/* <script src="https://cdn.usefathom.com/script.js" data-site="" defer></script> */}
     </NextHead>
   );
 };

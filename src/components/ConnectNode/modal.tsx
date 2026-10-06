@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { abortAllPending } from '../../store/abortRegistry';
 import styled from '@emotion/styled';
-import { trackGoal } from 'fathom-client';
 import { parseAndFormatUrl } from '../../utils/parseAndFormatUrl';
 
 // Stores
@@ -312,12 +311,10 @@ function ConnectNodeModal({ open = false, handleClose }: ConnectNodeModalProps) 
         } else {
           navigate(`${targetPath}?apiToken=${encodeURIComponent(apiToken)}&apiEndpoint=${formattedApiEndpoint}`);
         }
-        trackGoal('IZUWDE9K', 1);
         props.handleClose();
       }
     } catch (e) {
       // error is handled in redux
-      trackGoal('WWH3JCEH', 1);
     } finally {
       set_forceLogin(false);
     }
