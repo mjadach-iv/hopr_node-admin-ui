@@ -66,10 +66,10 @@ The running container reports its version at `/version.txt`.
 
 ## Continuous integration
 
-| Workflow                               | Trigger                                    | What it does                                                  |
-| -------------------------------------- | ------------------------------------------ | ------------------------------------------------------------- |
-| [Docker](.github/workflows/docker.yml) | Push to `main`, `v*` tags, PRs, manual run | Builds the image and pushes it to Docker Hub (PRs only build) |
-| [Deploy](.github/workflows/deploy.yml) | Manual run                                 | Builds the app and uploads `build/` to a web server over FTP  |
+| Workflow                               | Trigger         | What it does                                                            |
+| -------------------------------------- | --------------- | ----------------------------------------------------------------------- |
+| [Docker](.github/workflows/docker.yml) | Manual run, PRs | Pushes the image to Docker Hub with the tags you enter (PRs only build) |
+| [Deploy](.github/workflows/deploy.yml) | Manual run      | Builds the app and uploads `build/` to a web server over FTP            |
 
 ### Docker Hub publishing
 
@@ -78,17 +78,14 @@ Set these under **Settings > Secrets and variables > Actions** in the GitHub rep
 - **Variable `DOCKERHUB_USERNAME`**: the Docker Hub account or organisation that owns the image. Falls back to the GitHub owner name.
 - **Secret `DOCKERHUB_TOKEN`**: a Docker Hub access token with Read & Write scope.
 
-Image tags:
+Images are only pushed when you run the workflow by hand:
 
-- A push to `main` publishes `latest` and `sha-<commit>`.
-- A tag such as `v5.0.0` publishes `5.0.0`, `5.0` and `sha-<commit>`.
+1. Bump `version` in `package.json` and push the change.
+2. Open **Actions > Docker > Run workflow**.
+3. Pick the branch or tag to build from.
+4. Enter the image tags, separated by commas or spaces, for example `5.0.0, latest`.
 
-To release a version, bump `version` in `package.json`, then tag and push:
-
-```sh
-git tag v5.0.0
-git push origin v5.0.0
-```
+Pull requests build the image to check it, but never push it.
 
 ### FTP deploy
 

@@ -1,41 +1,64 @@
 name: Docker
 
-# Builds the Node Admin image and publishes it to Docker Hub.
+# Publishes the Node Admin image to Docker Hub on a manual run, with the tags you enter.
+# Pull requests only build the image to check that it still builds. Nothing is pushed.
 #
 # Required repository settings (Settings > Secrets and variables > Actions):
 #   - variable DOCKERHUB_USERNAME: Docker Hub account or organisation that owns the image
 #                                   (falls back to the GitHub owner name when unset)
 #   - secret   DOCKERHUB_TOKEN:    Docker Hub access token with Read & Write scope
-#
-# Tags pushed:
-#   - push to main     -> latest, sha-<short sha>
-#   - push of tag vX.Y.Z -> X.Y.Z, X.Y, sha-<short sha>
-#   - pull requests    -> image is built to check it, never pushed
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Image tags, separated by commas or spaces (e.g. "5.0.0-alpha.1, latest")'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: docker-${{ github.ref }}
-  cancel-in-progress: true
+  group: docker-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || github.repository_owner }}
   IMAGE: ${{ vars.DOCKERHUB_USERNAME || github.repository_owner }}/hopr-node-admin-ui
-  PUSH: ${{ github.event_name != 'pull_request' }}
+  PUSH: ${{ github.event_name == 'workflow_dispatch' }}
 
 jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
+      - name: Parse requested tags
+        id: tags
+        if: env.PUSH == 'true'
+        env:
+          INPUT_TAGS: ${{ inputs.tags }}
+        run: |
+          set -f # no filename expansion when splitting the input
+          list=""
+          for tag in $(echo "$INPUT_TAGS" | tr ',' ' '); do
+            if ! [[ "$tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+              echo "::error::Invalid Docker tag: '$tag'"
+              exit 1
+            fi
+            list+="type=raw,value=${tag}"$'\n'
+          done
+          if [ -z "$list" ]; then
+            echo "::error::Enter at least one tag"
+            exit 1
+          fi
+          {
+            echo 'list<<EOF'
+            printf '%s' "$list"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
@@ -55,11 +78,7 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
+          tags: ${{ steps.tags.outputs.list || 'type=ref,event=pr' }}
 
       - name: Build and push
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
