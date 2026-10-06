@@ -11,11 +11,12 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY package.json .
-COPY yarn.lock .
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 
 RUN jq .version package.json -r > /app/version.txt
-RUN yarn --frozen-lockfile --network-timeout 1000000
+RUN pnpm install --frozen-lockfile
 
 FROM --platform=linux/amd64 node:22-bullseye-slim AS build
 
@@ -25,7 +26,7 @@ COPY --from=deps /app/node_modules ./node_modules
 
 COPY . .
 
-RUN yarn run build
+RUN corepack enable && pnpm run build
 
 FROM nginx:stable-alpine@sha256:e544ba68e68ddbcdff106010fa82f4ab30378899e78d4ff7aadf4ef5a7c65091 AS runtime
 

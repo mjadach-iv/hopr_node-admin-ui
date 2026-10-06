@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, type JSX } from 'react';
 import styled from '@emotion/styled';
 import _debounce from 'lodash/debounce';
 import { TableVirtuoso, TableComponents } from 'react-virtuoso';

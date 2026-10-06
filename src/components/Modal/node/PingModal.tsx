@@ -1,4 +1,4 @@
-import { useState, useEffect, KeyboardEvent } from 'react';
+import { useState, useEffect, KeyboardEvent, type JSX } from 'react';
 import { DialogTitle, TextField, DialogActions, Alert } from '@mui/material';
 import { SDialog, SDialogContent, SIconButton, TopBar } from '../../../future-hopr-lib-components/Modal/styled';
 import { useAppDispatch, useAppSelector } from '../../../store';

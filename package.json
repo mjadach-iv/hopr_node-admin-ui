@@ -1,6 +1,6 @@
 {
   "name": "node-admin-ui",
-  "version": "4.0.0-rc.4",
+  "version": "5.0.0-alpha.0",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.11.0",
@@ -36,7 +36,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:clean": "npm run dev -- --force",
+    "dev:clean": "pnpm dev --force",
     "build-vite": "tsc && vite build",
     "build": "tsc && vite build",
     "test": "echo \"Error: no test specified\" && exit 0",
@@ -67,7 +67,7 @@
       "last 1 safari version"
     ]
   },
-  "packageManager": "yarn@1.22.19",
+  "packageManager": "pnpm@11.25.0",
   "devDependencies": {
     "@types/canvas-confetti": "^1.6.0",
     "@types/js-yaml": "^4.0.9",
@@ -86,8 +86,5 @@
     "vite": "^8.0.12",
     "vite-plugin-checker": "^0.13.0",
     "vite-plugin-svgr": "^5.2.0"
-  },
-  "resolutions": {
-    "qs": "6.14.1"
   }
 }

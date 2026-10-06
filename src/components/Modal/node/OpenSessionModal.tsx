@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 import styled from '@emotion/styled';
 import { sendNotification } from '../../../hooks/useWatcher/notifications';
 

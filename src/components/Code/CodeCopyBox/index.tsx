@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type JSX } from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import { Container } from './styled';
 

@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import styled from '@emotion/styled';
 
 // Mui
