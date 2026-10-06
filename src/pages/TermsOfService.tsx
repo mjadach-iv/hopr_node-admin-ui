@@ -144,10 +144,6 @@ const TermsOfService = () => {
           product liability. Moreover, the exclusion of liability does not apply to damage from injury to life, body or
           health (Personal injuries).
         </Description>
-        <Title>Privacy</Title>
-        <Description>
-          Please see our Privacy Policy to understand how we collect and use your personal data.
-        </Description>
         <Title>Governing Law and Jurisdiction</Title>
         <Description>
           These Terms of Service are governed by and construed in accordance with the substantive laws of Switzerland

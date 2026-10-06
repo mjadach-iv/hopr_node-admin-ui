@@ -3,7 +3,6 @@ import { environment } from '../config';
 
 import NodeLandingPage from './pages/node/landingPage';
 import TermsOfService from './pages/TermsOfService';
-import PrivacyNotice from './pages/PrivacyNotice';
 
 import LayoutEnhanced from './LayoutEnhanced';
 import { applicationMap } from './applicationMap';
@@ -46,10 +45,6 @@ applicationMap.forEach((groups) => {
 routes[0].children.push({
   path: '/tos',
   element: <TermsOfService />,
-});
-routes[0].children.push({
-  path: '/privacy-notice',
-  element: <PrivacyNotice />,
 });
 
 const router = createBrowserRouter(routes);

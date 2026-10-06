@@ -113,10 +113,6 @@ const links = [
     name: 'Terms of Service',
     link: '/tos',
   },
-  {
-    name: 'Privacy Policy',
-    link: '/privacy-notice',
-  },
 ];
 
 const socials = [
