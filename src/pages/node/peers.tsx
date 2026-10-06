@@ -142,7 +142,7 @@ function PeersPage() {
       node: <PeersInfo peerAddress={peer.address} />,
       address: getAliasByAddress(peer.address),
       peerAddress: peer.address,
-      score: <ProgressBar value={peer.score} />,
+      score: typeof peer.score === 'number' ? <ProgressBar value={peer.score} /> : '-',
       lastUpdate: <LastSeen timestamp={peer.lastUpdate} />,
       actions: (
         <>

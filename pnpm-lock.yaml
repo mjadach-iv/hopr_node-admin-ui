@@ -21,8 +21,8 @@ importers:
         specifier: ^5.0.0
         version: 5.2.6
       '@hoprnet/hopr-sdk':
-        specifier: 4.0.0-rc.0-pr.159
-        version: 4.0.0-rc.0-pr.159(supports-color@7.2.0)
+        specifier: 5.0.0-rc.0-commit.1a334cf
+        version: 5.0.0-rc.0-commit.1a334cf(supports-color@7.2.0)
       '@metamask/jazzicon':
         specifier: ^2.0.0
         version: 2.0.0
@@ -314,8 +314,8 @@ packages:
   '@fontsource/roboto@5.2.6':
     resolution: {integrity: sha512-hzarG7yAhMoP418smNgfY4fO7UmuUEm5JUtbxCoCcFHT0hOJB+d/qAEyoNjz7YkPU5OjM2LM8rJnW8hfm0JLaA==}
 
-  '@hoprnet/hopr-sdk@4.0.0-rc.0-pr.159':
-    resolution: {integrity: sha512-fwjO7luSjfGoTidSkw6I6+tauUGKy7tTu7TVDFW6HlUPdHD5LZsc87CL3Ehr19doK2zujzkvfCzGGrM88KJxwQ==, tarball: https://europe-west3-npm.pkg.dev/hoprassociation/npm/@hoprnet/hopr-sdk/-/@hoprnet/hopr-sdk-4.0.0-rc.0-pr.159.tgz}
+  '@hoprnet/hopr-sdk@5.0.0-rc.0-commit.1a334cf':
+    resolution: {integrity: sha512-egeEDUv8jcQDIgnbEIeqn9pSUo6Si33b3vQFPH+Q9aNFH8nNHgK4dQ/RrlhrzHk7Ine7Aa6jt3MN86G3F92utA==, tarball: https://europe-west3-npm.pkg.dev/hoprassociation/npm/@hoprnet/hopr-sdk/-/@hoprnet/hopr-sdk-5.0.0-rc.0-commit.1a334cf.tgz}
     engines: {node: '>=22.0.0'}
 
   '@humanwhocodes/config-array@0.13.0':
@@ -2549,7 +2549,7 @@ snapshots:
 
   '@fontsource/roboto@5.2.6': {}
 
-  '@hoprnet/hopr-sdk@4.0.0-rc.0-pr.159(supports-color@7.2.0)':
+  '@hoprnet/hopr-sdk@5.0.0-rc.0-commit.1a334cf(supports-color@7.2.0)':
     dependencies:
       debug: 4.4.3(supports-color@7.2.0)
       isomorphic-ws: 5.0.0(ws@8.19.0)

@@ -231,8 +231,8 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
       },
       capabilities: [],
       protocol,
-      forwardPath: {},
-      returnPath: {},
+      forwardPath: { Hops: numberOfForwardHops },
+      returnPath: { Hops: numberOfReturnHops },
       responseBuffer: `${responseBuffer} kB`,
       maxSurbUpstream: `${maxSurbUpstream} kb/s`,
       maxClientSessions: maxClientSessions,
@@ -241,24 +241,12 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
     // ts fix
     if (!sessionPayload.capabilities) return;
 
-    if (sendForwardMode === 'numberOfHops') {
-      sessionPayload.forwardPath = {
-        Hops: numberOfForwardHops,
-      };
-    }
-
     // sendForwardMode == 'path' got temporary? removed
     // if (sendForwardMode == 'path' && intermediateForwardPath.length > 0 && !intermediateForwardPath.includes(null)) {
     //   sessionPayload.forwardPath = {
     //     IntermediatePath: intermediateForwardPath as string[],
     //   };
     // }
-
-    if (sendReturnMode === 'numberOfHops') {
-      sessionPayload.returnPath = {
-        Hops: numberOfForwardHops,
-      };
-    }
 
     // sendReturnMode == 'path' got temporary? removed
     // if (sendReturnMode == 'path' && intermediateReturnPath.length > 0 && !intermediateReturnPath.includes(null)) {
