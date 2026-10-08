@@ -20,14 +20,16 @@ import { abortAllPending } from '../../store/abortRegistry';
 
 const Container = styled(Button)`
   align-items: center;
-  border-left: 1px lightgray solid;
+  border-left: 1px var(--border) solid;
   cursor: pointer;
-  color: black;
+  color: var(--text);
   display: flex;
   flex-direction: row;
-  gap: 10px;
+  gap: 8px;
   height: 42px;
-  width: 240px;
+  width: auto;
+  min-width: 0;
+  padding: 0 8px 0 4px;
   border-radius: 0;
   div {
     align-items: center;
@@ -38,39 +40,47 @@ const Container = styled(Button)`
     width: 100%;
   }
   .image-container {
-    height: 48px;
+    height: 42px;
     margin-left: 8px;
-    width: 50px;
+    width: 28px;
     img {
-      height: 34px;
-      width: 34px;
+      height: 28px;
+      width: 28px;
       border-radius: 50px;
     }
   }
 `;
 
 const NodeButton = styled.div`
-  font-family: 'Source Code Pro';
-  min-width: 150px;
+  font-family: var(--font-mono);
   display: flex;
   flex-direction: row !important;
   align-items: center;
-  color: #414141;
-  gap: 10px;
+  color: var(--text-2);
+  gap: 8px;
+  .dropdown-icon img {
+    filter: brightness(0) invert(0.7);
+  }
+  /* only the identicon on narrower screens, the address is in the menu tooltip */
+  @media (max-width: 1700px) {
+    .node-label {
+      display: none;
+    }
+  }
   text-align: left;
   p {
     margin: 0;
     font-size: 12px;
   }
   .node-info {
-    color: #414141;
+    color: var(--text-2);
     line-height: 12px;
     height: 12px;
     white-space: nowrap;
   }
   .node-info-localname {
     font-weight: 700;
-    color: #000050;
+    color: var(--text);
     height: 12px;
     line-height: 12px;
     white-space: nowrap;
@@ -212,8 +222,8 @@ export default function ConnectNode() {
         </div>
         {connected ? (
           <>
-            <NodeButton>
-              <span>
+            <NodeButton title={peerAddress ?? undefined}>
+              <span className="node-label">
                 {localNameToDisplay && <p className="node-info node-info-localname">{localNameToDisplay}</p>}
                 <p className="node-info">
                   {peerAddress && (

@@ -24,12 +24,11 @@ const Container = styled.div`
   height: 42px;
   display: flex;
   align-items: center;
-  padding: 0 8px;
-  border-left: 1px lightgray solid;
+  padding: 0 4px;
 `;
 
 const SButton = styled(Button)`
-  color: #0000b4;
+  color: var(--primary);
   text-transform: none;
   white-space: nowrap;
   @media (max-width: 600px) {

@@ -234,9 +234,13 @@ function SettingsPage() {
     >
       <SubpageTitle title="CONFIGURATION" />
       <Paper
+        elevation={0}
         style={{
-          padding: '24px',
-          width: 'calc( 100% - 48px )',
+          padding: '8px 20px 16px',
+          width: '100%',
+          boxSizing: 'border-box',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
         }}
       >
         <TableExtended

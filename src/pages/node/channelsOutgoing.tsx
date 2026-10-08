@@ -17,6 +17,7 @@ import CloseChannelIcon from '../../future-hopr-lib-components/Icons/CloseChanne
 import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
 import { TokenAmount } from '../../components/TokenAmount';
+import { StatusPill } from '../../components/StatusPill';
 import {
   useBlokliChannels,
   blokliChannelHeader,
@@ -160,13 +161,9 @@ function ChannelsPage() {
 
   const header = [
     {
-      key: 'id',
-      name: '#',
-    },
-    {
       key: 'node',
       name: 'Node',
-      maxWidth: '500px',
+      grow: true,
     },
     {
       key: 'peerAddress',
@@ -175,24 +172,25 @@ function ChannelsPage() {
       hidden: true,
     },
     {
-      key: 'status',
+      key: 'statusText',
       name: 'Status',
       search: true,
-      tooltip: true,
-      maxWidth: '80px',
+      hidden: true,
+    },
+    {
+      key: 'status',
+      name: 'Status',
     },
     {
       key: 'funds',
-      name: 'Dedicated Funds',
-      maxWidth: '45px',
+      name: 'Funds',
+      align: 'right' as const,
     },
     ...blokliChannelHeader(tabLabel),
     {
       key: 'actions',
-      name: 'Actions',
+      name: '',
       search: false,
-      width: '225px',
-      maxWidth: '225px',
     },
   ];
 
@@ -247,7 +245,8 @@ function ChannelsPage() {
           />
         ),
         peerAddress: getAliasByPeerAddress(peerAddress as string),
-        status: statusWithClosure(channelsOutgoingObject[id].status as string, blokliChannel),
+        statusText: statusWithClosure(channelsOutgoingObject[id].status as string, blokliChannel),
+        status: <StatusPill status={statusWithClosure(channelsOutgoingObject[id].status as string, blokliChannel)} />,
         funds: (
           <TokenAmount
             value={channelsOutgoingObject[id].balance}
@@ -310,7 +309,8 @@ function ChannelsPage() {
     id: string;
     key: string;
     peerAddress: string;
-    status: string;
+    status: JSX.Element;
+    statusText: string;
     funds: JSX.Element;
     epoch: string;
     ticketIndex: string | JSX.Element;

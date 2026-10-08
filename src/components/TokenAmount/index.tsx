@@ -6,7 +6,8 @@ export const TokenAmount = ({ value, unit }: { value?: string | null; unit: stri
   value ? (
     <Tooltip title={`${value} ${unit}`}>
       <span>
-        {shrinkNumber(value)} {unit}
+        {shrinkNumber(value)}
+        <span className="unit">{unit}</span>
       </span>
     </Tooltip>
   ) : (

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, type JSX } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react';
 import styled from '@emotion/styled';
 import _debounce from 'lodash/debounce';
 import { TableVirtuoso, TableComponents } from 'react-virtuoso';
@@ -14,11 +14,192 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import TextField from '@mui/material/TextField';
+import InputBase from '@mui/material/InputBase';
+import SearchIcon from '@mui/icons-material/Search';
+
+// the parts of the card layout shared by the wrapped and the phone variant
+const CARDS = `
+  display: block;
+  thead {
+    display: none;
+  }
+  tbody {
+    display: block;
+  }
+  tbody tr[data-index] {
+    display: grid;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr[data-index] > td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: auto !important;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    white-space: normal;
+    overflow: visible;
+    &::before {
+      content: attr(data-label);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    &.grow,
+    &.actions {
+      &::before {
+        display: none;
+      }
+    }
+    &.grow {
+      font-weight: 600;
+    }
+    &.actions {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+  }
+`;
+
+// narrowest the address column may get before the table turns into cards
+const GROW_MIN_WIDTH = 220;
+
+/**
+ * True when the table has less room than its columns need. The need is measured
+ * while the table is shown as a table: every column at its content width plus
+ * the address column at GROW_MIN_WIDTH. While cards are shown the last
+ * measurement is kept, so the layout does not flip back and forth.
+ */
+const useCardLayout = (rowCount: number) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const requiredRef = useRef(0);
+  const cardsRef = useRef(false);
+  const [cards, set_cards] = useState(false);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const measure = () => {
+      const table = container.querySelector('table');
+      if (!cardsRef.current && table) {
+        // the header cells render as <td> (plain <thead>, not MUI TableHead)
+        const grow = table.querySelector<HTMLElement>('thead .grow');
+        requiredRef.current = table.scrollWidth - (grow ? grow.offsetWidth - GROW_MIN_WIDTH : 0);
+      }
+      const next = container.clientWidth < requiredRef.current;
+      if (next !== cardsRef.current) {
+        cardsRef.current = next;
+        set_cards(next);
+      }
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    const table = container.querySelector('table');
+    if (table) observer.observe(table);
+    // late data (e.g. dashboard figures) widens other columns without resizing the table
+    const grow = container.querySelector('thead .grow');
+    if (grow) observer.observe(grow);
+    return () => observer.disconnect();
+  }, [rowCount]);
+
+  return { containerRef, cards };
+};
 
 const STable = styled(Table)`
   tr.onRowClick {
     cursor: pointer;
+  }
+  tbody tr {
+    transition: background-color 0.12s ease;
+  }
+  tbody tr:hover {
+    background-color: var(--surface-hover);
+  }
+  /* row actions stay quiet until the row is hovered */
+  td.actions .MuiIconButton-root {
+    padding: 4px;
+    svg {
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+      fill: var(--muted);
+    }
+  }
+  tbody tr:hover td.actions .MuiIconButton-root:not(.Mui-disabled) svg {
+    color: var(--primary);
+    fill: var(--primary);
+  }
+  /* copy / explorer links next to addresses only on hover */
+  .PeerInfo-links {
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+  tbody tr:hover .PeerInfo-links {
+    opacity: 1;
+  }
+  /* touch screens have no hover, keep everything visible */
+  @media (hover: none) {
+    .PeerInfo-links {
+      opacity: 1;
+    }
+    td.actions .MuiIconButton-root svg {
+      color: var(--text-2);
+      fill: var(--text-2);
+    }
+  }
+  /* a table without room for all its columns shows every row as a small card,
+     values carry their column name (see useCardLayout) */
+  &.cards {
+    ${CARDS}
+    tbody tr[data-index] {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px 16px;
+    }
+    tbody tr[data-index] > td {
+      /* address on the left and the row actions on the right of the first line */
+      &.grow {
+        grid-row: 1;
+        grid-column: 1 / -3;
+      }
+      &.actions {
+        grid-row: 1;
+        grid-column: -3 / -1;
+        justify-content: flex-end;
+        align-items: center;
+      }
+    }
+  }
+  /* phones: two values per line, actions under the values. The selectors
+     repeat with .cards so they also win over the wrapped layout above */
+  @container (max-width: 600px) {
+    ${CARDS}
+    tbody tr[data-index],
+    &.cards tbody tr[data-index] {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+    }
+    tbody tr[data-index] > td,
+    &.cards tbody tr[data-index] > td {
+      &.grow,
+      &.actions {
+        grid-row: auto;
+        grid-column: 1 / -1;
+      }
+      &.actions {
+        justify-content: flex-start;
+        padding-top: 8px;
+        border-top: 1px dashed var(--border);
+      }
+    }
   }
 `;
 
@@ -28,7 +209,12 @@ const STable = styled(Table)`
  * scrolling wins over stickiness.
  */
 const STableContainer = styled(TableContainer)`
+  container-type: inline-size;
   overflow-x: unset;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  background: var(--surface);
   @media (max-width: 850px) {
     overflow-x: auto;
   }
@@ -46,38 +232,94 @@ const STableContainer = styled(TableContainer)`
 ` as typeof TableContainer;
 
 const STableCell = styled(TableCell)`
-  max-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 8px 16px;
-  max-width: calc(100% - 168px);
+  padding: 6px 12px;
+  height: 40px;
+  box-sizing: border-box;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+  &.grow {
+    max-width: 0;
+  }
+  &.align-right {
+    text-align: right;
+  }
+  &.align-center {
+    text-align: center;
+  }
   &.actions {
     overflow: unset;
+    text-align: right;
+    padding-right: 8px;
   }
   &.wrap {
     overflow-wrap: anywhere;
     text-overflow: unset;
     white-space: unset;
   }
+  &.TableCellHeader {
+    height: 36px;
+    padding-top: 0;
+    padding-bottom: 0;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
 `;
 
 const OverTable = styled.div`
-  width: 100%;
   display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  .count {
+    color: var(--muted);
+    white-space: nowrap;
+  }
 `;
 
-const STextField = styled(TextField)`
-  flex-grow: 1;
-  margin: 0px 16px;
+const SearchBox = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 320px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  &:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+  }
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+  .MuiInputBase-root {
+    flex: 1;
+    font-size: 13px;
+  }
+  .spacer {
+    flex: 1;
+  }
 `;
 
 const EmptyState = styled.div`
   padding: 8px 16px;
-  height: 57px;
+  height: 48px;
   display: flex;
   align-items: center;
-  font-size: 0.875rem;
+  color: var(--muted);
 `;
 
 interface Props {
@@ -98,6 +340,10 @@ interface Props {
     copy?: boolean;
     hidden?: boolean;
     tooltipHeader?: string | JSX.Element;
+    // right align numbers, the cell text and the header follow
+    align?: 'left' | 'right' | 'center';
+    // the column that takes the free width; every other column shrinks to its content
+    grow?: boolean;
   }[];
   search?: boolean;
   loading?: boolean;
@@ -111,6 +357,7 @@ type TableContext = {
   tableId?: string;
   header: Props['header'];
   onRowClick?: Function;
+  cards?: boolean;
 };
 
 type Order = 'asc' | 'desc';
@@ -154,6 +401,7 @@ const virtuosoComponents: TableComponents<RowData, TableContext> = {
   Table: ({ context, ...tableProps }) => (
     <STable
       {...tableProps}
+      className={context?.cards ? 'cards' : ''}
       aria-label="custom table"
     />
   ),
@@ -241,16 +489,26 @@ export default function CustomPaginationActionsTable(props: Props) {
     [filteredData, order, orderBy],
   );
 
+  const { containerRef, cards } = useCardLayout(sortedRows.length);
+
   return (
-    <STableContainer component={Paper}>
+    <STableContainer
+      component={Paper}
+      ref={containerRef}
+    >
       {props.search && (
         <OverTable className={`OverTable`}>
-          <STextField
-            label="Search"
-            variant="standard"
-            value={searchPhrase}
-            onChange={handleSearchChange}
-          />
+          <SearchBox>
+            <SearchIcon />
+            <InputBase
+              placeholder="Search"
+              value={searchPhrase}
+              onChange={handleSearchChange}
+            />
+          </SearchBox>
+          <span className="count">
+            {searchPhrase ? `${sortedRows.length} of ${props.data.length}` : `${props.data.length} rows`}
+          </span>
         </OverTable>
       )}
       <TableVirtuoso
@@ -263,6 +521,7 @@ export default function CustomPaginationActionsTable(props: Props) {
           tableId: props.id,
           header: props.header,
           onRowClick: props.onRowClick,
+          cards,
         }}
         components={virtuosoComponents}
         fixedHeaderContent={() => (
@@ -272,8 +531,8 @@ export default function CustomPaginationActionsTable(props: Props) {
                 !headElem.hidden && (
                   <STableCell
                     key={idx}
-                    className={`TableCell TableCellHeader`}
-                    width={headElem?.width ?? ''}
+                    className={`TableCell TableCellHeader ${headElem.key} ${cellClasses(headElem)}`}
+                    width={cellWidth(headElem)}
                   >
                     <Tooltip
                       title={headElem.tooltipHeader}
@@ -298,6 +557,11 @@ export default function CustomPaginationActionsTable(props: Props) {
   );
 }
 
+const cellWidth = (headElem: Props['header'][0]) => headElem.width ?? (headElem.grow ? undefined : '1%');
+
+const cellClasses = (headElem: Props['header'][0]) =>
+  [headElem.grow ? 'grow' : '', headElem.align ? `align-${headElem.align}` : ''].join(' ');
+
 const RowCells = ({ row, header }: { row: RowData; header: Props['header'] }) => {
   const [tooltip, set_tooltip] = useState<string>();
 
@@ -319,9 +583,9 @@ const RowCells = ({ row, header }: { row: RowData; header: Props['header'] }) =>
           !headElem.hidden && (
             <STableCell
               key={headElem.key}
-              className={`TableCell ${headElem.key} ${headElem.wrap ? 'wrap' : ''}`}
-              width={headElem.width}
-              style={{ maxWidth: headElem.maxWidth }}
+              className={`TableCell ${headElem.key} ${headElem.wrap ? 'wrap' : ''} ${cellClasses(headElem)}`}
+              width={cellWidth(headElem)}
+              data-label={typeof headElem.name === 'string' ? headElem.name : ''}
               onClick={(event) =>
                 headElem.copy && typeof row[headElem.key] === 'string'
                   ? onDoubleClick(event, row[headElem.key] as string)

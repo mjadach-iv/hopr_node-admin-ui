@@ -14,6 +14,12 @@ const VersionComponent = styled.div`
   bottom: 4px;
   right: 4px;
   font-size: 10px;
+  color: var(--muted);
+  @media (max-width: 600px) {
+    position: static;
+    padding: 8px 0 16px;
+    text-align: center;
+  }
 `;
 
 function App() {
@@ -22,6 +28,7 @@ function App() {
       <ThemeProvider theme={theme}>
         <ToastContainer
           position="bottom-right"
+          theme="dark"
           limit={10}
           style={{ maxHeight: 'calc(100vh - 100px)' }}
         />

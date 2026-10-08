@@ -5,7 +5,7 @@ const STextField = styled(MuiTextField)`
   font-family: 'Source Code Pro', monospace;
   width: 100%;
   margin-bottom: 8px;
-  background: white;
+  background: transparent;
   * {
     font-family: 'Source Code Pro', monospace !important;
   }
@@ -18,7 +18,7 @@ const STextField = styled(MuiTextField)`
     -moz-appearance: textfield;
   }
   .MuiFormLabel-root.MuiInputLabel-shrink {
-    color: #000030;
+    color: var(--muted);
   }
   @media (max-width: 320px) {
     .MuiInputAdornment-root {

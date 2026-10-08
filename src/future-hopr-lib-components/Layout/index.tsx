@@ -34,7 +34,7 @@ type ContentType = {
 };
 
 const Content = styled.div<ContentType>`
-  margin-top: 43px;
+  margin-top: ${navBarHeight}px;
   margin-left: 0;
 
   transition: margin-left 0.4s ease-out;
@@ -47,14 +47,6 @@ const Content = styled.div<ContentType>`
     css`
       @media screen and (max-width: 520px) {
         margin-top: 0px;
-      }
-    `}
-
-  ${(props) =>
-    props.drawerRight &&
-    css`
-      @media screen and (min-width: 740px) {
-        margin-right: 233px;
       }
     `}
 `;
@@ -108,9 +100,8 @@ const Layout: React.FC<{
       ? true
       : false,
   );
-  const [openedNavigationDrawerMobile, set_openedNavigationDrawerMobile] = useState(
-    initialDrawerState !== null ? Boolean(initialDrawerState) : false,
-  );
+  // the mobile menu covers the page, so it always starts closed
+  const [openedNavigationDrawerMobile, set_openedNavigationDrawerMobile] = useState(false);
 
   const handleOpenedNavigationDrawer = (bool: boolean) => {
     if (isMobile) set_openedNavigationDrawerMobile(bool);
@@ -138,6 +129,7 @@ const Layout: React.FC<{
         webapp={webapp}
         set_openedNavigationDrawer={handleOpenedNavigationDrawer}
         openedNavigationDrawer={isMobile ? openedNavigationDrawerMobile : openedNavigationDrawerPC}
+        centerContent={drawerRight}
       />
       {drawer && (
         <Drawer
@@ -162,7 +154,6 @@ const Layout: React.FC<{
         </div>
         {/* {children} */}
       </Content>
-      {drawerRight}
       {/* <Footer /> */}
     </SLayout>
   );

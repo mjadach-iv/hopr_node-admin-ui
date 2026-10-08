@@ -1,36 +1,37 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-const Bar = styled.div`
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  height: 26px;
-  border-radius: 2px;
-  //   width: 120px;
-`;
-
-const Value = styled.div`
-  position: absolute;
-  line-height: 24px;
-  width: 100%;
-  display: flex;
-  -webkit-box-pack: center;
-  justify-content: center;
-`;
-
-const Progress = styled.div`
-  height: 100%;
-  max-width: ${(props) => props.percentage};
-  &.red {
-    background-color: rgb(244, 67, 54);
+// compact meter: a thin bar followed by the percentage
+const Meter = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 96px;
+  .track {
+    position: relative;
+    flex: 0 0 48px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    overflow: hidden;
   }
-  &.orange {
-    background-color: rgba(239, 187, 90, 0.64);
+  .fill {
+    height: 100%;
+    border-radius: 3px;
   }
-  &.green {
-    background-color: rgba(8, 130, 8, 0.64);
+  .red {
+    background-color: var(--red);
+  }
+  .orange {
+    background-color: #f79009;
+  }
+  .green {
+    background-color: #17b26a;
+  }
+  .value {
+    font-variant-numeric: tabular-nums;
+    min-width: 40px;
+    text-align: right;
   }
 `;
 
@@ -48,13 +49,15 @@ function ProgressBar(props) {
   }
 
   return (
-    <Bar>
-      <Value className="value">{percentage()}</Value>
-      <Progress
-        className={`progress ${color()}`}
-        percentage={percentage()}
-      />
-    </Bar>
+    <Meter className="ProgressBar">
+      <div className="track">
+        <div
+          className={`fill ${color()}`}
+          style={{ width: percentage() }}
+        />
+      </div>
+      <span className="value">{percentage()}</span>
+    </Meter>
   );
 }
 

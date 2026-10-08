@@ -58,14 +58,11 @@ function SessionsPage() {
 
   const header = [
     {
-      key: 'id',
-      name: '#',
-    },
-    {
       key: 'destination',
       name: 'Destination',
       search: true,
       copy: true,
+      grow: true,
     },
     {
       key: 'ip',
@@ -105,10 +102,8 @@ function SessionsPage() {
     },
     {
       key: 'actions',
-      name: 'Actions',
+      name: '',
       search: false,
-      width: '68px',
-      maxWidth: '68px',
     },
   ];
 

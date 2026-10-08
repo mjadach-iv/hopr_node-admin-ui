@@ -14,9 +14,10 @@ import {
 } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
 import { ApplicationMapType } from '../../applicationMap';
-import Details from '../../components/InfoBar/details';
+import { WalletBreakdown } from '../../components/InfoBar';
 import { rounder2 } from '../../utils/functions';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { navBarHeight } from '../Navbar/navBar';
 
 export const drawerWidth = 200;
 export const minDrawerWidth = 50;
@@ -24,7 +25,15 @@ export const minDrawerWidth = 50;
 const StyledDrawer = styled(MuiDrawer)`
   .MuiDrawer-paper {
     box-sizing: border-box;
-    padding-top: 43px;
+    padding-top: ${navBarHeight}px;
+    background: var(--chrome);
+    border-right: 1px solid var(--border);
+    hr {
+      display: none;
+    }
+    .MuiList-root {
+      padding: 4px 0;
+    }
     transition: width 0.4s ease-out;
     overflow-x: hidden;
     scrollbar-width: none;
@@ -37,7 +46,7 @@ const StyledDrawer = styled(MuiDrawer)`
     ${(props) =>
       props.variant === 'temporary' &&
       css`
-        width: ${drawerWidth}px;
+        width: min(300px, 85vw);
       `}
   }
 
@@ -80,46 +89,72 @@ const StyledDrawer = styled(MuiDrawer)`
 `;
 
 const StyledListSubheader = styled(ListSubheader)`
+  position: static;
   align-items: center;
   display: flex;
-  height: 48px;
-  letter-spacing: 0.2px;
+  height: 30px;
+  margin-top: 6px;
+  padding-left: 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1;
   user-select: none;
-  color: #777;
+  color: var(--muted);
+  background: transparent;
+  .SListItemIcon {
+    min-width: 0;
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
 `;
 
 const StyledListItemButton = styled(ListItemButton)`
-  height: 48px;
-  fill: rgba(0, 0, 0, 0.54);
-  width: 100%;
-  padding-right: 7px;
-  padding-left: 14px;
+  height: 34px;
+  margin: 1px 6px;
+  width: calc(100% - 12px);
+  border-radius: 6px;
+  padding-right: 6px;
+  padding-left: 9px;
+  color: var(--text-2);
+  fill: var(--muted);
   .MuiListItemIcon-root {
-    min-width: 38px;
+    min-width: 30px;
+    color: var(--muted);
     svg {
-      width: 24px;
-      height: 24px;
+      width: 18px;
+      height: 18px;
     }
   }
   .MuiTypography-root {
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
     white-space: nowrap;
+    text-transform: lowercase;
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+  &:hover {
+    background-color: var(--surface-hover);
   }
   &.Mui-selected {
-    color: #0000b4;
-    fill: #0000b4;
-    background-color: rgba(255, 255, 255, 0.45);
-    .MuiListItemText-root {
-      text-decoration: underline 2px #0000b4;
-      text-underline-offset: 4px;
-    }
+    color: var(--primary);
+    fill: var(--primary);
+    background-color: var(--primary-soft);
     .MuiTypography-root {
-      font-weight: bold;
+      font-weight: 650;
     }
     .MuiSvgIcon-root,
     .MuiListItemIcon-root {
-      color: #0000b4;
-      fill: #0000b4;
+      color: var(--primary);
+      fill: var(--primary);
+    }
+    .drawer-number {
+      background: var(--surface);
+      color: var(--primary);
     }
   }
 ` as typeof ListItemButton;
@@ -132,15 +167,22 @@ const SListItemIcon = styled(ListItemIcon)`
 
 const Numbers = styled.div`
   font-size: 11px;
-  background-color: #ddeaff;
-  padding: 3px;
+  font-weight: 600;
+  line-height: 18px;
+  min-width: 18px;
+  text-align: center;
+  border-radius: 9px;
+  padding: 0 6px;
+  color: var(--text-2);
+  background-color: var(--surface-2);
+  border: 1px solid var(--border);
 `;
 
 const NumbersLoading = styled.div`
   height: 18px;
   width: 18px;
-  background-color: #ddeaff;
   padding: 2px;
+  color: var(--muted);
   svg {
     animation: rotation 2s infinite linear;
     height: 16px;
@@ -289,7 +331,7 @@ const Drawer = ({
                             item.loginNeeded &&
                             drawerLoginState?.[item.loginNeeded] &&
                             typeof drawerNumbers[item.numberKey] === 'number' && (
-                              <Numbers>{rounder2(drawerNumbers[item.numberKey])}</Numbers>
+                              <Numbers className="drawer-number">{rounder2(drawerNumbers[item.numberKey])}</Numbers>
                             )}
                         </StyledListItemButton>
                       </Tooltip>
@@ -299,7 +341,9 @@ const Drawer = ({
             </div>
           ),
       )}
-      {drawerVariant === 'temporary' && <Details style={{ margin: '0 auto 16px' }} />}
+      {drawerVariant === 'temporary' && drawerLoginState?.node && (
+        <WalletBreakdown style={{ width: '100%', margin: '8px 0 16px' }} />
+      )}
     </StyledDrawer>
   );
 };

@@ -15,13 +15,14 @@ type StyledButtonProps = ButtonProps & {
 };
 
 const StyledButton = styled(MuiButton)<StyledButtonProps>`
-  font-family: 'Source Code Pro';
+  font-family: var(--font-sans);
   text-align: center;
   text-transform: none;
   font-style: normal;
-  font-weight: 500;
-  font-size: 18px;
-  border-radius: 20px;
+  font-weight: 650;
+  font-size: 14px;
+  border-radius: 8px;
+  box-shadow: none;
   letter-spacing: 0.25px;
   line-height: 1.5;
   height: unset;
@@ -30,8 +31,16 @@ const StyledButton = styled(MuiButton)<StyledButtonProps>`
   }
 
   &.btn-hopr--v2:not(.Mui-disabled) {
-    background: linear-gradient(#000050, #0000b4);
-    color: #fff;
+    background: var(--hopr-yellow);
+    color: var(--hopr-dark-blue);
+    &:hover {
+      background: #ffffc4;
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+  }
+  &.btn-hopr--v2.Mui-disabled {
+    background: var(--surface-2);
+    color: var(--muted);
   }
   &.btn-hopr--standardWidth {
     width: 100%;
@@ -53,7 +62,7 @@ const StyledButton = styled(MuiButton)<StyledButtonProps>`
     }
   }
   &.btn-hopr--v2.btn-hopr--fade:not(.Mui-disabled) {
-    background: linear-gradient(rgb(0 0 80 / 60%), rgb(0 0 180 / 60%));
+    background: rgba(255, 255, 160, 0.7);
   }
   &.white:not(.Mui-disabled) {
     background: #fff;
@@ -63,7 +72,8 @@ const StyledButton = styled(MuiButton)<StyledButtonProps>`
 
   &.btn-hopr--no-fade:not(.Mui-disabled) {
     align-self: flex-start;
-    background: #000050;
+    background: var(--hopr-yellow);
+    color: var(--hopr-dark-blue);
     font-size: 12px;
     font-weight: 700;
     height: 32px;
@@ -85,9 +95,9 @@ const StyledButton = styled(MuiButton)<StyledButtonProps>`
   }
 
   &.btn-hopr--outlined:not(.Mui-disabled) {
-    background: #fff;
-    color: #000050;
-    border: 2px solid #000050;
+    background: transparent;
+    color: var(--hopr-yellow);
+    border: 1px solid var(--hopr-yellow);
   }
 `;
 

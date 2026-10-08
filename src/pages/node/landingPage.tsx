@@ -14,7 +14,8 @@ const CommunityEdition = styled.div`
   top: 140px;
   right: -30px;
   transform: rotate(45deg);
-  color: #a00000;
+  color: var(--hopr-sky-blue);
+  opacity: 0.55;
   font-size: 32px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -33,49 +34,52 @@ const StyledContainer = styled.div`
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   max-width: 1080px;
-  padding: 2rem;
-`;
-
-const ImageContainer = styled.div`
-  min-height: 256px;
-  min-width: 512px;
-  padding: 1rem;
-  @media screen and (max-height: 1025px) {
-    height: 128px;
-    width: 256;
+  padding: 2rem 0;
+  @media screen and (max-width: 600px) {
+    gap: 1.25rem;
+    padding: 1rem 0;
   }
 `;
 
-const Image = styled.img`
-  display: block;
-  height: 100%;
-  width: 100%;
+// the drawing is navy, paint its shape in HOPR yellow
+const Image = styled.div`
+  width: min(420px, 80vw);
+  height: 200px;
+  background-color: var(--hopr-yellow);
+  mask: url('/assets/blue_HOPR_Node.svg') no-repeat center / contain;
+  -webkit-mask: url('/assets/blue_HOPR_Node.svg') no-repeat center / contain;
+  @media screen and (max-height: 1025px), screen and (max-width: 600px) {
+    height: 128px;
+  }
 `;
 
 const Title = styled.h2`
-  color: #414141;
-  font-size: 80px;
-  font-weight: 400;
-  margin-block: 1rem;
+  color: var(--text);
+  font-size: clamp(36px, 10vw, 72px);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
   text-transform: uppercase;
 `;
 
 const Description = styled.p`
-  color: #414141;
-  font-size: 18px;
-  font-weight: 600;
+  color: var(--text-2);
+  font-size: 16px;
+  line-height: 1.5;
   margin: 0;
   max-width: 74ch;
 `;
 
 const Disclaimer = styled.p`
-  background-color: rgba(255, 255, 255, 0.6);
-  border-left: 4px solid #ff0000;
-  border-radius: 4px;
-  color: #414141;
-  font-size: 15px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  border-radius: 8px;
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
   margin: 0;
   max-width: 74ch;
   padding: 12px 16px;
@@ -94,7 +98,7 @@ const StyledButton = styled(Button)`
 `;
 
 const StyledLink = styled(Link)`
-  color: #0000b4;
+  color: var(--hopr-sky-blue);
   font-weight: 700;
   text-decoration: underline;
 `;
@@ -113,9 +117,10 @@ function LandingPage() {
     >
       <CommunityEdition>Community edition</CommunityEdition>
       <StyledContainer>
-        <ImageContainer>
-          <Image src="/assets/blue_HOPR_Node.svg" />
-        </ImageContainer>
+        <Image
+          role="img"
+          aria-label="HOPR node"
+        />
         <Title>Node Admin</Title>
         <Description>
           HOPR Node Admin allows at-a-glance access to the crucial information of a HOPR Node. It provides users with a

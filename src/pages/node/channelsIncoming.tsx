@@ -17,6 +17,7 @@ import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import CloseChannelIcon from '../../future-hopr-lib-components/Icons/CloseChannel';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
 import { TokenAmount } from '../../components/TokenAmount';
+import { StatusPill } from '../../components/StatusPill';
 import {
   useBlokliChannels,
   blokliChannelHeader,
@@ -105,13 +106,9 @@ function ChannelsPage() {
 
   const headerIncoming = [
     {
-      key: 'id',
-      name: '#',
-    },
-    {
       key: 'node',
       name: 'Node',
-      maxWidth: '568px',
+      grow: true,
     },
     {
       key: 'peerAddress',
@@ -121,16 +118,19 @@ function ChannelsPage() {
       hidden: true,
     },
     {
-      key: 'status',
+      key: 'statusText',
       name: 'Status',
       search: true,
-      maxWidth: '368px',
-      tooltip: true,
+      hidden: true,
+    },
+    {
+      key: 'status',
+      name: 'Status',
     },
     {
       key: 'funds',
-      name: 'Dedicated Funds',
-      maxWidth: '68px',
+      name: 'Funds',
+      align: 'right' as const,
     },
     ...blokliChannelHeader(tabLabel),
     // {
@@ -149,10 +149,8 @@ function ChannelsPage() {
     // },
     {
       key: 'actions',
-      name: 'Actions',
+      name: '',
       search: false,
-      width: '270px',
-      maxWidth: '270px',
     },
   ];
 
@@ -253,7 +251,8 @@ function ChannelsPage() {
           />
         ),
         peerAddress: getAliasByPeerAddress(peerAddress as string),
-        status: statusWithClosure(channelsIncomingObject[id].status as string, blokliChannel),
+        statusText: statusWithClosure(channelsIncomingObject[id].status as string, blokliChannel),
+        status: <StatusPill status={statusWithClosure(channelsIncomingObject[id].status as string, blokliChannel)} />,
         funds: (
           <TokenAmount
             value={channelsIncomingObject[id].balance}
@@ -322,7 +321,8 @@ function ChannelsPage() {
     id: string;
     key: string;
     peerAddress: string;
-    status: string;
+    status: JSX.Element;
+    statusText: string;
     tickets: string;
     funds: JSX.Element;
     epoch: string;

@@ -1,5 +1,26 @@
 # Changelog
 
+## 5.0.0-alpha.4
+
+Changes since 5.0.0-alpha.3.
+
+### Added
+
+- Mobile and tablet layout. Tables that do not fit their space turn into cards: wrapped columns on medium screens, two values per line on phones. The menu slides out and also shows the node wallet, and the header shows the total balance.
+
+### Changed
+
+- New look: dark HOPR blue theme with HOPR yellow accents, a sans-serif font with monospace only for addresses, and smaller unit names next to figures.
+- The right hand info bar is gone. Node status and the main balances (node xDAI, safe, safe channels, earned, total) are in the header, and a click on them shows every balance at full precision. The page FAQ opens from "?" in the header.
+- INFO page: headline tiles (status, total staked, safe, safe channels, earned, node gas, peers, channels) and compact cards replace the long list of tables. Packets and throughput are merged into one Traffic table.
+- Denser tables: shorter rows, numbers right aligned, status pills, "last seen" as relative time, and copy, explorer and row actions highlighted on hover. The "#" column is gone.
+- SAFE → NODES: throughput columns show the speed only, the share of the tested speed is in the tooltip.
+- Tickets, Configuration, the landing page, dialogs, buttons, inputs and notifications follow the new theme.
+
+### Fixed
+
+- On phones the menu no longer reopens on every page load.
+
 ## 5.0.0-alpha.3
 
 Changes since 5.0.0-alpha.2.

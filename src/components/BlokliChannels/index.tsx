@@ -58,20 +58,20 @@ export const blokliChannelHeader = (direction: Direction) => [
   {
     key: 'epoch',
     name: 'Epoch',
-    maxWidth: '45px',
+    align: 'right' as const,
     tooltipHeader: 'Channel epoch, it goes up every time the channel is reopened. From blokli.',
   },
   {
     key: 'ticketIndex',
     name: 'Tickets',
-    maxWidth: '60px',
+    align: 'right' as const,
     tooltipHeader:
       'On-chain ticket index: the tickets issued in the current channel epoch up to its last on-chain redemption, winning and losing. From blokli.',
   },
   {
     key: 'estimate',
     name: direction === 'outgoing' ? 'Est. spent' : 'Est. earned',
-    maxWidth: '90px',
+    align: 'right' as const,
     tooltipHeader: (
       <>
         Estimate: tickets issued in the current channel epoch up to its last on-chain redemption × current ticket price
@@ -97,7 +97,8 @@ export const blokliChannelCells = (channel: BlokliChannelType | undefined) => ({
   estimate: channel?.estimatedValue ? (
     <Tooltip title={`${channel.estimatedValue.formatted} ${HOPR_TOKEN_USED}`}>
       <span>
-        ≈ {shrinkNumber(channel.estimatedValue.formatted)} {HOPR_TOKEN_USED}
+        ≈ {shrinkNumber(channel.estimatedValue.formatted)}
+        <span className="unit">{HOPR_TOKEN_USED}</span>
       </span>
     </Tooltip>
   ) : (
@@ -168,13 +169,9 @@ export const ClosedChannelsTable = ({
 
   const header = [
     {
-      key: 'id',
-      name: '#',
-    },
-    {
       key: 'node',
       name: 'Node',
-      maxWidth: '500px',
+      grow: true,
     },
     {
       key: 'peerAddress',
@@ -188,12 +185,11 @@ export const ClosedChannelsTable = ({
       search: true,
       copy: true,
       tooltip: true,
-      maxWidth: '200px',
     },
     {
       key: 'epoch',
       name: 'Last epoch',
-      maxWidth: '60px',
+      align: 'right' as const,
     },
   ];
 

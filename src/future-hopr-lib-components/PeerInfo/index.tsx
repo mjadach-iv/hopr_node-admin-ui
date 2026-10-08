@@ -22,21 +22,47 @@ interface Props {
 const Container = styled.div`
   display: flex;
   align-items: center;
+  min-width: 0;
   .node-jazz-icon {
-    height: 30px;
-    width: 30px;
+    flex: 0 0 20px;
+    height: 20px;
+    width: 20px;
+  }
+  .label {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .alias {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .address {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-2);
+  }
+  .alias + .address {
+    color: var(--muted);
+  }
+  .PeerInfo-links {
+    display: inline-flex;
+    flex: 0 0 auto;
+    margin-left: 4px;
+    svg {
+      width: 15px;
+      height: 15px;
+      color: var(--muted);
+    }
   }
 `;
 
 const PeersInfo: React.FC<Props> = (props) => {
   const { peerAddress, shortAddress, ...rest } = props;
   const aliases = useAppSelector((store) => store.node.aliases);
-
-  const getAliasByAddress = (address: string): string => {
-    const shown = shortAddress ? shortenAddress(address) : address;
-    if (aliases && address && aliases[address]) return `${aliases[address]} (${shown})`;
-    return shown;
-  };
 
   const noCopyPaste = !(
     window.location.protocol === 'https:' ||
@@ -53,14 +79,13 @@ const PeersInfo: React.FC<Props> = (props) => {
         src={icon || ''}
         data-src={peerAddress}
       />
-      <div>
-        {shortAddress ? (
-          <Tooltip title={peerAddress}>
-            <span>{peerAddress && getAliasByAddress(peerAddress)}</span>
-          </Tooltip>
-        ) : (
-          <span>{peerAddress && getAliasByAddress(peerAddress)}</span>
-        )}{' '}
+      <Tooltip title={peerAddress}>
+        <span className="label">
+          {peerAddress && aliases?.[peerAddress] && <span className="alias">{aliases[peerAddress]}</span>}
+          <span className="address">{peerAddress && (shortAddress ? shortenAddress(peerAddress) : peerAddress)}</span>
+        </span>
+      </Tooltip>
+      <span className="PeerInfo-links">
         <SmallActionButton
           onClick={() => navigator.clipboard.writeText(peerAddress as string)}
           disabled={noCopyPaste}
@@ -76,7 +101,7 @@ const PeersInfo: React.FC<Props> = (props) => {
             <LaunchIcon />
           </Link>
         </SmallActionButton>
-      </div>
+      </span>
     </Container>
   );
 };

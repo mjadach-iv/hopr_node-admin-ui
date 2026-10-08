@@ -16,18 +16,75 @@
 
 :root {
   --wcm-z-index: 100000 !important;
+
+  /* Design tokens: dark HOPR navy with HOPR yellow as the accent.
+     Brand: yellow #ffffa0, dark blue #000050, bright blue #0000b4,
+     steel blue #3c64a5, sky blue #b4f0ff, text #414141 */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --hopr-yellow: #ffffa0;
+  --hopr-dark-blue: #000050;
+  --hopr-bright-blue: #0000b4;
+  --hopr-steel-blue: #3c64a5;
+  --hopr-sky-blue: #b4f0ff;
+  --bg: #04052a;
+  --chrome: #000050;
+  --surface: #0a0c3a;
+  --surface-2: #0f1248;
+  --surface-hover: #141857;
+  --border: #1d2266;
+  --border-strong: #2d3a86;
+  --text: #f1f3fd;
+  --text-2: #c9d1ee;
+  --muted: #8d9bcb;
+  --primary: var(--hopr-yellow);
+  --primary-2: var(--hopr-sky-blue);
+  --primary-soft: rgba(255, 255, 160, 0.1);
+  --accent: var(--hopr-yellow);
+  --green: #5ee0a0;
+  --green-soft: rgba(94, 224, 160, 0.12);
+  --orange: #fdb94a;
+  --orange-soft: rgba(253, 185, 74, 0.13);
+  --red: #ff8a80;
+  --red-soft: rgba(255, 138, 128, 0.13);
+  --radius: 10px;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
-  font-family: 'Source Code Pro', monospace;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-y: scroll !important;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* unit names next to figures (wxHOPR, xDAI, Mbps, GB ...) are smaller and muted */
+.unit {
+  margin-left: 0.25em;
+  font-size: 0.8em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+/* '/s' sits right against its number */
+.unit.unit-tight {
+  margin-left: 0;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  letter-spacing: -0.01em;
 }
 
 code {
-  font-family: 'Source Code Pro', monospace;
+  font-family: var(--font-mono);
 }
 
 a {
@@ -112,10 +169,10 @@ li.selected-safe {
 }
 
 img.node-jazz-icon {
-  margin-right: 10px;
+  margin-right: 8px;
   border-radius: 30px;
-  height: 22px;
-  width: 22px;
+  height: 20px;
+  width: 20px;
 }
 
 img.node-jazz-icon-present {

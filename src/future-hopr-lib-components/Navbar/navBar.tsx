@@ -14,12 +14,13 @@ interface AppBarProps extends MuiAppBarProps {
   webapp?: boolean;
 }
 
-export const navBarHeight = 44;
+export const navBarHeight = 52;
 
 const AppBar = styled(({ tallerNavBarOnMobile, webapp, ...rest }: AppBarProps) => <MuiAppBar {...rest} />)`
-  background: white;
+  background: var(--chrome);
+  color: var(--text);
   height: ${navBarHeight}px;
-  border-bottom: 1px lightgray solid;
+  border-bottom: 1px solid var(--border);
   box-shadow: unset;
   z-index: 1201;
   ${(props) =>
@@ -58,12 +59,27 @@ const FlexBox = styled(Box)`
   gap: 8px;
 
   .MuiIconButton-root {
-    height: 42px;
-    width: 42px;
+    height: 36px;
+    width: 36px;
+    border-radius: 8px;
     &:hover {
-      background-color: rgba(0, 0, 180, 0.1);
-      transition: background-color 0.4s ease;
+      background-color: var(--primary-soft);
+      transition: background-color 0.2s ease;
     }
+  }
+`;
+
+const Center = styled.div`
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  @media (max-width: 600px) {
+    justify-content: flex-end;
+    padding: 0 4px;
   }
 `;
 
@@ -74,29 +90,38 @@ const Logo = styled.div`
   align-items: center;
   justify-content: center;
   position: relative;
-  img {
-    height: 40px;
-    width: auto;
+  /* the logo file is navy, paint its shape in HOPR yellow */
+  .logo-mask {
+    display: block;
+    width: 80px;
+    height: 36px;
+    background-color: var(--hopr-yellow);
+    mask: var(--logo) no-repeat center / contain;
+    -webkit-mask: var(--logo) no-repeat center / contain;
+  }
+  @media screen and (max-width: 600px) {
+    width: 64px;
+    .logo-mask {
+      width: 62px;
+      height: 28px;
+    }
   }
 `;
 
 // drawn over the bottom of the logo, starting just right of the "p" tail
 const Edition = styled.span`
   position: absolute;
-  top: 33px;
+  top: calc(50% + 11px);
   left: 55px;
-  color: #a00000;
-  font-size: 8px;
+  color: var(--hopr-sky-blue);
+  font-size: 7.5px;
   font-weight: 700;
   line-height: 1;
   text-transform: uppercase;
   white-space: nowrap;
   pointer-events: none;
   @media screen and (max-width: 600px) {
-    top: 30px;
-    font-size: 6px;
-    white-space: normal;
-    width: min-content;
+    display: none;
   }
 `;
 
@@ -111,6 +136,7 @@ const NavBar: React.FC<{
   tallerNavBarOnMobile?: boolean;
   itemsNavbarCenter?: any[];
   itemsNavbarRight?: any[];
+  centerContent?: React.ReactNode;
   openedNavigationDrawer: boolean;
   onButtonClick?: () => void;
   set_openedNavigationDrawer: (openedNavigationDrawer: boolean) => void;
@@ -125,6 +151,7 @@ const NavBar: React.FC<{
   tallerNavBarOnMobile,
   itemsNavbarCenter = [],
   itemsNavbarRight = [],
+  centerContent,
   openedNavigationDrawer,
   onButtonClick,
   set_openedNavigationDrawer,
@@ -157,17 +184,19 @@ const NavBar: React.FC<{
       >
         <Container webapp={webapp}>
           <FlexBox>
-            <IconButton onClick={() => set_openedNavigationDrawer(!openedNavigationDrawer)}>
+            <IconButton
+              aria-label="Menu"
+              onClick={() => set_openedNavigationDrawer(!openedNavigationDrawer)}
+            >
               <MenuIcon />
             </IconButton>
             <Logo className="logo-hopr">
-              {/* <a href="/"> */}
-              <img
-                className="logo-hopr-navbar"
-                alt={mainLogoAlt}
-                src={mainLogo}
+              <span
+                className="logo-mask logo-hopr-navbar"
+                role="img"
+                aria-label={mainLogoAlt}
+                style={{ '--logo': `url(${mainLogo})` } as React.CSSProperties}
               />
-              {/* </a> */}
               <Edition>Community edition</Edition>
             </Logo>
           </FlexBox>
@@ -177,6 +206,7 @@ const NavBar: React.FC<{
           >
             <span></span>
           </div>
+          <Center>{centerContent}</Center>
           <NavBarItems
             itemsNavbar={itemsNavbarCenter}
             center

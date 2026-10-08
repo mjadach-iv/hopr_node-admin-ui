@@ -8,13 +8,14 @@ const StyledCard = styled(Card)`
   flex-direction: column;
   width: 206px;
   font-size: 12px;
-  border-radius: 1rem;
+  border-radius: var(--radius);
   margin-right: 8px;
   padding: 8px;
-  box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14),
-    0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+  box-shadow: none;
+  width: 300px;
+  padding: 12px;
   &.blue {
-    background-color: #daf8ff;
+    background-color: var(--surface);
   }
   &.pink {
     background-color: #ffe7e7;
@@ -28,12 +29,12 @@ const StyledChip = styled(Chip)`
   text-transform: uppercase;
 
   &.blue {
-    background-color: #0000b2;
-    color: #fff;
+    background-color: var(--hopr-yellow);
+    color: var(--hopr-dark-blue);
   }
   &.pink {
     background-color: #ffafa3;
-    color: #414141;
+    color: var(--text-2);
   }
 `;
 
@@ -52,7 +53,7 @@ const StyledAccordion = styled(Accordion)`
 `;
 
 const SAccordionSummary = styled(AccordionSummary)`
-  border-bottom: 2px solid #414141;
+  border-bottom: 1px solid var(--border);
   padding: 0;
   font-size: 11px;
 
@@ -60,7 +61,7 @@ const SAccordionSummary = styled(AccordionSummary)`
     min-height: 48px;
   }
   &.blue {
-    background-color: #daf8ff;
+    background-color: var(--surface);
   }
   &.pink {
     background-color: #ffe7e7;
@@ -72,7 +73,7 @@ const SAccordionSummary = styled(AccordionSummary)`
 `;
 
 const Title = styled.h3`
-  color: #414141;
+  color: var(--text-2);
   font-weight: 700;
   margin: 0;
 `;
@@ -82,7 +83,7 @@ const AccordionContent = styled(AccordionDetails)`
   padding: 0.75rem 0;
 
   &.blue {
-    background-color: #daf8ff;
+    background-color: var(--surface);
   }
   &.pink {
     background-color: #ffe7e7;
@@ -90,11 +91,11 @@ const AccordionContent = styled(AccordionDetails)`
 `;
 
 const Content = styled.div`
-  color: #414141;
+  color: var(--text-2);
   overflow-wrap: break-word;
 
   a {
-    color: #007bff; /* Set the desired color for links */
+    color: var(--hopr-sky-blue);
     text-decoration: underline;
   }
 `;

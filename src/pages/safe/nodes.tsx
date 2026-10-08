@@ -12,6 +12,8 @@ import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
 import { LastSeen } from '../../components/LastSeen';
 import ProgressBar from '../../future-hopr-lib-components/Progressbar';
 import { TokenAmount } from '../../components/TokenAmount';
+import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
+import { WithUnit } from '../../components/Unit';
 
 // Modals
 import { PingModal } from '../../components/Modal/node/PingModal';
@@ -19,6 +21,15 @@ import { CreateAliasModal } from '../../components/Modal/node/AddAliasModal';
 import { OpenChannelModal } from '../../components/Modal/node/OpenChannelModal';
 import { FundChannelModal } from '../../components/Modal/node/FundChannelModal';
 import { OpenSessionModal } from '../../components/Modal/node/OpenSessionModal';
+
+// '30.0 Mbps' in the cell, the share of the tested speed on hover
+const Throughput = ({ mbps, maxMbps }: { mbps?: number | null; maxMbps?: number | null }) => (
+  <Tooltip title={typeof mbps === 'number' && maxMbps ? dashboardUtils.formatMbps(mbps, maxMbps) : ''}>
+    <span>
+      <WithUnit text={dashboardUtils.formatMbps(mbps)} />
+    </span>
+  </Tooltip>
+);
 
 /**
  * Nodes registered to the same safe as the connected node. All on-chain figures
@@ -90,8 +101,18 @@ function SafeNodesPage() {
         />
       ),
       availability24h: typeof stats?.availability24h === 'number' ? <ProgressBar value={stats.availability24h} /> : '-',
-      lastThroughput: dashboardUtils.formatMbps(stats?.lastThroughput, stats?.maxLastThroughput),
-      throughput24h: dashboardUtils.formatMbps(stats?.throughput24h, stats?.maxThroughput24h),
+      lastThroughput: (
+        <Throughput
+          mbps={stats?.lastThroughput}
+          maxMbps={stats?.maxLastThroughput}
+        />
+      ),
+      throughput24h: (
+        <Throughput
+          mbps={stats?.throughput24h}
+          maxMbps={stats?.maxThroughput24h}
+        />
+      ),
       lastSeen: (
         <LastSeen
           timestamp={peersObject[nodeAddress]?.lastUpdate ?? 0}
@@ -131,7 +152,7 @@ function SafeNodesPage() {
     {
       key: 'node',
       name: 'Node',
-      maxWidth: '350px',
+      grow: true,
     },
     {
       key: 'peerAddress',
@@ -142,54 +163,49 @@ function SafeNodesPage() {
     {
       key: 'xDai',
       name: 'xDai',
-      maxWidth: '80px',
+      align: 'right' as const,
     },
     {
       key: 'channelsCount',
-      name: 'Channels',
-      maxWidth: '45px',
+      name: 'Ch.',
+      align: 'right' as const,
+      tooltipHeader: 'Open outgoing channels of the node',
     },
     {
       key: 'channelsFunds',
-      name: 'Channels total',
-      maxWidth: '90px',
+      name: 'In channels',
+      align: 'right' as const,
     },
     {
       key: 'redeemed',
       name: 'Earned',
-      maxWidth: '90px',
+      align: 'right' as const,
     },
     {
       key: 'availability24h',
-      name: '24h avail.',
+      name: 'Avail. 24h',
       tooltipHeader: 'Share of the network dashboard pings answered in the last 24 hours',
-      maxWidth: '90px',
     },
     {
       key: 'lastThroughput',
-      name: 'Last throughput',
-      tooltip: true,
+      name: 'Last tput',
+      align: 'right' as const,
       tooltipHeader: `Relay throughput in the most recent hour the network dashboard tested the node. ${dashboardUtils.CT_ELIGIBILITY_HINT}`,
-      maxWidth: '90px',
     },
     {
       key: 'throughput24h',
-      name: '24h throughput',
-      tooltip: true,
+      name: 'Tput 24h',
+      align: 'right' as const,
       tooltipHeader: `Average relay throughput measured by the network dashboard in the last 24 hours. ${dashboardUtils.CT_ELIGIBILITY_HINT}`,
-      maxWidth: '90px',
     },
     {
       key: 'lastSeen',
       name: 'Last seen',
-      maxWidth: '20px',
     },
     {
       key: 'actions',
-      name: 'Actions',
+      name: '',
       search: false,
-      width: '160px',
-      maxWidth: '160px',
     },
   ];
 

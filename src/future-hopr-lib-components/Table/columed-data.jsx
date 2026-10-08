@@ -22,21 +22,27 @@ export const Tables = styled.div`
 `;
 
 export const Table = styled.table`
-  font-family: 'Source Code Pro';
+  font-family: var(--font-sans);
   width: 100%;
-  font-size: 14px;
-  border-bottom: 0.1rem solid darkgray;
+  font-size: 13px;
   border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
   th {
     text-align: left;
     vertical-align: top;
+    font-weight: 450;
+    color: var(--text-2);
+  }
+  td {
+    color: var(--text);
+    font-weight: 550;
   }
   tr {
-    border-top: 0.1rem solid darkgray;
+    border-top: 1px solid var(--border);
   }
   th,
   td {
-    padding: 8px;
+    padding: 8px 8px 8px 0;
   }
   td {
     overflow: hidden;
@@ -50,7 +56,7 @@ export const Table = styled.table`
   }
   &.table-has-title {
     tr:first-of-type {
-      border-top: 0.2rem solid darkgray;
+      border-top: 1px solid var(--border);
     }
   }
   ${(props) => props.noTopBorder && `tr:first-of-type { border-top: none; }`};
@@ -71,13 +77,17 @@ export const Table = styled.table`
 `;
 
 const Content = styled.div`
-  color: #414141;
+  color: var(--text);
   width: 100%;
   .title {
-    color: #414141;
-    margin-bottom: 8px;
-    font-size: 18px;
-    font-weight: 700;
+    display: flex;
+    align-items: center;
+    height: 40px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 650;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
   }
 `;
 

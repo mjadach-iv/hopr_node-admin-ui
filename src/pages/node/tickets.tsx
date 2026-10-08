@@ -135,9 +135,13 @@ function TicketsPage() {
         }
       />
       <Paper
+        elevation={0}
         style={{
-          padding: '24px',
-          width: 'calc( 100% - 48px )',
+          padding: '8px 20px 16px',
+          width: '100%',
+          boxSizing: 'border-box',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)',
         }}
       >
         <TableExtended
@@ -154,7 +158,10 @@ function TicketsPage() {
                   <span>Unredeemed value</span>
                 </Tooltip>
               </th>
-              <td>{statistics?.unredeemedValue ? statistics?.unredeemedValue : '-'} wxHOPR</td>
+              <td>
+                {statistics?.unredeemedValue ? statistics?.unredeemedValue : '-'}
+                <span className="unit">wxHOPR</span>
+              </td>
             </tr>
             <tr>
               <th>
@@ -165,7 +172,10 @@ function TicketsPage() {
                   <span>Neglected value</span>
                 </Tooltip>
               </th>
-              <td>{statistics?.neglectedValue ? statistics?.neglectedValue : '-'} wxHOPR</td>
+              <td>
+                {statistics?.neglectedValue ? statistics?.neglectedValue : '-'}
+                <span className="unit">wxHOPR</span>
+              </td>
             </tr>
             <tr>
               <th>
@@ -176,7 +186,10 @@ function TicketsPage() {
                   <span>Rejected value</span>
                 </Tooltip>
               </th>
-              <td>{statistics?.rejectedValue ? statistics?.rejectedValue : '-'} wxHOPR</td>
+              <td>
+                {statistics?.rejectedValue ? statistics?.rejectedValue : '-'}
+                <span className="unit">wxHOPR</span>
+              </td>
             </tr>
             <tr>
               <th>
@@ -187,7 +200,16 @@ function TicketsPage() {
                   <span>Earned value</span>
                 </Tooltip>
               </th>
-              <td>{ticketRedemption ? `${ticketRedemption.redeemed.formatted} wxHOPR` : '-'}</td>
+              <td>
+                {ticketRedemption ? (
+                  <>
+                    {ticketRedemption.redeemed.formatted}
+                    <span className="unit">wxHOPR</span>
+                  </>
+                ) : (
+                  '-'
+                )}
+              </td>
             </tr>
             <tr>
               <th>
@@ -198,7 +220,16 @@ function TicketsPage() {
                   <span>Redemptions</span>
                 </Tooltip>
               </th>
-              <td>{ticketRedemption ? `${ticketRedemption.redemptionCount} tickets` : '-'}</td>
+              <td>
+                {ticketRedemption ? (
+                  <>
+                    {ticketRedemption.redemptionCount}
+                    <span className="unit">tickets</span>
+                  </>
+                ) : (
+                  '-'
+                )}
+              </td>
             </tr>
           </tbody>
         </TableExtended>
@@ -217,7 +248,10 @@ function TicketsPage() {
                   <span>Current ticket price</span>
                 </Tooltip>
               </th>
-              <td>{ticketPrice ? ticketPrice : '-'} wxHOPR</td>
+              <td>
+                {ticketPrice ? ticketPrice : '-'}
+                <span className="unit">wxHOPR</span>
+              </td>
             </tr>
             <tr>
               <th>

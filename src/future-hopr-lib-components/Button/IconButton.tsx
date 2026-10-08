@@ -17,11 +17,16 @@ type SubpageTitleProps = {
 };
 
 const SIconButton = styled(MuiIconButton)`
+  padding: 6px;
+  border-radius: 6px;
   svg {
-    color: #000050;
-    fill: #000050;
-    width: 1em;
-    height: 1em;
+    color: var(--primary);
+    fill: var(--primary);
+    width: 20px;
+    height: 20px;
+  }
+  &:hover {
+    background-color: var(--primary-soft);
   }
   &.Mui-disabled {
     svg {

@@ -131,12 +131,11 @@ function AliasesPage() {
     {
       key: 'node',
       name: 'Node',
-      maxWidth: '350px',
+      grow: true,
     },
     {
       key: 'lastUpdate',
       name: 'Last update',
-      maxWidth: '20px',
     },
     {
       key: 'peerAddress',
@@ -147,10 +146,8 @@ function AliasesPage() {
     },
     {
       key: 'actions',
-      name: 'Actions',
+      name: '',
       search: false,
-      width: '190px',
-      maxWidth: '190px',
     },
   ];
 

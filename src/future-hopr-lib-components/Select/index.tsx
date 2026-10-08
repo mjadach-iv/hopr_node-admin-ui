@@ -20,7 +20,7 @@ const SFormControl = styled(FormControl)`
     font-size: 17px;
   }
   .MuiFormLabel-root.MuiInputLabel-shrink {
-    color: #000030;
+    color: var(--muted);
   }
   .MuiInputBase-root {
     button.removeValue {

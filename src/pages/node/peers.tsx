@@ -74,14 +74,9 @@ function PeersPage() {
 
   const header = [
     {
-      key: 'id',
-      name: '#',
-      maxWidth: '5px',
-    },
-    {
       key: 'node',
       name: 'Node',
-      maxWidth: '300px',
+      grow: true,
     },
     {
       key: 'address',
@@ -92,22 +87,15 @@ function PeersPage() {
     {
       key: 'lastUpdate',
       name: 'Last update',
-      tooltip: true,
-      width: '120px',
-      maxWidth: '120px',
     },
     {
       key: 'score',
       name: 'Score',
-      width: '90px',
-      maxWidth: '90px',
     },
     {
       key: 'actions',
-      name: 'Actions',
+      name: '',
       search: false,
-      width: '150px',
-      maxWidth: '150px',
     },
   ];
 
@@ -139,7 +127,12 @@ function PeersPage() {
   const parsedTableData = peersSorted.map((peer, index) => {
     return {
       id: index + 1,
-      node: <PeersInfo peerAddress={peer.address} />,
+      node: (
+        <PeersInfo
+          peerAddress={peer.address}
+          shortAddress
+        />
+      ),
       address: getAliasByAddress(peer.address),
       peerAddress: peer.address,
       score: typeof peer.score === 'number' ? <ProgressBar value={peer.score} /> : '-',

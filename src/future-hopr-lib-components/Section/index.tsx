@@ -6,7 +6,7 @@ const SSection = styled.section`
     --section-background: linear-gradient(180deg, #0000b4 -110.52%, hsla(0, 0%, 85%, 0) 60.89%);
   }
   &.section--yellow {
-    --section-background: #ffffa0;
+    --section-background: var(--bg);
   }
   &.section--yellow-light {
     --section-background: #ffffa059;
@@ -54,18 +54,21 @@ const SSection = styled.section`
     padding-left: 16px;
     padding-right: 16px;
   }
-  padding-bottom: 40px;
-  //  padding-top: 40px;
+  padding-bottom: 32px;
 `;
 
 const Content = styled.div`
-  max-width: 1500px;
+  max-width: 1600px;
   margin: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: 24px;
+  padding-right: 24px;
+  @media (max-width: 600px) {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
   &.content--center {
     align-items: center;
     width: calc(100% - 32px);
