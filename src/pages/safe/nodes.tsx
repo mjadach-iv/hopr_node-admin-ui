@@ -24,8 +24,8 @@ import { OpenSessionModal } from '../../components/Modal/node/OpenSessionModal';
  * Nodes registered to the same safe as the connected node. All on-chain figures
  * come from blokli, missing ones render as '-' and are never filled in from node
  * data. Last seen is p2p liveness the chain cannot know, so it comes from the
- * connected node's peer data like on the aliases page. Availability, latency and
- * throughput are what the network dashboard measured from the outside.
+ * connected node's peer data like on the aliases page. Availability and throughput
+ * are what the network dashboard measured from the outside.
  */
 function SafeNodesPage() {
   const dispatch = useAppDispatch();
@@ -90,8 +90,7 @@ function SafeNodesPage() {
         />
       ),
       availability24h: typeof stats?.availability24h === 'number' ? <ProgressBar value={stats.availability24h} /> : '-',
-      availability7d: dashboardUtils.formatAvailability(stats?.availability7d),
-      latency: dashboardUtils.formatLatency(stats?.latency),
+      lastThroughput: dashboardUtils.formatMbps(stats?.lastThroughput, stats?.maxLastThroughput),
       throughput24h: dashboardUtils.formatMbps(stats?.throughput24h, stats?.maxThroughput24h),
       lastSeen: (
         <LastSeen
@@ -167,16 +166,11 @@ function SafeNodesPage() {
       maxWidth: '90px',
     },
     {
-      key: 'availability7d',
-      name: '7d avail.',
-      tooltipHeader: 'Share of the network dashboard pings answered in the last 7 days',
-      maxWidth: '70px',
-    },
-    {
-      key: 'latency',
-      name: 'Latency',
-      tooltipHeader: 'Median latency of the network dashboard pings in the last 24 hours',
-      maxWidth: '70px',
+      key: 'lastThroughput',
+      name: 'Last throughput',
+      tooltip: true,
+      tooltipHeader: `Relay throughput in the most recent hour the network dashboard tested the node. ${dashboardUtils.CT_ELIGIBILITY_HINT}`,
+      maxWidth: '90px',
     },
     {
       key: 'throughput24h',
