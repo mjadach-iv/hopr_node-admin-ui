@@ -12,6 +12,7 @@ import { fetchNodeData } from './store/slices/node/fetchNodeData';
 import Layout from './future-hopr-lib-components/Layout';
 import ConnectNode from './components/ConnectNode';
 import NotificationBar from './components/NotificationBar';
+import UpdateAvailable from './components/UpdateAvailable';
 import InfoBar from './components/InfoBar';
 
 import { applicationMap } from './applicationMap';
@@ -102,6 +103,7 @@ const LayoutEnhanced = () => {
       drawerType={undefined}
       itemsNavbarRight={
         <>
+          <UpdateAvailable />
           {(environment === 'dev' || environment === 'node') && <NotificationBar />}
           {(environment === 'dev' || environment === 'node') && <ConnectNode />}
         </>
