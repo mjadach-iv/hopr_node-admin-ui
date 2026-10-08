@@ -1,0 +1,139 @@
+name: Close release
+
+# Closes a release on a manual run: reads the version from package.json, pushes the
+# Node Admin image to Docker Hub as `latest` and `<version>` (plus any extra tags you
+# enter), then tags the commit with `<version>`. The run fails before building if
+# that git tag already exists.
+# Pull requests only build the image to check that it still builds. Nothing is pushed.
+#
+# Required repository settings (Settings > Secrets and variables > Actions):
+#   - variable DOCKERHUB_USERNAME: Docker Hub account or organisation that owns the image
+#                                   (falls back to the GitHub owner name when unset)
+#   - secret   DOCKERHUB_TOKEN:    Docker Hub access token with Read & Write scope
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Extra image tags (optional), separated by commas or spaces. "latest" and the package.json version are always added.'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && 'close-release' || format('docker-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || github.repository_owner }}
+  IMAGE: ${{ vars.DOCKERHUB_USERNAME || github.repository_owner }}/hopr-node-admin-ui
+  PUSH: ${{ github.event_name == 'workflow_dispatch' }}
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release tag
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Read version
+        id: version
+        if: env.PUSH == 'true'
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if ! [[ "$version" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+            echo "::error::package.json version '$version' is not a valid Docker tag"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check release tag is free
+        if: env.PUSH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if out=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$VERSION" 2>&1); then
+            echo "::error::Tag $VERSION already exists. Bump version in package.json."
+            exit 1
+          elif ! grep -q 'HTTP 404' <<< "$out"; then
+            echo "::error::Could not check tag $VERSION: $out"
+            exit 1
+          fi
+
+      - name: Parse requested tags
+        id: tags
+        if: env.PUSH == 'true'
+        env:
+          INPUT_TAGS: ${{ inputs.tags }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -f # no filename expansion when splitting the input
+          seen=" latest $VERSION "
+          list="type=raw,value=latest"$'\n'"type=raw,value=${VERSION}"$'\n'
+          for tag in $(echo "$INPUT_TAGS" | tr ',' ' '); do
+            if ! [[ "$tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+              echo "::error::Invalid Docker tag: '$tag'"
+              exit 1
+            fi
+            [[ "$seen" == *" $tag "* ]] && continue
+            seen+="$tag "
+            list+="type=raw,value=${tag}"$'\n'
+          done
+          {
+            echo 'list<<EOF'
+            printf '%s' "$list"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to Docker Hub
+        if: env.PUSH == 'true'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: ${{ steps.tags.outputs.list || 'type=ref,event=pr' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ env.PUSH == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create release tag
+        if: env.PUSH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$VERSION" -f sha="$GITHUB_SHA" --silent
+          {
+            echo "### Released $VERSION"
+            echo
+            echo "Tagged \`$GITHUB_SHA\` as \`$VERSION\` and pushed:"
+            echo
+            while read -r tag; do [ -n "$tag" ] && echo "- \`$tag\`"; done <<< "$IMAGE_TAGS"
+          } >> "$GITHUB_STEP_SUMMARY"

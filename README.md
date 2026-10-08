@@ -66,12 +66,12 @@ The running container reports its version at `/version.txt`.
 
 ## Continuous integration
 
-| Workflow                               | Trigger         | What it does                                                            |
-| -------------------------------------- | --------------- | ----------------------------------------------------------------------- |
-| [Docker](.github/workflows/docker.yml) | Manual run, PRs | Pushes the image to Docker Hub with the tags you enter (PRs only build) |
-| [Deploy](.github/workflows/deploy.yml) | Manual run      | Builds the app and uploads `build/` to a web server over FTP            |
+| Workflow                                             | Trigger         | What it does                                                                                                       |
+| ---------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| [Close release](.github/workflows/close-release.yml) | Manual run, PRs | Pushes the image as `latest` and the `package.json` version (plus extra tags), then tags the repo (PRs only build) |
+| [Deploy](.github/workflows/deploy.yml)               | Manual run      | Builds the app and uploads `build/` to a web server over FTP                                                       |
 
-### Docker Hub publishing
+### Releasing
 
 Set these under **Settings > Secrets and variables > Actions** in the GitHub repository:
 
@@ -81,9 +81,12 @@ Set these under **Settings > Secrets and variables > Actions** in the GitHub rep
 Images are only pushed when you run the workflow by hand:
 
 1. Bump `version` in `package.json` and push the change.
-2. Open **Actions > Docker > Run workflow**.
-3. Pick the branch or tag to build from.
-4. Enter the image tags, separated by commas or spaces, for example `5.0.0, latest`.
+2. Open **Actions > Close release > Run workflow**.
+3. Pick the branch to release from.
+4. Optionally enter extra image tags, separated by commas or spaces. `latest` and the `package.json` version are always pushed.
+
+The workflow then tags the released commit with the version, for example `5.0.0`.
+If that git tag already exists, the run fails before anything is built or pushed.
 
 Pull requests build the image to check it, but never push it.
 
