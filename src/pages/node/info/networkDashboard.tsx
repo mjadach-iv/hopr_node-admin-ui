@@ -95,16 +95,11 @@ function NetworkDashboard() {
           title="First seen"
           value={stats?.firstSeen ? formatDate(stats.firstSeen, false) : '-'}
         />
-        <Row
+        {/* <Row
           tooltip="When the dashboard last reached this node"
           title="Last seen"
           value={stats?.lastSeen ? formatDate(stats.lastSeen, false) : '-'}
-        />
-        <Row
-          tooltip="Version of this node as seen by the dashboard"
-          title="Version"
-          value={stats?.version ?? '-'}
-        />
+        /> */}
         <Row
           tooltip={`Relay throughput in the most recent hour the dashboard tested this node${measuredAt}. ${CT_ELIGIBILITY_HINT}`}
           title="Last throughput"
@@ -114,11 +109,6 @@ function NetworkDashboard() {
           tooltip={`Average relay throughput during cover traffic bursts in the last 24 hours. ${CT_ELIGIBILITY_HINT}`}
           title="24h avg. throughput"
           value={formatMbps(stats?.throughput24h, stats?.maxThroughput24h)}
-        />
-        <Row
-          tooltip="End of the dashboard run these figures come from"
-          title="Data as of"
-          value={nodes?.lastRun ? formatDate(nodes.lastRun, false) : '-'}
         />
       </tbody>
     </TableExtended>
