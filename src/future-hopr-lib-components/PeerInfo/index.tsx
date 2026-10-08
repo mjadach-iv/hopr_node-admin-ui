@@ -6,6 +6,8 @@ import styled from '@emotion/styled';
 // HOPR Components
 import SmallActionButton from '../../future-hopr-lib-components/Button/SmallActionButton';
 import { generateBase64Jazz } from '../../utils/functions';
+import { shortenAddress } from '../../utils/amount';
+import Tooltip from '../Tooltip/tooltip-fixed-width';
 
 //Mui
 import CopyIcon from '@mui/icons-material/ContentCopy';
@@ -13,6 +15,8 @@ import LaunchIcon from '@mui/icons-material/Launch';
 
 interface Props {
   peerAddress?: string;
+  // 0x12345...abcde with the full address in a tooltip
+  shortAddress?: boolean;
 }
 
 const Container = styled.div`
@@ -25,12 +29,13 @@ const Container = styled.div`
 `;
 
 const PeersInfo: React.FC<Props> = (props) => {
-  const { peerAddress, ...rest } = props;
+  const { peerAddress, shortAddress, ...rest } = props;
   const aliases = useAppSelector((store) => store.node.aliases);
 
   const getAliasByAddress = (address: string): string => {
-    if (aliases && address && aliases[address]) return `${aliases[address]} (${address})`;
-    return address;
+    const shown = shortAddress ? shortenAddress(address) : address;
+    if (aliases && address && aliases[address]) return `${aliases[address]} (${shown})`;
+    return shown;
   };
 
   const noCopyPaste = !(
@@ -49,7 +54,13 @@ const PeersInfo: React.FC<Props> = (props) => {
         data-src={peerAddress}
       />
       <div>
-        <span>{peerAddress && getAliasByAddress(peerAddress)}</span>{' '}
+        {shortAddress ? (
+          <Tooltip title={peerAddress}>
+            <span>{peerAddress && getAliasByAddress(peerAddress)}</span>
+          </Tooltip>
+        ) : (
+          <span>{peerAddress && getAliasByAddress(peerAddress)}</span>
+        )}{' '}
         <SmallActionButton
           onClick={() => navigator.clipboard.writeText(peerAddress as string)}
           disabled={noCopyPaste}

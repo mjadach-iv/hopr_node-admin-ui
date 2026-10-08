@@ -184,7 +184,7 @@ function TicketsPage() {
                   title="The total value of the tickets this node has redeemed on chain, all time. Read from blokli, so unlike the values above it survives a DB reset."
                   notWide
                 >
-                  <span>Redeemed value</span>
+                  <span>Earned value</span>
                 </Tooltip>
               </th>
               <td>{ticketRedemption ? `${ticketRedemption.redeemed.formatted} wxHOPR` : '-'}</td>

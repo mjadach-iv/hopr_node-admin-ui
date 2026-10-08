@@ -4,6 +4,7 @@ import { blokliActionsAsync } from '../../store/slices/blokli';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
 import type { BlokliChannelType } from '../../blokli';
 import { formatCount } from '../../utils/metrics';
+import { shrinkNumber } from '../../utils/amount';
 import { formatTimeToUserTimezone } from '../../utils/date';
 import { HOPR_TOKEN_USED } from '../../../config';
 
@@ -96,7 +97,7 @@ export const blokliChannelCells = (channel: BlokliChannelType | undefined) => ({
   estimate: channel?.estimatedValue ? (
     <Tooltip title={`${channel.estimatedValue.formatted} ${HOPR_TOKEN_USED}`}>
       <span>
-        ≈ {Number(channel.estimatedValue.formatted).toFixed(4)} {HOPR_TOKEN_USED}
+        ≈ {shrinkNumber(channel.estimatedValue.formatted)} {HOPR_TOKEN_USED}
       </span>
     </Tooltip>
   ) : (
@@ -150,7 +151,14 @@ export const ClosedChannelsTable = ({
     return {
       id: (index + 1).toString(),
       key: channel.channelId,
-      node: address ? <PeersInfo peerAddress={address} /> : '-',
+      node: address ? (
+        <PeersInfo
+          peerAddress={address}
+          shortAddress
+        />
+      ) : (
+        '-'
+      ),
       peerAddress: address ? (aliases?.[address] ? `${aliases[address]} (${address})` : address) : '',
       channelId: channel.channelId,
       epoch: channel.epoch.toString(),

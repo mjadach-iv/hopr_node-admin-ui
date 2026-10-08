@@ -11,6 +11,7 @@ import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
 import { LastSeen } from '../../components/LastSeen';
 import ProgressBar from '../../future-hopr-lib-components/Progressbar';
+import { TokenAmount } from '../../components/TokenAmount';
 
 // Modals
 import { PingModal } from '../../components/Modal/node/PingModal';
@@ -62,12 +63,32 @@ function SafeNodesPage() {
       id: nodeAddress,
       key: index.toString(),
       alias: aliases?.[nodeAddress] ?? '',
-      node: <PeersInfo peerAddress={nodeAddress} />,
+      node: (
+        <PeersInfo
+          peerAddress={nodeAddress}
+          shortAddress
+        />
+      ),
       peerAddress: nodeAddress,
-      xDai: safeNode.xDai ? `${safeNode.xDai.formatted} xDai` : '-',
+      xDai: (
+        <TokenAmount
+          value={safeNode.xDai?.formatted}
+          unit="xDai"
+        />
+      ),
       channelsCount: safeNode.channels ? safeNode.channels.count : '-',
-      channelsFunds: safeNode.channels ? `${safeNode.channels.formatted} wxHOPR` : '-',
-      redeemed: safeNode.redeemed ? `${safeNode.redeemed.formatted} wxHOPR` : '-',
+      channelsFunds: (
+        <TokenAmount
+          value={safeNode.channels?.formatted}
+          unit="wxHOPR"
+        />
+      ),
+      redeemed: (
+        <TokenAmount
+          value={safeNode.redeemed?.formatted}
+          unit="wxHOPR"
+        />
+      ),
       availability24h: typeof stats?.availability24h === 'number' ? <ProgressBar value={stats.availability24h} /> : '-',
       availability7d: dashboardUtils.formatAvailability(stats?.availability7d),
       latency: dashboardUtils.formatLatency(stats?.latency),
@@ -122,7 +143,6 @@ function SafeNodesPage() {
     {
       key: 'xDai',
       name: 'xDai',
-      tooltip: true,
       maxWidth: '80px',
     },
     {
@@ -133,13 +153,11 @@ function SafeNodesPage() {
     {
       key: 'channelsFunds',
       name: 'Channels total',
-      tooltip: true,
       maxWidth: '90px',
     },
     {
       key: 'redeemed',
-      name: 'Redeemed',
-      tooltip: true,
+      name: 'Earned',
       maxWidth: '90px',
     },
     {

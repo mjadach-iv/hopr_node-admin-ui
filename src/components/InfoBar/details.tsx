@@ -2,6 +2,7 @@ import { useAppSelector } from '../../store';
 import styled from '@emotion/styled';
 import { formatEther } from 'viem';
 import Tooltip from '@mui/material/Tooltip';
+import { shrinkNumber } from '../../utils/amount';
 
 interface Props {
   style?: object;
@@ -112,42 +113,6 @@ export const ColorStatus = styled.span`
   }
 `;
 
-// TODO: make batter to work with balances
-const truncateBalanceto5charsWhenNoDecimals = (value: string | number | undefined | null) => {
-  try {
-    if (value && BigInt(value)) {
-      if (typeof value === 'string') value = parseInt(value);
-      if (BigInt(value) > BigInt(1e9)) {
-        return '1e9+';
-      } else if (BigInt(value) >= BigInt(1e6)) {
-        const tmp = (value / 1e6).toString();
-        if (tmp.includes('.')) {
-          const [before, after] = tmp.split('.');
-          if (before.length === 3) return before + 'm';
-          return `${before}.${after.substring(0, 1)}m`;
-        } else {
-          if (tmp.length === 3) return `${tmp}3m`;
-          return `${tmp}.0m`;
-        }
-      } else if (BigInt(value) > BigInt(99999)) {
-        const tmp = (value / 1e3).toString();
-        if (tmp.includes('.')) {
-          const [before, after] = tmp.split('.');
-          if (before.length === 3) return before + 'k';
-          return `${before}.${after.substring(0, 1)}k`;
-        } else {
-          if (tmp.length === 3) return `${tmp}k`;
-          return `${tmp}.0k`;
-        }
-      }
-      return value;
-    }
-  } catch (e) {
-    console.warn('Error while paring data to BigInt for InfoBar');
-  }
-  return value;
-};
-
 export default function Details(props: Props) {
   const balances = useAppSelector((store) => store.node.balances.data);
   const info = useAppSelector((store) => store.node.info.data);
@@ -235,7 +200,7 @@ export default function Details(props: Props) {
                 balances.native?.formatted && balances.native?.formatted !== '0' ? balances.native?.formatted : null
               }
             >
-              <p>{balances.native?.formatted ?? '-'}</p>
+              <p>{balances.native?.formatted ? shrinkNumber(balances.native.formatted) : '-'}</p>
             </Tooltip>
           </ColorStatus>
           <Tooltip
@@ -243,18 +208,18 @@ export default function Details(props: Props) {
               balances.safeHopr?.formatted && balances.safeHopr?.formatted !== '0' ? balances.safeHopr?.formatted : null
             }
           >
-            <p>{balances.safeHopr?.formatted ?? '-'}</p>
+            <p>{balances.safeHopr?.formatted ? shrinkNumber(balances.safeHopr.formatted) : '-'}</p>
           </Tooltip>
           <Tooltip
             title={safeChannelsOut?.formatted && safeChannelsOut.formatted !== '0' ? safeChannelsOut.formatted : null}
           >
-            <p className="double">{safeChannelsOut?.formatted ? safeChannelsOut.formatted : '-'}</p>
+            <p className="double">{safeChannelsOut?.formatted ? shrinkNumber(safeChannelsOut.formatted) : '-'}</p>
           </Tooltip>
           <Tooltip title={redeemed && redeemed !== '0' ? redeemed : null}>
-            <p className="double">{redeemed ? redeemed : '-'}</p>
+            <p className="double">{redeemed ? shrinkNumber(redeemed) : '-'}</p>
           </Tooltip>
           <Tooltip title={totalwxHOPR && totalwxHOPR !== '0' ? totalwxHOPR : null}>
-            <p className="double">{totalwxHOPR ?? '-'}</p>
+            <p className="double">{totalwxHOPR !== '-' ? shrinkNumber(totalwxHOPR) : '-'}</p>
           </Tooltip>
         </Data>
       </DataColumn>

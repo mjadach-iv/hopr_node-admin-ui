@@ -16,6 +16,7 @@ import IconButton from '../../future-hopr-lib-components/Button/IconButton';
 import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import CloseChannelIcon from '../../future-hopr-lib-components/Icons/CloseChannel';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
+import { TokenAmount } from '../../components/TokenAmount';
 import {
   useBlokliChannels,
   blokliChannelHeader,
@@ -130,7 +131,6 @@ function ChannelsPage() {
       key: 'funds',
       name: 'Dedicated Funds',
       maxWidth: '68px',
-      tooltip: true,
     },
     ...blokliChannelHeader(tabLabel),
     // {
@@ -246,10 +246,20 @@ function ChannelsPage() {
       return {
         id: (index + 1).toString(),
         key: id,
-        node: <PeersInfo peerAddress={peerAddress} />,
+        node: (
+          <PeersInfo
+            peerAddress={peerAddress}
+            shortAddress
+          />
+        ),
         peerAddress: getAliasByPeerAddress(peerAddress as string),
         status: statusWithClosure(channelsIncomingObject[id].status as string, blokliChannel),
-        funds: `${channelsIncomingObject[id].balance} ${HOPR_TOKEN_USED}`,
+        funds: (
+          <TokenAmount
+            value={channelsIncomingObject[id].balance}
+            unit={HOPR_TOKEN_USED}
+          />
+        ),
         ...blokliChannelCells(blokliChannel),
         tickets: unredeemedTicketsPerChannel,
         actions: (
@@ -314,7 +324,7 @@ function ChannelsPage() {
     peerAddress: string;
     status: string;
     tickets: string;
-    funds: string;
+    funds: JSX.Element;
     epoch: string;
     ticketIndex: string | JSX.Element;
     estimate: string | JSX.Element;
