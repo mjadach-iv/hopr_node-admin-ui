@@ -1,6 +1,23 @@
 # Changelog
 
-## 5.0.0-alpha.2 (unreleased)
+## 5.0.0-alpha.3
+
+Changes since 5.0.0-alpha.2.
+
+### Added
+
+- "Update available" in the header when the UI runs from the Docker image and a newer image has been released. Clicking it shows the `docker rm` / `docker run` commands that replace the container with the new version. Stable installs are only offered stable versions. Checked on load and every 6 hours against the repository's release tags.
+- "Last throughput" column in SAFE → NODES, before "24h throughput".
+
+### Removed
+
+- "Latency" and "7d avail." columns from SAFE → NODES. Both are still shown on the INFO page.
+
+### CI
+
+- The Docker workflow is now "Close release". A manual run reads the version from `package.json`, fails if a git tag with that version already exists, pushes the image as `latest` and `<version>` (plus optional extra tags), and then tags the commit with the version.
+
+## 5.0.0-alpha.2
 
 Changes since 5.0.0-alpha.1.
 
