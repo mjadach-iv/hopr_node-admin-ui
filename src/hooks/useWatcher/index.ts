@@ -9,6 +9,9 @@ import { nodeActions, nodeActionsAsync } from '../../store/slices/node';
 import { blokliActions } from '../../store/slices/blokli';
 import { fetchBlokliData } from '../../store/slices/blokli/fetchBlokliData';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
+import { networkDashboardActions } from '../../store/slices/networkDashboard';
+import { fetchNetworkDashboardData } from '../../store/slices/networkDashboard/fetchNetworkDashboardData';
+import { utils as networkDashboardUtils } from '../../networkDashboard';
 import { checkHowChannelsHaveChanged } from './channels';
 import { isAddress } from 'viem';
 
@@ -30,6 +33,10 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
   // inputs of the blokli queries
   const blokliUrl = useAppSelector(selectBlokliUrl);
   const hoprNodeSafe = useAppSelector((store) => store.node.info.data?.hoprNodeSafe);
+  // joined so the dashboard effect only reruns when the safe's node list really changes
+  const safeNodeAddressesKey = useAppSelector((store) =>
+    (store.blokli.safeNodes.data ?? []).map((node) => node.nodeAddress).join(','),
+  );
 
   // flags to activate notifications
   const activeChannels = useAppSelector((store) => store.app.configuration.notifications.channels);
@@ -331,4 +338,31 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
       clearInterval(watchBlokliInterval);
     };
   }, [blokliUrl, peerAddress, hoprNodeSafe, intervalDuration]);
+
+  // Network dashboard context: node or network changed, drop the previous figures
+  useEffect(() => {
+    dispatch(
+      networkDashboardActions.setContext({
+        nodeAddress: peerAddress,
+        envId: networkDashboardUtils.dashboardEnvId(hoprNetworkName),
+      }),
+    );
+  }, [peerAddress, hoprNetworkName]);
+
+  // Network dashboard figures for our node and the safe's nodes. The dashboard
+  // recomputes every ~5 min, so polling faster than that only repeats answers.
+  useEffect(() => {
+    const fetch = () =>
+      fetchNetworkDashboardData({
+        networkName: hoprNetworkName,
+        nodeAddress: peerAddress,
+        safeNodeAddresses: safeNodeAddressesKey ? safeNodeAddressesKey.split(',') : [],
+        dispatch,
+      });
+    fetch();
+    const watchDashboardInterval = setInterval(fetch, 5 * intervalDuration);
+    return () => {
+      clearInterval(watchDashboardInterval);
+    };
+  }, [hoprNetworkName, peerAddress, safeNodeAddressesKey, intervalDuration]);
 };

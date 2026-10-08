@@ -2,18 +2,7 @@ import { useAppSelector } from '../../../store';
 import { TableExtended } from '../../../future-hopr-lib-components/Table/columed-data';
 import Tooltip from '../../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 import type { PacketStats } from '../../../store/slices/node/initialState';
-
-const formatCount = (value: string | null): string => {
-  if (value === null) return '-';
-  const n = Number(value);
-  if (!Number.isFinite(n)) return value;
-  const abs = Math.abs(n);
-  if (abs < 1_000) return n.toString();
-  if (abs < 1_000_000) return `${(n / 1_000).toFixed(2)}k`;
-  if (abs < 1_000_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  if (abs < 1_000_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
-  return `${(n / 1_000_000_000_000).toFixed(2)}T`;
-};
+import { formatCount } from '../../../utils/metrics';
 
 const formatPacketStats = (stats: PacketStats) => {
   const total = formatCount(stats.latest?.data ?? null);

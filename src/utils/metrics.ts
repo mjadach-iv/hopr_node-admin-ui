@@ -16,6 +16,44 @@ export const hoprPacketSize = (version: string | null): number | null => {
   return null;
 };
 
+export const formatCount = (value: string | number | null): string => {
+  if (value === null) return '-';
+  const n = Number(value);
+  if (!Number.isFinite(n)) return value.toString();
+  const abs = Math.abs(n);
+  if (abs < 1_000) return n.toString();
+  if (abs < 1_000_000) return `${(n / 1_000).toFixed(2)}k`;
+  if (abs < 1_000_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+  if (abs < 1_000_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
+  return `${(n / 1_000_000_000_000).toFixed(2)}T`;
+};
+
+type ParsedMetricsType = Record<string, { categories: string[]; data: unknown[] } | undefined>;
+
+/** Value of one series of a parsed metric, category is e.g. '' for a plain gauge, 'sum' or '{valid="true"}'. */
+export const metricValue = (parsed: ParsedMetricsType, key: string, category = ''): number | null => {
+  const metric = parsed[key];
+  if (!metric) return null;
+  const index = metric.categories.indexOf(category);
+  if (index === -1) return null;
+  const value = metric.data[index];
+  return typeof value === 'number' ? value : null;
+};
+
+/** Series of a parsed metric keyed by the value of one label, e.g. reason="undecodable" -> { undecodable: n }. */
+export const metricByLabel = (parsed: ParsedMetricsType, key: string, label: string): Record<string, number> => {
+  const metric = parsed[key];
+  const result: Record<string, number> = {};
+  if (!metric) return result;
+  const labelRegex = new RegExp(`${label}="([^"]*)"`);
+  metric.categories.forEach((category, i) => {
+    const match = category.match(labelRegex);
+    const value = metric.data[i];
+    if (match && typeof value === 'number') result[match[1]] = value;
+  });
+  return result;
+};
+
 /**
  * Parses Node metrics to Apex charts ready data.
  * @param data The string of metrics from HOPRd.

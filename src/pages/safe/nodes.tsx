@@ -1,6 +1,8 @@
 import { useAppDispatch, useAppSelector } from '../../store';
 import { blokliActionsAsync } from '../../store/slices/blokli';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
+import { fetchNetworkDashboardData } from '../../store/slices/networkDashboard/fetchNetworkDashboardData';
+import { utils as dashboardUtils } from '../../networkDashboard';
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
@@ -8,6 +10,7 @@ import { SubpageTitle } from '../../components/SubpageTitle';
 import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
 import { LastSeen } from '../../components/LastSeen';
+import ProgressBar from '../../future-hopr-lib-components/Progressbar';
 
 // Modals
 import { PingModal } from '../../components/Modal/node/PingModal';
@@ -20,7 +23,8 @@ import { OpenSessionModal } from '../../components/Modal/node/OpenSessionModal';
  * Nodes registered to the same safe as the connected node. All on-chain figures
  * come from blokli, missing ones render as '-' and are never filled in from node
  * data. Last seen is p2p liveness the chain cannot know, so it comes from the
- * connected node's peer data like on the aliases page.
+ * connected node's peer data like on the aliases page. Availability, latency and
+ * throughput are what the network dashboard measured from the outside.
  */
 function SafeNodesPage() {
   const dispatch = useAppDispatch();
@@ -31,8 +35,16 @@ function SafeNodesPage() {
   const hoprNodeSafe = useAppSelector((store) => store.node.info.data?.hoprNodeSafe);
   const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);
   const blokliUrl = useAppSelector(selectBlokliUrl);
+  const hoprNetworkName = useAppSelector((store) => store.node.info.data?.hoprNetworkName);
+  const dashboardNodes = useAppSelector((store) => store.networkDashboard.nodes);
 
   const handleRefresh = () => {
+    fetchNetworkDashboardData({
+      networkName: hoprNetworkName,
+      nodeAddress: mypeerAddress,
+      safeNodeAddresses: (safeNodes.data ?? []).map((node) => node.nodeAddress),
+      dispatch,
+    });
     if (!blokliUrl || !mypeerAddress || !hoprNodeSafe) return;
     dispatch(
       blokliActionsAsync.getSafeNodesThunk({
@@ -45,6 +57,7 @@ function SafeNodesPage() {
 
   const parsedTableData = (safeNodes.data ?? []).map((safeNode, index) => {
     const nodeAddress = safeNode.nodeAddress;
+    const stats = dashboardNodes.data?.byAddress[nodeAddress];
     return {
       id: nodeAddress,
       key: index.toString(),
@@ -55,6 +68,10 @@ function SafeNodesPage() {
       channelsCount: safeNode.channels ? safeNode.channels.count : '-',
       channelsFunds: safeNode.channels ? `${safeNode.channels.formatted} wxHOPR` : '-',
       redeemed: safeNode.redeemed ? `${safeNode.redeemed.formatted} wxHOPR` : '-',
+      availability24h: typeof stats?.availability24h === 'number' ? <ProgressBar value={stats.availability24h} /> : '-',
+      availability7d: dashboardUtils.formatAvailability(stats?.availability7d),
+      latency: dashboardUtils.formatLatency(stats?.latency),
+      throughput24h: dashboardUtils.formatMbps(stats?.throughput24h, stats?.maxThroughput24h),
       lastSeen: (
         <LastSeen
           timestamp={peersObject[nodeAddress]?.lastUpdate ?? 0}
@@ -126,6 +143,31 @@ function SafeNodesPage() {
       maxWidth: '90px',
     },
     {
+      key: 'availability24h',
+      name: '24h avail.',
+      tooltipHeader: 'Share of the network dashboard pings answered in the last 24 hours',
+      maxWidth: '90px',
+    },
+    {
+      key: 'availability7d',
+      name: '7d avail.',
+      tooltipHeader: 'Share of the network dashboard pings answered in the last 7 days',
+      maxWidth: '70px',
+    },
+    {
+      key: 'latency',
+      name: 'Latency',
+      tooltipHeader: 'Median latency of the network dashboard pings in the last 24 hours',
+      maxWidth: '70px',
+    },
+    {
+      key: 'throughput24h',
+      name: '24h throughput',
+      tooltip: true,
+      tooltipHeader: `Average relay throughput measured by the network dashboard in the last 24 hours. ${dashboardUtils.CT_ELIGIBILITY_HINT}`,
+      maxWidth: '90px',
+    },
+    {
       key: 'lastSeen',
       name: 'Last seen',
       maxWidth: '20px',
@@ -149,7 +191,7 @@ function SafeNodesPage() {
       <SubpageTitle
         title={safeNodes.data ? `NODES (${parsedTableData.length})` : 'NODES'}
         refreshFunction={handleRefresh}
-        reloading={safeNodes.isFetching}
+        reloading={safeNodes.isFetching || dashboardNodes.isFetching}
       />
       <TablePro
         data={parsedTableData}

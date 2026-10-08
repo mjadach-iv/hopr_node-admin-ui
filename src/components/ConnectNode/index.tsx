@@ -11,6 +11,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { authActions } from '../../store/slices/auth';
 import { nodeActions } from '../../store/slices/node';
 import { blokliActions } from '../../store/slices/blokli';
+import { networkDashboardActions } from '../../store/slices/networkDashboard';
 import { appActions } from '../../store/slices/app';
 
 //MUI
@@ -158,6 +159,7 @@ export default function ConnectNode() {
     dispatch(authActions.resetState());
     dispatch(nodeActions.resetState());
     dispatch(blokliActions.resetState());
+    dispatch(networkDashboardActions.resetState());
     dispatch(appActions.resetNodeState());
     dispatch(appActions.clearNotifications());
     navigate('/');

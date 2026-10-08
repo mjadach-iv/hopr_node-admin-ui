@@ -41,6 +41,8 @@ const blokliSlice = createSlice({
       state.ticketRedemption.isFetching = false;
       state.safeNodes.data = null;
       state.safeNodes.isFetching = false;
+      state.nodeChannels.data = null;
+      state.nodeChannels.isFetching = false;
     },
   },
   extraReducers: (builder) => createAsyncReducer(builder),

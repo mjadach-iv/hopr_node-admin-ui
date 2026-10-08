@@ -12,5 +12,14 @@ export const utils = {
   parseTokenValue,
 };
 
-export type { ChannelStatsType, SafeNodeType, TicketRedemptionType, TokenValueString, TokenValueType } from './types';
+export type {
+  BlokliChannelStatus,
+  BlokliChannelType,
+  ChannelStatsType,
+  NodeChannelsType,
+  SafeNodeType,
+  TicketRedemptionType,
+  TokenValueString,
+  TokenValueType,
+} from './types';
 export type { BlokliPayloadType } from './api';

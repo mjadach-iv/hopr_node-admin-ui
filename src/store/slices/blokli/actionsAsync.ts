@@ -1,10 +1,17 @@
 import { ActionReducerMapBuilder, createAsyncThunk } from '@reduxjs/toolkit';
-import { api, utils, type ChannelStatsType, type SafeNodeType, type TicketRedemptionType } from '../../../blokli';
+import {
+  api,
+  utils,
+  type ChannelStatsType,
+  type NodeChannelsType,
+  type SafeNodeType,
+  type TicketRedemptionType,
+} from '../../../blokli';
 import { initialState } from './initialState';
 import { RootState } from '../..';
 
 const { blokliApiError } = utils;
-const { getChannelStats, getSafeNodes, getTicketRedemptionStats } = api;
+const { getChannelStats, getNodeChannels, getSafeNodes, getTicketRedemptionStats } = api;
 
 /**
  * nodeAddress and blokliUrl are carried on every payload so the fulfilled reducers
@@ -115,6 +122,35 @@ const getSafeNodesThunk = createAsyncThunk<
   },
 );
 
+const getNodeChannelsThunk = createAsyncThunk<NodeChannelsType | undefined, BlokliThunkPayload, { state: RootState }>(
+  'blokli/getNodeChannels',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const nodeChannels = await getNodeChannels({
+        blokliUrl: payload.blokliUrl,
+        nodeAddress: payload.nodeAddress,
+      });
+      return nodeChannels;
+    } catch (e) {
+      if (e instanceof blokliApiError) {
+        return rejectWithValue({
+          code: e.code,
+          message: e.message,
+        });
+      }
+      return rejectWithValue({ message: JSON.stringify(e) });
+    }
+  },
+  {
+    condition: (_payload, { getState }) => {
+      const isFetching = getState().blokli.nodeChannels.isFetching;
+      if (isFetching) {
+        return false;
+      }
+    },
+  },
+);
+
 export const createAsyncReducer = (builder: ActionReducerMapBuilder<typeof initialState>) => {
   // getChannelStats
   builder.addCase(getChannelStatsThunk.pending, (state) => {
@@ -163,10 +199,27 @@ export const createAsyncReducer = (builder: ActionReducerMapBuilder<typeof initi
   builder.addCase(getSafeNodesThunk.rejected, (state) => {
     state.safeNodes.isFetching = false;
   });
+
+  // getNodeChannels
+  builder.addCase(getNodeChannelsThunk.pending, (state) => {
+    state.nodeChannels.isFetching = true;
+  });
+  builder.addCase(getNodeChannelsThunk.fulfilled, (state, action) => {
+    if (action.meta.arg.nodeAddress !== state.nodeAddress) return;
+    if (action.meta.arg.blokliUrl !== state.urlInUse) return;
+    if (action.payload) {
+      state.nodeChannels.data = action.payload;
+    }
+    state.nodeChannels.isFetching = false;
+  });
+  builder.addCase(getNodeChannelsThunk.rejected, (state) => {
+    state.nodeChannels.isFetching = false;
+  });
 };
 
 export const actionsAsync = {
   getChannelStatsThunk,
+  getNodeChannelsThunk,
   getSafeNodesThunk,
   getTicketRedemptionStatsThunk,
 };

@@ -14,6 +14,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import Section from '../../../future-hopr-lib-components/Section';
 import { actionsAsync as nodeActionsAsync } from '../../../store/slices/node/actionsAsync';
 import { fetchBlokliData } from '../../../store/slices/blokli/fetchBlokliData';
+import { fetchNetworkDashboardData } from '../../../store/slices/networkDashboard/fetchNetworkDashboardData';
 import { selectBlokliUrl } from '../../../store/selectors/blokli';
 import { TableExtended } from '../../../future-hopr-lib-components/Table/columed-data';
 import { SubpageTitle } from '../../../components/SubpageTitle';
@@ -33,6 +34,8 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 import NodeUptime from './node-uptime';
 import Packets from './packets';
 import Throughput from './throughput';
+import Transport from './transport';
+import NetworkDashboard from './networkDashboard';
 
 const TdActionIcons = styled.td`
   display: flex;
@@ -74,6 +77,8 @@ function InfoPage() {
   const channelStatsFetching = useAppSelector((store) => store.blokli.channelStats.isFetching);
   const ticketRedemption = useAppSelector((store) => store.blokli.ticketRedemption.data);
   const ticketRedemptionFetching = useAppSelector((store) => store.blokli.ticketRedemption.isFetching);
+  const safeNodes = useAppSelector((store) => store.blokli.safeNodes.data);
+  const dashboardFetching = useAppSelector((store) => store.networkDashboard.nodes.isFetching);
   const [showWholeProvider, set_showWholeProvider] = useState(false);
   const [providerShort, set_providerShort] = useState('');
   const [providerContainsSecret, set_providerContainsSecret] = useState(true);
@@ -157,6 +162,12 @@ function InfoPage() {
       safeAddress: info?.hoprNodeSafe,
       dispatch,
     });
+    fetchNetworkDashboardData({
+      networkName: info?.hoprNetworkName,
+      nodeAddress: addresses?.native,
+      safeNodeAddresses: (safeNodes ?? []).map((node) => node.nodeAddress),
+      dispatch,
+    });
   };
 
   // This will allow us to improve readability on the reloading prop for SubpageTitle
@@ -170,6 +181,7 @@ function InfoPage() {
     peersAnnouncedFetching,
     channelStatsFetching,
     ticketRedemptionFetching,
+    dashboardFetching,
   ].includes(true);
 
   const noCopyPaste = !(
@@ -748,6 +760,8 @@ function InfoPage() {
 
         <Throughput />
         <Packets />
+        <Transport />
+        <NetworkDashboard />
 
         <TableExtended
           title="Channels"

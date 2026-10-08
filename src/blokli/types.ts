@@ -35,6 +35,32 @@ export type SafeNodeType = {
   redeemed: TokenValueType | null;
 };
 
+export type BlokliChannelStatus = 'OPEN' | 'PENDINGTOCLOSE' | 'CLOSED';
+
+/**
+ * One channel of the connected node as indexed on-chain, in either direction.
+ */
+export type BlokliChannelType = {
+  // 0x prefixed lowercase, so it matches the hoprd channel id lowercased
+  channelId: string;
+  // checksummed, null when blokli could not resolve the counterparty keyid
+  counterparty: string | null;
+  status: BlokliChannelStatus;
+  balance: TokenValueType;
+  epoch: number;
+  ticketIndex: string;
+  // the on-chain closure time is when the closure can be finalized, not when it was initiated
+  closureTime: string | null;
+  // ticketIndex x ticket price, null for closed channels
+  estimatedValue: TokenValueType | null;
+};
+
+export type NodeChannelsType = {
+  ticketPrice: TokenValueType;
+  incoming: BlokliChannelType[];
+  outgoing: BlokliChannelType[];
+};
+
 /**
  * Splits a TokenValueString into the same { value, formatted } shape the node slice
  * uses for every balance. 18 decimals overflows float64, so the wei value goes

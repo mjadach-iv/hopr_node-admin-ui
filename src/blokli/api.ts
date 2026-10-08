@@ -2,10 +2,14 @@ import { formatEther, getAddress } from 'viem';
 import { queryBlokli, tryUnwrapUnion, unwrapUnion } from './client';
 import {
   parseTokenValue,
+  type BlokliChannelStatus,
+  type BlokliChannelType,
   type ChannelStatsType,
+  type NodeChannelsType,
   type SafeNodeType,
   type TicketRedemptionType,
   type TokenValueString,
+  type TokenValueType,
 } from './types';
 
 export type BlokliPayloadType = {
@@ -166,6 +170,42 @@ const ACCOUNTS_PER_REQUEST = 40;
 const NATIVE_BALANCES_PER_REQUEST = 8;
 const REDEMPTIONS_PER_REQUEST = 4;
 
+type BatchResultType = Record<string, { __typename?: string } | null>;
+
+/**
+ * Runs an aliased batch query in chunks, binding values[i] to $a{i}. A failing
+ * chunk is only logged, so its aliases are missing from the merged result.
+ */
+const runChunked = async (
+  payload: BlokliPayloadType,
+  values: (string | number)[],
+  chunkSize: number,
+  buildQuery: (chunkIndexes: number[]) => string,
+): Promise<BatchResultType> => {
+  const indexes = values.map((_, i) => i);
+  const chunks: number[][] = [];
+  for (let start = 0; start < indexes.length; start += chunkSize) {
+    chunks.push(indexes.slice(start, start + chunkSize));
+  }
+  const merged: BatchResultType = {};
+  await Promise.all(
+    chunks.map(async (chunkIndexes) => {
+      try {
+        const data = await queryBlokli<BatchResultType>(
+          payload.blokliUrl,
+          buildQuery(chunkIndexes),
+          Object.fromEntries(chunkIndexes.map((i) => [`a${i}`, values[i]])),
+          payload.timeout,
+        );
+        Object.assign(merged, data);
+      } catch (e) {
+        console.warn('Blokli batched request failed', e);
+      }
+    }),
+  );
+  return merged;
+};
+
 const buildAccountsQuery = (indexes: number[]) => {
   const variables = indexes.map((i) => `$a${i}: String!`).join(', ');
   const fields = indexes
@@ -272,36 +312,11 @@ export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: s
   // checksummed so the addresses match the alias and channel maps of the node slice
   const nodeAddresses = [...safe.registeredNodes].map((address) => getAddress(address)).sort();
   if (nodeAddresses.length === 0) return [];
-  const indexes = nodeAddresses.map((_, i) => i);
-
-  const runChunked = async (chunkSize: number, buildQuery: (chunkIndexes: number[]) => string) => {
-    const merged: Record<string, { __typename?: string } | null> = {};
-    const chunks: number[][] = [];
-    for (let start = 0; start < indexes.length; start += chunkSize) {
-      chunks.push(indexes.slice(start, start + chunkSize));
-    }
-    await Promise.all(
-      chunks.map(async (chunkIndexes) => {
-        try {
-          const data = await queryBlokli<Record<string, { __typename?: string } | null>>(
-            payload.blokliUrl,
-            buildQuery(chunkIndexes),
-            Object.fromEntries(chunkIndexes.map((i) => [`a${i}`, nodeAddresses[i]])),
-            payload.timeout,
-          );
-          Object.assign(merged, data);
-        } catch (e) {
-          console.warn('Blokli batched safe nodes request failed', e);
-        }
-      }),
-    );
-    return merged;
-  };
 
   const [accountsData, nativeData, redemptionData, channelsList] = await Promise.all([
-    runChunked(ACCOUNTS_PER_REQUEST, buildAccountsQuery),
-    runChunked(NATIVE_BALANCES_PER_REQUEST, buildNativeBalancesQuery),
-    runChunked(REDEMPTIONS_PER_REQUEST, buildRedemptionsQuery),
+    runChunked(payload, nodeAddresses, ACCOUNTS_PER_REQUEST, buildAccountsQuery),
+    runChunked(payload, nodeAddresses, NATIVE_BALANCES_PER_REQUEST, buildNativeBalancesQuery),
+    runChunked(payload, nodeAddresses, REDEMPTIONS_PER_REQUEST, buildRedemptionsQuery),
     queryBlokli<{ channels: { __typename?: string } | null }>(
       payload.blokliUrl,
       SAFE_CHANNELS_QUERY,
@@ -351,4 +366,189 @@ export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: s
       redeemed: redeemedStats ? parseTokenValue(redeemedStats.redeemedAmount) : null,
     };
   });
+};
+
+const NODE_ACCOUNT_QUERY = `
+  query AdminNodeAccount($nodeAddress: String!) {
+    accounts(chainKey: $nodeAddress) {
+      __typename
+      ... on AccountsList {
+        accounts {
+          keyid
+          chainKey
+        }
+      }
+      ... on MissingFilterError {
+        code
+        message
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }
+    chainInfo {
+      __typename
+      ... on ChainInfo {
+        ticketPrice
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }
+  }
+`;
+
+const NODE_CHANNELS_RESULT = `
+      __typename
+      ... on ChannelsList {
+        channels {
+          concreteChannelId
+          source
+          destination
+          balance
+          status
+          epoch
+          ticketIndex
+          closureTime
+        }
+      }
+      ... on MissingFilterError {
+        code
+        message
+      }
+      ... on InvalidAddressError {
+        code
+        message
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }`;
+
+// no status filter, closed channels are wanted too
+const NODE_CHANNELS_QUERY = `
+  query AdminNodeChannels($keyid: Int!) {
+    outgoing: channels(sourceKeyId: $keyid) {${NODE_CHANNELS_RESULT}
+    }
+    incoming: channels(destinationKeyId: $keyid) {${NODE_CHANNELS_RESULT}
+    }
+  }
+`;
+
+const buildAccountsByKeyidQuery = (indexes: number[]) => {
+  const variables = indexes.map((i) => `$a${i}: Int!`).join(', ');
+  const fields = indexes
+    .map(
+      (i) => `
+    k${i}: accounts(keyid: $a${i}) {
+      __typename
+      ... on AccountsList {
+        accounts {
+          keyid
+          chainKey
+        }
+      }
+      ... on MissingFilterError {
+        code
+        message
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }`,
+    )
+    .join('\n');
+  return `query AdminChannelCounterparties(${variables}) {${fields}
+  }`;
+};
+
+type BlokliRawChannelType = {
+  concreteChannelId: string;
+  source: number;
+  destination: number;
+  balance: TokenValueString;
+  status: BlokliChannelStatus;
+  epoch: number;
+  ticketIndex: string;
+  closureTime: string | null;
+};
+
+type AccountsListType = { accounts: { keyid: number; chainKey: string }[] };
+
+/**
+ * Every channel of the node in both directions and all statuses, with the
+ * counterparty keyids resolved to addresses. Blokli has no spent or per channel
+ * redeemed figure, so estimatedValue is ticketIndex x the current ticket price:
+ * every ticket issued this epoch up to the last on-chain redemption, valued at one hop.
+ */
+export const getNodeChannels = async (
+  payload: BlokliPayloadType & { nodeAddress: string },
+): Promise<NodeChannelsType> => {
+  const accountData = await queryBlokli<{
+    accounts: { __typename?: string } | null;
+    chainInfo: { __typename?: string } | null;
+  }>(payload.blokliUrl, NODE_ACCOUNT_QUERY, { nodeAddress: payload.nodeAddress }, payload.timeout);
+
+  const ticketPrice = parseTokenValue(
+    unwrapUnion<{ ticketPrice: TokenValueString }>(accountData.chainInfo, 'ChainInfo').ticketPrice,
+  );
+  const keyid = unwrapUnion<AccountsListType>(accountData.accounts, 'AccountsList').accounts.find(
+    (account) => account.chainKey.toLowerCase() === payload.nodeAddress.toLowerCase(),
+  )?.keyid;
+  if (keyid === undefined) {
+    console.warn(`Blokli does not know node ${payload.nodeAddress}`);
+    return { ticketPrice, incoming: [], outgoing: [] };
+  }
+
+  const channelsData = await queryBlokli<{
+    outgoing: { __typename?: string } | null;
+    incoming: { __typename?: string } | null;
+  }>(payload.blokliUrl, NODE_CHANNELS_QUERY, { keyid }, payload.timeout);
+  const outgoing = unwrapUnion<{ channels: BlokliRawChannelType[] }>(channelsData.outgoing, 'ChannelsList').channels;
+  const incoming = unwrapUnion<{ channels: BlokliRawChannelType[] }>(channelsData.incoming, 'ChannelsList').channels;
+
+  const counterpartyKeyids = Array.from(
+    new Set([...outgoing.map((channel) => channel.destination), ...incoming.map((channel) => channel.source)]),
+  );
+  const counterpartiesData = await runChunked(
+    payload,
+    counterpartyKeyids,
+    ACCOUNTS_PER_REQUEST,
+    buildAccountsByKeyidQuery,
+  );
+  const addressByKeyid = new Map<number, string>();
+  counterpartyKeyids.forEach((counterpartyKeyid, i) => {
+    const account = tryUnwrapUnion<AccountsListType>(counterpartiesData[`k${i}`], 'AccountsList')?.accounts.find(
+      (account) => account.keyid === counterpartyKeyid,
+    );
+    if (account) addressByKeyid.set(counterpartyKeyid, getAddress(account.chainKey));
+  });
+
+  const estimate = (ticketIndex: string): TokenValueType => {
+    const value = BigInt(ticketIndex) * BigInt(ticketPrice.value);
+    return {
+      value: value.toString(),
+      formatted: formatEther(value),
+    };
+  };
+
+  const toChannel = (channel: BlokliRawChannelType, counterpartyKeyid: number): BlokliChannelType => ({
+    channelId: `0x${channel.concreteChannelId.toLowerCase().replace(/^0x/, '')}`,
+    counterparty: addressByKeyid.get(counterpartyKeyid) ?? null,
+    status: channel.status,
+    balance: parseTokenValue(channel.balance),
+    epoch: channel.epoch,
+    ticketIndex: channel.ticketIndex,
+    closureTime: channel.closureTime,
+    estimatedValue: channel.status === 'CLOSED' ? null : estimate(channel.ticketIndex),
+  });
+
+  return {
+    ticketPrice,
+    outgoing: outgoing.map((channel) => toChannel(channel, channel.destination)),
+    incoming: incoming.map((channel) => toChannel(channel, channel.source)),
+  };
 };

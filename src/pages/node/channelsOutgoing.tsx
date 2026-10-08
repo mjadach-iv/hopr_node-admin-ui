@@ -16,6 +16,14 @@ import IconButton from '../../future-hopr-lib-components/Button/IconButton';
 import CloseChannelIcon from '../../future-hopr-lib-components/Icons/CloseChannel';
 import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
+import {
+  useBlokliChannels,
+  blokliChannelHeader,
+  blokliChannelCells,
+  statusWithClosure,
+  ClosedChannelsButton,
+  ClosedChannelsTable,
+} from '../../components/BlokliChannels';
 
 // Modals
 import { OpenMultipleChannelsModal } from '../../components/Modal/node/OpenMultipleChannelsModal';
@@ -40,8 +48,11 @@ function ChannelsPage() {
   const currentApiEndpoint = useAppSelector((store) => store.node.apiEndpoint);
   const tabLabel = 'outgoing';
   const channelsData = channels?.outgoing;
+  const blokliChannels = useBlokliChannels(tabLabel);
+  const [showClosed, set_showClosed] = useState(false);
 
   const handleRefresh = () => {
+    blokliChannels.refresh();
     if (!loginData.apiEndpoint) return;
     dispatch(
       actionsAsync.getChannelsThunk({
@@ -71,12 +82,18 @@ function ChannelsPage() {
   const handleExport = () => {
     if (channelsData) {
       exportToCsv(
-        Object.entries(channelsData).map(([, channel]) => ({
-          channelId: channel.id,
-          peerAddress: channel.peerAddress,
-          status: channel.status,
-          dedicatedFunds: channel.balance,
-        })),
+        Object.entries(channelsData).map(([, channel]) => {
+          const blokliChannel = blokliChannels.byId[channel.id.toLowerCase()];
+          return {
+            channelId: channel.id,
+            peerAddress: channel.peerAddress,
+            status: channel.status,
+            dedicatedFunds: channel.balance,
+            epoch: blokliChannel?.epoch ?? '',
+            ticketIndex: blokliChannel?.ticketIndex ?? '',
+            estimatedSpent: blokliChannel?.estimatedValue?.formatted ?? '',
+          };
+        }),
         `${tabLabel}-channels.csv`,
       );
     }
@@ -169,6 +186,7 @@ function ChannelsPage() {
       tooltip: true,
       maxWidth: '45px',
     },
+    ...blokliChannelHeader(tabLabel),
     {
       key: 'actions',
       name: 'Actions',
@@ -217,14 +235,16 @@ function ChannelsPage() {
 
       const peerAddress = channelsOutgoingObject[id].peerAddress;
       if (!peerAddress) return;
+      const blokliChannel = blokliChannels.byId[id.toLowerCase()];
 
       return {
         id: (index + 1).toString(),
         key: id,
         node: <PeersInfo peerAddress={peerAddress} />,
         peerAddress: getAliasByPeerAddress(peerAddress as string),
-        status: channelsOutgoingObject[id].status as string,
+        status: statusWithClosure(channelsOutgoingObject[id].status as string, blokliChannel),
         funds: `${channelsOutgoingObject[id].balance} ${HOPR_TOKEN_USED}`,
+        ...blokliChannelCells(blokliChannel),
         actions: (
           <>
             <PingModal
@@ -280,8 +300,11 @@ function ChannelsPage() {
     id: string;
     key: string;
     peerAddress: string;
-    status: 'Open' | 'PendingToClose' | 'Closed';
+    status: string;
     funds: string;
+    epoch: string;
+    ticketIndex: string | JSX.Element;
+    estimate: string | JSX.Element;
     actions: JSX.Element;
   }[];
 
@@ -301,6 +324,12 @@ function ChannelsPage() {
             <OpenChannelModal />
             <OpenMultipleChannelsModal />
             <FundChannelModal />
+            <ClosedChannelsButton
+              direction={tabLabel}
+              count={blokliChannels.closed.length}
+              show={showClosed}
+              onClick={() => set_showClosed(!showClosed)}
+            />
             <IconButton
               iconComponent={<GetAppIcon />}
               tooltipText={
@@ -324,6 +353,12 @@ function ChannelsPage() {
         loading={parsedTableData.length === 0 && channelsFetching}
         orderByDefault="number"
       />
+      {showClosed && (
+        <ClosedChannelsTable
+          direction={tabLabel}
+          channels={blokliChannels.closed}
+        />
+      )}
     </Section>
   );
 }

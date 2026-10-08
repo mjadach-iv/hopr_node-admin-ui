@@ -1,4 +1,4 @@
-import type { ChannelStatsType, SafeNodeType, TicketRedemptionType } from '../../../blokli';
+import type { ChannelStatsType, NodeChannelsType, SafeNodeType, TicketRedemptionType } from '../../../blokli';
 
 type InitialState = {
   // the node these figures belong to, used to drop results after a node switch
@@ -20,6 +20,10 @@ type InitialState = {
     data: SafeNodeType[] | null;
     isFetching: boolean;
   };
+  nodeChannels: {
+    data: NodeChannelsType | null;
+    isFetching: boolean;
+  };
 };
 
 export const initialState: InitialState = {
@@ -35,6 +39,10 @@ export const initialState: InitialState = {
     isFetching: false,
   },
   safeNodes: {
+    data: null,
+    isFetching: false,
+  },
+  nodeChannels: {
     data: null,
     isFetching: false,
   },
