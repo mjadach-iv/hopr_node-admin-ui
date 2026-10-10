@@ -7,6 +7,9 @@ type InitialState = {
   nodes: {
     data: NodesStatsType | null;
     isFetching: boolean;
+    // of the latest request, so a wider one is not dropped while a narrower one runs
+    fetchingAddresses: string[];
+    requestId: string | null;
   };
 };
 
@@ -16,5 +19,7 @@ export const initialState: InitialState = {
   nodes: {
     data: null,
     isFetching: false,
+    fetchingAddresses: [],
+    requestId: null,
   },
 };

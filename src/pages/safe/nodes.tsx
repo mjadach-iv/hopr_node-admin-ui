@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { blokliActionsAsync } from '../../store/slices/blokli';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
@@ -49,6 +50,16 @@ function SafeNodesPage() {
   const blokliUrl = useAppSelector(selectBlokliUrl);
   const hoprNetworkName = useAppSelector((store) => store.node.info.data?.hoprNetworkName);
   const dashboardNodes = useAppSelector((store) => store.networkDashboard.nodes);
+  const safeNodeAddressesKey = (safeNodes.data ?? []).map((node) => node.nodeAddress).join(',');
+
+  useEffect(() => {
+    fetchNetworkDashboardData({
+      networkName: hoprNetworkName,
+      nodeAddress: mypeerAddress,
+      safeNodeAddresses: safeNodeAddressesKey ? safeNodeAddressesKey.split(',') : [],
+      dispatch,
+    });
+  }, [hoprNetworkName, mypeerAddress, safeNodeAddressesKey]);
 
   const handleRefresh = () => {
     fetchNetworkDashboardData({

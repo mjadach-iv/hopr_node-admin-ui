@@ -17,6 +17,8 @@ const networkDashboardSlice = createSlice({
       state.envId = envId;
       state.nodes.data = null;
       state.nodes.isFetching = false;
+      state.nodes.fetchingAddresses = [];
+      state.nodes.requestId = null;
     },
   },
   extraReducers: (builder) => createAsyncReducer(builder),
