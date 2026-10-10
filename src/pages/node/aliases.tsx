@@ -63,16 +63,14 @@ function AliasesPage() {
     const lastUpdateNumeric = peerAddress ? peersObject[peerAddress]?.lastUpdate : 0;
     const lastUpdate =
       lastUpdateNumeric > 0
-        ? new Date(lastUpdateNumeric)
-            .toLocaleString('en-US', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZoneName: 'short',
-            })
-            .replace(', ', '\n')
+        ? new Date(lastUpdateNumeric).toLocaleString('en-US', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short',
+          })
         : 'Not seen';
 
     return {
@@ -80,9 +78,7 @@ function AliasesPage() {
       key: index.toString(),
       alias,
       node: <PeersInfo peerAddress={peerAddress} />,
-      lastUpdate: (
-        <span style={{ whiteSpace: 'break-spaces' }}>{mypeerAddress === peerAddress ? '-' : lastUpdate}</span>
-      ),
+      lastUpdate: mypeerAddress === peerAddress ? '-' : lastUpdate,
       lastUpdateValue: mypeerAddress === peerAddress || !lastUpdateNumeric ? null : lastUpdateNumeric,
       peerAddress: peerAddress,
       actions: (
