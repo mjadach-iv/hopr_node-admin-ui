@@ -4,6 +4,8 @@ const TICKET_REDEEMED = toEventSelector('TicketRedeemed(bytes32,bytes32)');
 const BALANCE_MASK = (BigInt(1) << BigInt(96)) - BigInt(1);
 const EPOCH_MASK = (BigInt(1) << BigInt(24)) - BigInt(1);
 const EPOCH_SHIFT = BigInt(176);
+// keeps the OR list of channel ids in one eth_getLogs topic within what public RPCs accept
+const CHANNELS_PER_REQUEST = 200;
 
 type RpcLog = {
   topics: string[];
@@ -42,24 +44,34 @@ export const getRedeemedPerChannel = async ({
   const redeemed: Record<string, bigint> = Object.fromEntries(channelIds.map((id) => [id.toLowerCase(), BigInt(0)]));
   if (channelIds.length === 0) return redeemed;
 
-  const response = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'eth_getLogs',
-      params: [{ address: channelsContract, fromBlock: '0x0', toBlock: 'latest', topics: [null, channelIds] }],
-    }),
-    signal: AbortSignal.timeout(timeout),
-  });
-  if (!response.ok) throw new Error(`RPC responded with ${response.status} ${response.statusText}`);
-  const json = (await response.json()) as { result?: RpcLog[]; error?: { message: string } };
-  if (!json.result) throw new Error(json.error?.message ?? 'RPC returned no logs');
+  const fetchLogs = async (ids: string[]) => {
+    const response = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_getLogs',
+        params: [{ address: channelsContract, fromBlock: '0x0', toBlock: 'latest', topics: [null, ids] }],
+      }),
+      signal: AbortSignal.timeout(timeout),
+    });
+    if (!response.ok) throw new Error(`RPC responded with ${response.status} ${response.statusText}`);
+    const json = (await response.json()) as { result?: RpcLog[]; error?: { message: string } };
+    if (!json.result) throw new Error(json.error?.message ?? 'RPC returned no logs');
+    return json.result;
+  };
+  const chunks: string[][] = [];
+  for (let i = 0; i < channelIds.length; i += CHANNELS_PER_REQUEST) {
+    chunks.push(channelIds.slice(i, i + CHANNELS_PER_REQUEST));
+  }
 
-  const logs = [...json.result].sort(
-    (a, b) => Number(BigInt(a.blockNumber) - BigInt(b.blockNumber)) || Number(BigInt(a.logIndex) - BigInt(b.logIndex)),
-  );
+  const logs = (await Promise.all(chunks.map(fetchLogs)))
+    .flat()
+    .sort(
+      (a, b) =>
+        Number(BigInt(a.blockNumber) - BigInt(b.blockNumber)) || Number(BigInt(a.logIndex) - BigInt(b.logIndex)),
+    );
 
   const last = new Map<string, ReturnType<typeof unpack>>();
   // the channel state before the current transaction, per channel
