@@ -57,6 +57,8 @@ export type BlokliChannelType = {
 
 export type NodeChannelsType = {
   ticketPrice: TokenValueType;
+  // redeemed by the counterparties from all our outgoing channels, null when the RPC failed
+  spent: TokenValueType | null;
   incoming: BlokliChannelType[];
   outgoing: BlokliChannelType[];
 };

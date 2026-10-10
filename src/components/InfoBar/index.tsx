@@ -21,6 +21,7 @@ export const useWallet = () => {
   const info = useAppSelector((store) => store.node.info.data);
   const safeChannelsOut = useAppSelector((store) => store.blokli.channelStats.data);
   const redeemed = useAppSelector((store) => store.blokli.ticketRedemption.data?.redeemed.formatted);
+  const spent = useAppSelector((store) => store.blokli.nodeChannels.data?.spent?.formatted);
 
   const total =
     safeChannelsOut?.value && balances.safeHopr?.value
@@ -51,6 +52,7 @@ export const useWallet = () => {
         unit: 'wxHOPR',
       },
       { key: 'earned', label: 'Earned', long: 'Node earned', value: redeemed, unit: 'wxHOPR' },
+      { key: 'spent', label: 'Spent', long: 'Node spent', value: spent, unit: 'wxHOPR' },
       { key: 'total', label: 'Total', long: 'Total staked', value: total, unit: 'wxHOPR' },
     ] as { key: string; label: string; long: string; value?: string | null; unit: string; level?: Level }[],
   };
@@ -150,7 +152,8 @@ const Chip = styled.button`
   /* fewer figures as the bar gets narrower, the rest is one click away */
   @media (max-width: 1280px) {
     .stat.channels,
-    .stat.earned {
+    .stat.earned,
+    .stat.spent {
       display: none;
     }
   }

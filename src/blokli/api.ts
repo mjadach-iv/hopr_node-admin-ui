@@ -1,5 +1,7 @@
 import { formatEther, getAddress } from 'viem';
 import { queryBlokli, tryUnwrapUnion, unwrapUnion } from './client';
+import { getRedeemedPerChannel } from '../chain/spent';
+import { GNOSIS_RPC_URL } from '../../config';
 import {
   parseTokenValue,
   type BlokliChannelStatus,
@@ -391,6 +393,7 @@ const NODE_ACCOUNT_QUERY = `
       __typename
       ... on ChainInfo {
         ticketPrice
+        contractAddresses
       }
       ... on QueryFailedError {
         code
@@ -492,15 +495,17 @@ export const getNodeChannels = async (
     chainInfo: { __typename?: string } | null;
   }>(payload.blokliUrl, NODE_ACCOUNT_QUERY, { nodeAddress: payload.nodeAddress }, payload.timeout);
 
-  const ticketPrice = parseTokenValue(
-    unwrapUnion<{ ticketPrice: TokenValueString }>(accountData.chainInfo, 'ChainInfo').ticketPrice,
+  const chainInfo = unwrapUnion<{ ticketPrice: TokenValueString; contractAddresses: string }>(
+    accountData.chainInfo,
+    'ChainInfo',
   );
+  const ticketPrice = parseTokenValue(chainInfo.ticketPrice);
   const keyid = unwrapUnion<AccountsListType>(accountData.accounts, 'AccountsList').accounts.find(
     (account) => account.chainKey.toLowerCase() === payload.nodeAddress.toLowerCase(),
   )?.keyid;
   if (keyid === undefined) {
     console.warn(`Blokli does not know node ${payload.nodeAddress}`);
-    return { ticketPrice, incoming: [], outgoing: [] };
+    return { ticketPrice, spent: null, incoming: [], outgoing: [] };
   }
 
   const channelsData = await queryBlokli<{
@@ -535,8 +540,23 @@ export const getNodeChannels = async (
     };
   };
 
+  const channelId = (channel: BlokliRawChannelType) =>
+    `0x${channel.concreteChannelId.toLowerCase().replace(/^0x/, '')}`;
+
+  let redeemedById: Record<string, bigint> | null = null;
+  try {
+    redeemedById = await getRedeemedPerChannel({
+      rpcUrl: GNOSIS_RPC_URL,
+      channelsContract: (JSON.parse(chainInfo.contractAddresses) as { channels: string }).channels,
+      channelIds: outgoing.map(channelId),
+    });
+  } catch (e) {
+    console.warn('Could not read the channel redemptions', e);
+  }
+  const toTokenValue = (value: bigint): TokenValueType => ({ value: value.toString(), formatted: formatEther(value) });
+
   const toChannel = (channel: BlokliRawChannelType, counterpartyKeyid: number): BlokliChannelType => ({
-    channelId: `0x${channel.concreteChannelId.toLowerCase().replace(/^0x/, '')}`,
+    channelId: channelId(channel),
     counterparty: addressByKeyid.get(counterpartyKeyid) ?? null,
     status: channel.status,
     balance: parseTokenValue(channel.balance),
@@ -548,6 +568,11 @@ export const getNodeChannels = async (
 
   return {
     ticketPrice,
+    spent: redeemedById
+      ? toTokenValue(
+          outgoing.reduce((sum, channel) => sum + (redeemedById?.[channelId(channel)] ?? BigInt(0)), BigInt(0)),
+        )
+      : null,
     outgoing: outgoing.map((channel) => toChannel(channel, channel.destination)),
     incoming: incoming.map((channel) => toChannel(channel, channel.source)),
   };
