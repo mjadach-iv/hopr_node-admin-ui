@@ -53,6 +53,8 @@ export type BlokliChannelType = {
   closureTime: string | null;
   // ticketIndex x ticket price, null for closed channels
   estimatedValue: TokenValueType | null;
+  // redeemed from the channel over all its epochs, from the chain events; null when the RPC failed
+  redeemed: TokenValueType | null;
 };
 
 export type NodeChannelsType = {

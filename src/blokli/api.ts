@@ -548,7 +548,7 @@ export const getNodeChannels = async (
     redeemedById = await getRedeemedPerChannel({
       rpcUrl: GNOSIS_RPC_URL,
       channelsContract: (JSON.parse(chainInfo.contractAddresses) as { channels: string }).channels,
-      channelIds: outgoing.map(channelId),
+      channelIds: [...outgoing, ...incoming].map(channelId),
     });
   } catch (e) {
     console.warn('Could not read the channel redemptions', e);
@@ -564,6 +564,7 @@ export const getNodeChannels = async (
     ticketIndex: channel.ticketIndex,
     closureTime: channel.closureTime,
     estimatedValue: channel.status === 'CLOSED' ? null : estimate(channel.ticketIndex),
+    redeemed: redeemedById ? toTokenValue(redeemedById[channelId(channel)] ?? BigInt(0)) : null,
   });
 
   return {

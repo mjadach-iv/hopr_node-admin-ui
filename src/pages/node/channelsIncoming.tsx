@@ -94,7 +94,7 @@ function ChannelsPage() {
             dedicatedFunds: channel.balance,
             epoch: blokliChannel?.epoch ?? '',
             ticketIndex: blokliChannel?.ticketIndex ?? '',
-            estimatedEarned: blokliChannel?.estimatedValue?.formatted ?? '',
+            earned: blokliChannel?.redeemed?.formatted ?? '',
           };
         }),
         `${tabLabel}-channels.csv`,
@@ -329,7 +329,7 @@ function ChannelsPage() {
     funds: JSX.Element;
     epoch: string;
     ticketIndex: string | JSX.Element;
-    estimate: string | JSX.Element;
+    redeemed: string | JSX.Element;
     actions: JSX.Element;
   }[];
 

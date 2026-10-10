@@ -78,28 +78,57 @@ export const blokliChannelHeader = (direction: Direction) => [
     tooltipHeader:
       'On-chain ticket index: the tickets issued in the current channel epoch up to its last on-chain redemption, winning and losing. From blokli.',
   },
-  {
-    key: 'estimate',
-    name: direction === 'outgoing' ? 'Est. spent' : 'Est. earned',
-    sortKey: 'estimateValue',
-    align: 'right' as const,
-    tooltipHeader: (
-      <>
-        Estimate: tickets issued in the current channel epoch up to its last on-chain redemption × current ticket price
-        for one hop.
-        <br />
-        <br />
-        Multi-hop tickets are worth more and unredeemed tickets are not counted. Resets when the channel closes. From
-        blokli.
-      </>
-    ),
-  },
+  redeemedHeader(direction),
 ];
+
+export const redeemedHeader = (direction: Direction) => ({
+  key: 'redeemed',
+  name: direction === 'outgoing' ? 'Spent' : 'Earned',
+  sortKey: 'redeemedValue',
+  align: 'right' as const,
+  tooltipHeader: (
+    <>
+      {direction === 'outgoing' ? 'Redeemed by the counterparty' : 'Redeemed by this node'} from the channel over all
+      its epochs, read from the on-chain TicketRedeemed events. Unredeemed tickets are not counted.
+      <br />
+      <br />
+      Marked ≈ when the chain could not be read: then it is an estimate of the current epoch, its ticket index × the
+      current ticket price for one hop.
+    </>
+  ),
+});
+
+const Amount = ({ value, approximate }: { value: string; approximate?: boolean }) => (
+  <Tooltip title={`${value} ${HOPR_TOKEN_USED}`}>
+    <span>
+      {approximate && '≈ '}
+      {shrinkNumber(value)}
+      <span className="unit">{HOPR_TOKEN_USED}</span>
+    </span>
+  </Tooltip>
+);
+
+export const redeemedCells = (channel: BlokliChannelType | undefined) => {
+  const exact = channel?.redeemed?.formatted;
+  const estimate = channel?.estimatedValue?.formatted;
+  return {
+    redeemedValue: exact ?? estimate,
+    redeemed: exact ? (
+      <Amount value={exact} />
+    ) : estimate ? (
+      <Amount
+        value={estimate}
+        approximate
+      />
+    ) : (
+      '-'
+    ),
+  };
+};
 
 export const blokliChannelCells = (channel: BlokliChannelType | undefined) => ({
   epoch: channel ? channel.epoch.toString() : '-',
   ticketIndexValue: channel?.ticketIndex,
-  estimateValue: channel?.estimatedValue?.formatted,
   ticketIndex: channel ? (
     <Tooltip title={BigInt(channel.ticketIndex).toLocaleString('en-US')}>
       <span>{formatCount(channel.ticketIndex)}</span>
@@ -107,16 +136,7 @@ export const blokliChannelCells = (channel: BlokliChannelType | undefined) => ({
   ) : (
     '-'
   ),
-  estimate: channel?.estimatedValue ? (
-    <Tooltip title={`${channel.estimatedValue.formatted} ${HOPR_TOKEN_USED}`}>
-      <span>
-        ≈ {shrinkNumber(channel.estimatedValue.formatted)}
-        <span className="unit">{HOPR_TOKEN_USED}</span>
-      </span>
-    </Tooltip>
-  ) : (
-    '-'
-  ),
+  ...redeemedCells(channel),
 });
 
 export const statusWithClosure = (status: string, channel: BlokliChannelType | undefined): string => {
@@ -159,6 +179,7 @@ export const ClosedChannelsTable = ({
       peerAddress: address ? (aliases?.[address] ? `${aliases[address]} (${address})` : address) : '',
       channelId: channel.channelId,
       epoch: channel.epoch.toString(),
+      ...redeemedCells(channel),
       actions: address ? (
         <>
           <PingModal address={address} />
@@ -201,6 +222,7 @@ export const ClosedChannelsTable = ({
       name: 'Last epoch',
       align: 'right' as const,
     },
+    redeemedHeader(direction),
     {
       key: 'actions',
       name: '',
