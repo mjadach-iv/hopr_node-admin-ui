@@ -33,6 +33,8 @@ export type SafeNodeType = {
   xDai: TokenValueType | null;
   channels: ChannelStatsType | null;
   redeemed: TokenValueType | null;
+  // redeemed by the counterparties from every channel the node opened, closed ones included
+  spent: TokenValueType | null;
 };
 
 export type BlokliChannelStatus = 'OPEN' | 'PENDINGTOCLOSE' | 'CLOSED';

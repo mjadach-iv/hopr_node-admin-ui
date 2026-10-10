@@ -111,6 +111,13 @@ function SafeNodesPage() {
           unit="wxHOPR"
         />
       ),
+      spent: (
+        <TokenAmount
+          value={safeNode.spent?.formatted}
+          unit="wxHOPR"
+        />
+      ),
+      spentValue: safeNode.spent?.formatted,
       availability24h: typeof stats?.availability24h === 'number' ? <ProgressBar value={stats.availability24h} /> : '-',
       lastThroughput: (
         <Throughput
@@ -202,6 +209,13 @@ function SafeNodesPage() {
       name: 'Earned',
       sortKey: 'redeemedValue',
       align: 'right' as const,
+    },
+    {
+      key: 'spent',
+      name: 'Spent',
+      sortKey: 'spentValue',
+      align: 'right' as const,
+      tooltipHeader: 'Redeemed by the counterparties from every channel the node opened, closed ones included',
     },
     {
       key: 'availability24h',

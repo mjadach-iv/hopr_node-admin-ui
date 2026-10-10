@@ -139,12 +139,14 @@ const SAFE_NODES_QUERY = `
 // client side - much cheaper than per node channelStats calls
 const SAFE_CHANNELS_QUERY = `
   query AdminSafeChannels($safeAddress: String!) {
-    channels(safeAddress: $safeAddress, status: OPEN) {
+    channels(safeAddress: $safeAddress) {
       __typename
       ... on ChannelsList {
         channels {
+          concreteChannelId
           source
           balance
+          status
         }
       }
       ... on MissingFilterError {
@@ -154,6 +156,16 @@ const SAFE_CHANNELS_QUERY = `
       ... on InvalidAddressError {
         code
         message
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }
+    chainInfo {
+      __typename
+      ... on ChainInfo {
+        contractAddresses
       }
       ... on QueryFailedError {
         code
@@ -299,6 +311,10 @@ const buildRedemptionsQuery = (indexes: number[]) => {
  * failure - any other failing request or per node field just nulls the affected
  * cells, rendered as '-'.
  */
+type SafeChannelType = { concreteChannelId: string; source: number; balance: TokenValueString; status: string };
+
+const safeChannelId = (channel: SafeChannelType) => `0x${channel.concreteChannelId.toLowerCase().replace(/^0x/, '')}`;
+
 export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: string }): Promise<SafeNodeType[]> => {
   const safeData = await queryBlokli<{
     safe: { __typename?: string; registeredNodes?: string[] } | null;
@@ -319,20 +335,36 @@ export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: s
     runChunked(payload, nodeAddresses, ACCOUNTS_PER_REQUEST, buildAccountsQuery),
     runChunked(payload, nodeAddresses, NATIVE_BALANCES_PER_REQUEST, buildNativeBalancesQuery),
     runChunked(payload, nodeAddresses, REDEMPTIONS_PER_REQUEST, buildRedemptionsQuery),
-    queryBlokli<{ channels: { __typename?: string } | null }>(
+    queryBlokli<{ channels: { __typename?: string } | null; chainInfo: { __typename?: string } | null }>(
       payload.blokliUrl,
       SAFE_CHANNELS_QUERY,
       { safeAddress: payload.safeAddress },
       payload.timeout,
     )
-      .then((data) =>
-        tryUnwrapUnion<{ channels: { source: number; balance: TokenValueString }[] }>(data.channels, 'ChannelsList'),
-      )
+      .then((data) => ({
+        channels: tryUnwrapUnion<{ channels: SafeChannelType[] }>(data.channels, 'ChannelsList')?.channels ?? null,
+        contractAddresses: tryUnwrapUnion<{ contractAddresses: string }>(data.chainInfo, 'ChainInfo')
+          ?.contractAddresses,
+      }))
       .catch((e) => {
         console.warn('Blokli safe channels request failed', e);
-        return null;
+        return { channels: null, contractAddresses: undefined };
       }),
   ]);
+
+  // every channel the safe funded, closed ones too, so a node's spent covers its whole history
+  let redeemedById: Record<string, bigint> | null = null;
+  if (channelsList.channels && channelsList.contractAddresses) {
+    try {
+      redeemedById = await getRedeemedPerChannel({
+        rpcUrl: GNOSIS_RPC_URL,
+        channelsContract: (JSON.parse(channelsList.contractAddresses) as { channels: string }).channels,
+        channelIds: channelsList.channels.map(safeChannelId),
+      });
+    } catch (e) {
+      console.warn('Could not read the safe channel redemptions', e);
+    }
+  }
 
   return nodeAddresses.map((nodeAddress, i) => {
     const accountsList = tryUnwrapUnion<{ accounts: { keyid: number; chainKey: string }[] }>(
@@ -351,14 +383,23 @@ export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: s
     // a resolved keyid with no matching channels is real data (0 channels),
     // an unresolved keyid or a failed channels request is unknown ('-')
     let channels: ChannelStatsType | null = null;
-    if (channelsList && keyid !== null) {
+    let spent: TokenValueType | null = null;
+    if (channelsList.channels && keyid !== null) {
       const outgoing = channelsList.channels.filter((channel) => channel.source === keyid);
-      const value = outgoing.reduce((sum, channel) => sum + BigInt(parseTokenValue(channel.balance).value), BigInt(0));
+      const open = outgoing.filter((channel) => channel.status === 'OPEN');
+      const value = open.reduce((sum, channel) => sum + BigInt(parseTokenValue(channel.balance).value), BigInt(0));
       channels = {
-        count: outgoing.length,
+        count: open.length,
         value: value.toString(),
         formatted: formatEther(value),
       };
+      if (redeemedById) {
+        const spentValue = outgoing.reduce(
+          (sum, channel) => sum + (redeemedById?.[safeChannelId(channel)] ?? BigInt(0)),
+          BigInt(0),
+        );
+        spent = { value: spentValue.toString(), formatted: formatEther(spentValue) };
+      }
     }
 
     return {
@@ -366,6 +407,7 @@ export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: s
       xDai: native ? parseTokenValue(native.balance) : null,
       channels,
       redeemed: redeemedStats ? parseTokenValue(redeemedStats.redeemedAmount) : null,
+      spent,
     };
   });
 };
