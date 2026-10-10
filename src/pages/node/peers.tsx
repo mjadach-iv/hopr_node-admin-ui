@@ -77,6 +77,7 @@ function PeersPage() {
       key: 'node',
       name: 'Node',
       grow: true,
+      sortKey: 'peerAddress',
     },
     {
       key: 'address',
@@ -87,10 +88,12 @@ function PeersPage() {
     {
       key: 'lastUpdate',
       name: 'Last update',
+      sortKey: 'lastUpdateValue',
     },
     {
       key: 'score',
       name: 'Score',
+      sortKey: 'scoreValue',
     },
     {
       key: 'actions',
@@ -136,6 +139,8 @@ function PeersPage() {
       address: getAliasByAddress(peer.address),
       peerAddress: peer.address,
       score: typeof peer.score === 'number' ? <ProgressBar value={peer.score} /> : '-',
+      scoreValue: peer.score,
+      lastUpdateValue: peer.lastUpdate,
       lastUpdate: <LastSeen timestamp={peer.lastUpdate} />,
       actions: (
         <>

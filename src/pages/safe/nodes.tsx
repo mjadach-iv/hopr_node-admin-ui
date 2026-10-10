@@ -124,6 +124,13 @@ function SafeNodesPage() {
           maxMbps={stats?.maxThroughput24h}
         />
       ),
+      xDaiValue: safeNode.xDai?.formatted,
+      channelsFundsValue: safeNode.channels?.formatted,
+      redeemedValue: safeNode.redeemed?.formatted,
+      availability24hValue: stats?.availability24h,
+      lastThroughputValue: stats?.lastThroughput,
+      throughput24hValue: stats?.throughput24h,
+      lastSeenValue: peersObject[nodeAddress]?.lastUpdate || null,
       lastSeen: (
         <LastSeen
           timestamp={peersObject[nodeAddress]?.lastUpdate ?? 0}
@@ -164,6 +171,7 @@ function SafeNodesPage() {
       key: 'node',
       name: 'Node',
       grow: true,
+      sortKey: 'peerAddress',
     },
     {
       key: 'peerAddress',
@@ -174,6 +182,7 @@ function SafeNodesPage() {
     {
       key: 'xDai',
       name: 'xDai',
+      sortKey: 'xDaiValue',
       align: 'right' as const,
     },
     {
@@ -185,33 +194,39 @@ function SafeNodesPage() {
     {
       key: 'channelsFunds',
       name: 'In channels',
+      sortKey: 'channelsFundsValue',
       align: 'right' as const,
     },
     {
       key: 'redeemed',
       name: 'Earned',
+      sortKey: 'redeemedValue',
       align: 'right' as const,
     },
     {
       key: 'availability24h',
       name: 'Avail. 24h',
+      sortKey: 'availability24hValue',
       tooltipHeader: 'Share of the network dashboard pings answered in the last 24 hours',
     },
     {
       key: 'lastThroughput',
       name: 'Last tput',
+      sortKey: 'lastThroughputValue',
       align: 'right' as const,
       tooltipHeader: `Relay throughput in the most recent hour the network dashboard tested the node. ${dashboardUtils.CT_ELIGIBILITY_HINT}`,
     },
     {
       key: 'throughput24h',
       name: 'Tput 24h',
+      sortKey: 'throughput24hValue',
       align: 'right' as const,
       tooltipHeader: `Average relay throughput measured by the network dashboard in the last 24 hours. ${dashboardUtils.CT_ELIGIBILITY_HINT}`,
     },
     {
       key: 'lastSeen',
       name: 'Last seen',
+      sortKey: 'lastSeenValue',
     },
     {
       key: 'actions',

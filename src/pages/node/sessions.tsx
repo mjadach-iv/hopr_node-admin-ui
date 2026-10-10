@@ -91,6 +91,7 @@ function SessionsPage() {
     {
       key: 'path',
       name: 'Path',
+      sortable: false,
       search: true,
       copy: true,
     },

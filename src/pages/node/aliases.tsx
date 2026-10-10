@@ -83,6 +83,7 @@ function AliasesPage() {
       lastUpdate: (
         <span style={{ whiteSpace: 'break-spaces' }}>{mypeerAddress === peerAddress ? '-' : lastUpdate}</span>
       ),
+      lastUpdateValue: mypeerAddress === peerAddress || !lastUpdateNumeric ? null : lastUpdateNumeric,
       peerAddress: peerAddress,
       actions: (
         <>
@@ -132,10 +133,12 @@ function AliasesPage() {
       key: 'node',
       name: 'Node',
       grow: true,
+      sortKey: 'alias',
     },
     {
       key: 'lastUpdate',
       name: 'Last update',
+      sortKey: 'lastUpdateValue',
     },
     {
       key: 'peerAddress',

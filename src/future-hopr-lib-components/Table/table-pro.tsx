@@ -13,6 +13,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
 import Paper from '@mui/material/Paper';
 import InputBase from '@mui/material/InputBase';
 import SearchIcon from '@mui/icons-material/Search';
@@ -271,6 +272,23 @@ const STableCell = styled(TableCell)`
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+    .MuiTableSortLabel-root {
+      color: inherit;
+      &:hover,
+      &.Mui-active {
+        color: var(--text);
+      }
+    }
+    .MuiTableSortLabel-icon {
+      font-size: 14px;
+      margin: 0 0 0 2px;
+    }
+    &.align-right .MuiTableSortLabel-root {
+      flex-direction: row-reverse;
+      .MuiTableSortLabel-icon {
+        margin: 0 2px 0 0;
+      }
+    }
   }
 `;
 
@@ -324,7 +342,7 @@ const EmptyState = styled.div`
 
 interface Props {
   data: {
-    [key: string]: string | number | JSX.Element;
+    [key: string]: string | number | null | undefined | JSX.Element;
     id: string | number;
     actions: JSX.Element;
   }[];
@@ -344,6 +362,9 @@ interface Props {
     align?: 'left' | 'right' | 'center';
     // the column that takes the free width; every other column shrinks to its content
     grow?: boolean;
+    // row field holding the raw value to sort by, for columns rendered as JSX
+    sortKey?: string;
+    sortable?: boolean;
   }[];
   search?: boolean;
   loading?: boolean;
@@ -362,40 +383,32 @@ type TableContext = {
 
 type Order = 'asc' | 'desc';
 
-const isString = (value: any) => typeof value === 'string' || value instanceof String;
+const NUMERIC = /^-?\d+(\.\d+)?$/;
 
-function descendingComparator<T>(
-  a: { [key in string]: number | string },
-  b: { [key in string]: number | string },
-  orderBy: string,
-) {
-  if (isString(b[orderBy]) && isString(a[orderBy])) {
-    if ((b[orderBy] as string).toLowerCase() < (a[orderBy] as string).toLowerCase()) {
-      return -1;
-    }
-    if ((b[orderBy] as string).toLowerCase() > (a[orderBy] as string).toLowerCase()) {
-      return 1;
-    }
-  }
+// JSX, empty and '-' values have nothing to compare and always go last
+const sortValue = (value: unknown): number | string | null => {
+  if (typeof value === 'number') return Number.isNaN(value) ? null : value;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (trimmed === '' || trimmed === '-') return null;
+  return NUMERIC.test(trimmed) ? Number(trimmed) : trimmed.toLowerCase();
+};
 
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
+const compareRows = (a: RowData, b: RowData, orderBy: string, order: Order) => {
+  const left = sortValue(a[orderBy]);
+  const right = sortValue(b[orderBy]);
+  if (left === null || right === null) return left === right ? 0 : left === null ? 1 : -1;
+  const result =
+    typeof left === 'number' && typeof right === 'number'
+      ? left - right
+      : String(left).localeCompare(String(right), undefined, { numeric: true });
+  return order === 'asc' ? result : -result;
+};
 
-  return 0;
-}
+const isSortable = (headElem: Props['header'][0]) =>
+  headElem.sortable ?? (headElem.name !== '' && headElem.key !== 'actions');
 
-function getComparator<Key extends keyof any>(
-  order: Order,
-  orderBy: string,
-): (a: { [key in Key]: number | string }, b: { [key in Key]: number | string }) => number {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
+const sortField = (headElem: Props['header'][0]) => headElem.sortKey ?? headElem.key;
 
 const virtuosoComponents: TableComponents<RowData, TableContext> = {
   Table: ({ context, ...tableProps }) => (
@@ -482,12 +495,18 @@ export default function CustomPaginationActionsTable(props: Props) {
   }
 
   const sortedRows = React.useMemo(
-    () =>
-      [...filteredData]
-        //@ts-expect-error as we can input JSX into the data, but we will not sort by it
-        .sort(getComparator(order, orderBy)),
+    () => [...filteredData].sort((a, b) => compareRows(a, b, orderBy, order)),
     [filteredData, order, orderBy],
   );
+
+  const handleSort = (field: string) => {
+    if (field === orderBy) {
+      setOrder(order === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+    setOrderBy(field);
+    setOrder('asc');
+  };
 
   const { containerRef, cards } = useCardLayout(sortedRows.length);
 
@@ -538,7 +557,17 @@ export default function CustomPaginationActionsTable(props: Props) {
                       title={headElem.tooltipHeader}
                       notWide
                     >
-                      <span>{headElem.name}</span>
+                      {isSortable(headElem) ? (
+                        <TableSortLabel
+                          active={orderBy === sortField(headElem)}
+                          direction={orderBy === sortField(headElem) ? order : 'asc'}
+                          onClick={() => handleSort(sortField(headElem))}
+                        >
+                          {headElem.name}
+                        </TableSortLabel>
+                      ) : (
+                        <span>{headElem.name}</span>
+                      )}
                     </Tooltip>
                   </STableCell>
                 ),

@@ -109,6 +109,7 @@ function ChannelsPage() {
       key: 'node',
       name: 'Node',
       grow: true,
+      sortKey: 'peerAddress',
     },
     {
       key: 'peerAddress',
@@ -126,10 +127,12 @@ function ChannelsPage() {
     {
       key: 'status',
       name: 'Status',
+      sortKey: 'statusText',
     },
     {
       key: 'funds',
       name: 'Funds',
+      sortKey: 'fundsValue',
       align: 'right' as const,
     },
     ...blokliChannelHeader(tabLabel),
@@ -253,6 +256,7 @@ function ChannelsPage() {
         peerAddress: getAliasByPeerAddress(peerAddress as string),
         statusText: statusWithClosure(channelsIncomingObject[id].status as string, blokliChannel),
         status: <StatusPill status={statusWithClosure(channelsIncomingObject[id].status as string, blokliChannel)} />,
+        fundsValue: channelsIncomingObject[id].balance,
         funds: (
           <TokenAmount
             value={channelsIncomingObject[id].balance}

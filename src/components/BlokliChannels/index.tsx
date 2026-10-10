@@ -64,6 +64,7 @@ export const blokliChannelHeader = (direction: Direction) => [
   {
     key: 'ticketIndex',
     name: 'Tickets',
+    sortKey: 'ticketIndexValue',
     align: 'right' as const,
     tooltipHeader:
       'On-chain ticket index: the tickets issued in the current channel epoch up to its last on-chain redemption, winning and losing. From blokli.',
@@ -71,6 +72,7 @@ export const blokliChannelHeader = (direction: Direction) => [
   {
     key: 'estimate',
     name: direction === 'outgoing' ? 'Est. spent' : 'Est. earned',
+    sortKey: 'estimateValue',
     align: 'right' as const,
     tooltipHeader: (
       <>
@@ -87,6 +89,8 @@ export const blokliChannelHeader = (direction: Direction) => [
 
 export const blokliChannelCells = (channel: BlokliChannelType | undefined) => ({
   epoch: channel ? channel.epoch.toString() : '-',
+  ticketIndexValue: channel?.ticketIndex,
+  estimateValue: channel?.estimatedValue?.formatted,
   ticketIndex: channel ? (
     <Tooltip title={BigInt(channel.ticketIndex).toLocaleString('en-US')}>
       <span>{formatCount(channel.ticketIndex)}</span>
@@ -172,6 +176,7 @@ export const ClosedChannelsTable = ({
       key: 'node',
       name: 'Node',
       grow: true,
+      sortKey: 'peerAddress',
     },
     {
       key: 'peerAddress',
