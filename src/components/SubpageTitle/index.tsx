@@ -59,9 +59,13 @@ const Content = styled.div`
   .MuiSvgIcon-root {
     color: var(--primary);
   }
-  /* image icons (Scalar) are drawn in navy */
-  .actions img {
-    filter: brightness(0) invert(0.92);
+  /* image icons (Scalar) are painted through their alpha so they follow the theme */
+  .mask-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    background-color: var(--primary);
+    mask: var(--icon) center / contain no-repeat;
   }
 `;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
 import { Link } from 'react-router-dom';
 import { copyStringToClipboard } from '../../../utils/functions';
@@ -255,9 +255,9 @@ function InfoPage() {
             />
             <IconButton
               iconComponent={
-                <img
-                  style={{ maxWidth: '20px' }}
-                  src="/assets/scalar-removebg-preview.png"
+                <span
+                  className="mask-icon"
+                  style={{ '--icon': 'url(/assets/scalar-removebg-preview.png)' } as CSSProperties}
                 />
               }
               tooltipText={
