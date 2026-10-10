@@ -30,6 +30,7 @@ const Container = styled(Button)`
   width: auto;
   min-width: 0;
   padding: 0 8px 0 4px;
+  margin-right: 8px;
   border-radius: 0;
   div {
     align-items: center;
