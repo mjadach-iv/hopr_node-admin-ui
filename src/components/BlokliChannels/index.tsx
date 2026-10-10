@@ -7,6 +7,7 @@ import { formatCount } from '../../utils/metrics';
 import { shrinkNumber } from '../../utils/amount';
 import { formatTimeToUserTimezone } from '../../utils/date';
 import { HOPR_TOKEN_USED } from '../../../config';
+import { loadStateFromLocalStorage, saveStateToLocalStorage } from '../../utils/localStorage';
 
 // HOPR Components
 import { SubpageTitle } from '../SubpageTitle';
@@ -134,7 +135,13 @@ export const ClosedChannelsTable = ({
 }) => {
   const aliases = useAppSelector((store) => store.node.aliases);
   const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);
-  const [show, set_show] = useState(false);
+  const showKey = `app/closedChannels/${direction}/show`;
+  const [show, set_show] = useState(() => loadStateFromLocalStorage(showKey) === true);
+
+  const toggleShow = () => {
+    saveStateToLocalStorage(showKey, !show);
+    set_show(!show);
+  };
 
   const data = channels.map((channel, index) => {
     const address = channel.counterparty;
@@ -216,7 +223,7 @@ export const ClosedChannelsTable = ({
               </span>
             }
             disabled={channels.length === 0}
-            onClick={() => set_show(!show)}
+            onClick={toggleShow}
           />
         }
       />
