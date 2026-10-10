@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import styled from '@emotion/styled';
 
 // Mui
@@ -10,6 +10,8 @@ type SubpageTitleProps = {
   reloading?: boolean;
   refreshFunction?: () => void;
   actions?: any;
+  // sits right next to the title instead of in the actions on the right
+  titleAction?: ReactNode;
 };
 
 const Content = styled.div`
@@ -26,6 +28,12 @@ const Content = styled.div`
     h2 {
       font-size: 18px;
     }
+  }
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
   }
   h2 {
     margin: 0;
@@ -98,12 +106,15 @@ const SIconButton = styled(IconButton)`
   }
 `;
 
-export const SubpageTitle = ({ title, reloading, refreshFunction, actions }: SubpageTitleProps) => {
+export const SubpageTitle = ({ title, reloading, refreshFunction, actions, titleAction }: SubpageTitleProps) => {
   const [reloadingLocal, set_reloadingLocal] = useState(false);
 
   return (
     <Content className="SubpageTitle">
-      <h2>{title}</h2>
+      <div className="title">
+        <h2>{title}</h2>
+        {titleAction}
+      </div>
       <div className="right">
         {actions && <div className="actions">{actions}</div>}
         {refreshFunction && (

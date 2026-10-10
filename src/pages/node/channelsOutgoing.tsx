@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, type JSX } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { actionsAsync } from '../../store/slices/node/actionsAsync';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +23,6 @@ import {
   blokliChannelHeader,
   blokliChannelCells,
   statusWithClosure,
-  ClosedChannelsButton,
   ClosedChannelsTable,
 } from '../../components/BlokliChannels';
 
@@ -51,7 +50,6 @@ function ChannelsPage() {
   const tabLabel = 'outgoing';
   const channelsData = channels?.outgoing;
   const blokliChannels = useBlokliChannels(tabLabel);
-  const [showClosed, set_showClosed] = useState(false);
 
   const handleRefresh = () => {
     blokliChannels.refresh();
@@ -338,12 +336,6 @@ function ChannelsPage() {
             <OpenChannelModal />
             <OpenMultipleChannelsModal />
             <FundChannelModal />
-            <ClosedChannelsButton
-              direction={tabLabel}
-              count={blokliChannels.closed.length}
-              show={showClosed}
-              onClick={() => set_showClosed(!showClosed)}
-            />
             <IconButton
               iconComponent={<GetAppIcon />}
               tooltipText={
@@ -367,12 +359,10 @@ function ChannelsPage() {
         loading={parsedTableData.length === 0 && channelsFetching}
         orderByDefault="number"
       />
-      {showClosed && (
-        <ClosedChannelsTable
-          direction={tabLabel}
-          channels={blokliChannels.closed}
-        />
-      )}
+      <ClosedChannelsTable
+        direction={tabLabel}
+        channels={blokliChannels.closed}
+      />
     </Section>
   );
 }

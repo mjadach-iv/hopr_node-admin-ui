@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { blokliActionsAsync } from '../../store/slices/blokli';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
@@ -15,8 +15,16 @@ import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
 import IconButton from '../../future-hopr-lib-components/Button/IconButton';
 import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 
+// Modals
+import { PingModal } from '../Modal/node/PingModal';
+import { CreateAliasModal } from '../Modal/node/AddAliasModal';
+import { OpenChannelModal } from '../Modal/node/OpenChannelModal';
+import { FundChannelModal } from '../Modal/node/FundChannelModal';
+import { OpenSessionModal } from '../Modal/node/OpenSessionModal';
+
 // Mui
-import HistoryIcon from '@mui/icons-material/History';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 type Direction = 'incoming' | 'outgoing';
 
@@ -117,31 +125,6 @@ export const statusWithClosure = (status: string, channel: BlokliChannelType | u
   return `${status} · closable ${closable}`;
 };
 
-export const ClosedChannelsButton = ({
-  direction,
-  count,
-  show,
-  onClick,
-}: {
-  direction: Direction;
-  count: number;
-  show: boolean;
-  onClick: () => void;
-}) => (
-  <IconButton
-    iconComponent={<HistoryIcon />}
-    tooltipText={
-      <span>
-        {show ? 'HIDE' : 'SHOW'}
-        <br />
-        closed {direction} channels ({count})
-      </span>
-    }
-    disabled={count === 0}
-    onClick={onClick}
-  />
-);
-
 export const ClosedChannelsTable = ({
   direction,
   channels,
@@ -150,6 +133,8 @@ export const ClosedChannelsTable = ({
   channels: BlokliChannelType[];
 }) => {
   const aliases = useAppSelector((store) => store.node.aliases);
+  const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);
+  const [show, set_show] = useState(false);
 
   const data = channels.map((channel, index) => {
     const address = channel.counterparty;
@@ -167,7 +152,20 @@ export const ClosedChannelsTable = ({
       peerAddress: address ? (aliases?.[address] ? `${aliases[address]} (${address})` : address) : '',
       channelId: channel.channelId,
       epoch: channel.epoch.toString(),
-      actions: <></>,
+      actions: address ? (
+        <>
+          <PingModal address={address} />
+          <CreateAliasModal address={address} />
+          {peerAddressToOutgoingChannelLink[address] ? (
+            <FundChannelModal address={address} />
+          ) : (
+            <OpenChannelModal peerAddress={address} />
+          )}
+          <OpenSessionModal destination={address} />
+        </>
+      ) : (
+        <></>
+      ),
     };
   });
 
@@ -196,18 +194,41 @@ export const ClosedChannelsTable = ({
       name: 'Last epoch',
       align: 'right' as const,
     },
+    {
+      key: 'actions',
+      name: '',
+      search: false,
+    },
   ];
 
   return (
     <>
-      <SubpageTitle title={`CLOSED ${direction.toUpperCase()} CHANNELS (${channels.length})`} />
-      <TablePro
-        data={data}
-        id={`node-channels-${direction === 'outgoing' ? 'out' : 'in'}-closed-table`}
-        header={header}
-        search
-        orderByDefault="number"
+      <SubpageTitle
+        title={`CLOSED ${direction.toUpperCase()} CHANNELS (${channels.length})`}
+        titleAction={
+          <IconButton
+            iconComponent={show ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            tooltipText={
+              <span>
+                {show ? 'HIDE' : 'SHOW'}
+                <br />
+                closed {direction} channels
+              </span>
+            }
+            disabled={channels.length === 0}
+            onClick={() => set_show(!show)}
+          />
+        }
       />
+      {show && (
+        <TablePro
+          data={data}
+          id={`node-channels-${direction === 'outgoing' ? 'out' : 'in'}-closed-table`}
+          header={header}
+          search
+          orderByDefault="number"
+        />
+      )}
     </>
   );
 };
