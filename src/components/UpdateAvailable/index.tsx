@@ -89,9 +89,13 @@ export default function UpdateAvailable() {
 
   if (!versions) return null;
 
+  // host port may differ from the container's fixed 4677 if the user mapped it to something else
+  // 80/443 (or no port, meaning one of those) means no custom mapping, so fall back to 4677
+  const hostPort = ['', '80', '443'].includes(window.location.port) ? '4677' : window.location.port;
+
   const commands = [
     `docker rm -f ${CONTAINER_NAME}`,
-    `docker run -d --name ${CONTAINER_NAME} -p 4677:4677 ${DOCKER_IMAGE}:${versions.latest}`,
+    `docker run -d --name ${CONTAINER_NAME} -p ${hostPort}:4677 ${DOCKER_IMAGE}:${versions.latest}`,
   ].join('\n');
 
   return (
