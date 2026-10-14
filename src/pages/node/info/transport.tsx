@@ -2,12 +2,9 @@ import { useAppSelector } from '../../../store';
 import { formatCount, metricByLabel, metricValue } from '../../../utils/metrics';
 import { Card, KV } from './ui';
 
-const NAT_STATUS = ['Unknown', 'Public', 'Private'];
-
 function Transport() {
   const parsed = useAppSelector((store) => store.node.metrics.data.parsed);
 
-  const natStatus = metricValue(parsed, 'hopr_transport_p2p_nat_status');
   const connections = metricValue(parsed, 'hopr_transport_p2p_active_connection_count');
 
   const acksSent = metricValue(parsed, 'hopr_protocol_ack_sent_count');
@@ -69,12 +66,6 @@ function Transport() {
 
   return (
     <Card title="Transport">
-      <KV
-        label="NAT status"
-        tip="NAT status as detected by libp2p autonat. Private means other nodes can not dial this node directly"
-      >
-        {natStatus !== null ? NAT_STATUS[natStatus] ?? natStatus : '-'}
-      </KV>
       <KV
         label="P2P connections"
         tip="Currently active p2p connections"
