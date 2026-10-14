@@ -14,6 +14,8 @@ import FAQ from '../Faq';
 import nodeInfoData from '../Faq/node-faq';
 
 type Level = '' | 'warn' | 'low';
+type Group = 'node' | 'safe';
+type WalletItem = { key: string; label: string; long: string; value?: string | null; unit: string; level?: Level };
 
 /** The node's balances and status, shared by the header, its popover and the mobile menu. */
 export const useWallet = () => {
@@ -41,7 +43,7 @@ export const useWallet = () => {
 
   return {
     status: info?.connectivityStatus,
-    items: [
+    node: [
       {
         key: 'node',
         label: 'Node',
@@ -50,6 +52,8 @@ export const useWallet = () => {
         unit: 'xDAI',
         level: xDaiLevel,
       },
+    ] as WalletItem[],
+    safe: [
       { key: 'safe', label: 'Safe', long: 'wxHOPR · safe', value: balances.safeHopr?.formatted, unit: 'wxHOPR' },
       {
         key: 'channels',
@@ -61,7 +65,7 @@ export const useWallet = () => {
       { key: 'earned', label: 'Earned', long: 'Safe earned', value: redeemed, unit: 'wxHOPR' },
       { key: 'spent', label: 'Spent', long: 'Safe spent', value: spent, unit: 'wxHOPR' },
       { key: 'total', label: 'Total', long: 'Total staked', value: total, unit: 'wxHOPR' },
-    ] as { key: string; label: string; long: string; value?: string | null; unit: string; level?: Level }[],
+    ] as WalletItem[],
   };
 };
 
@@ -169,6 +173,10 @@ const Chip = styled.button`
     .stat.safe {
       display: none;
     }
+    .stat.total {
+      padding-left: 0;
+      border-left: 0;
+    }
     .dot {
       margin-right: 10px;
     }
@@ -200,6 +208,9 @@ const Breakdown = styled.div`
   font-variant-numeric: tabular-nums;
   h4 {
     margin: 0 0 8px;
+    &:not(:first-of-type) {
+      margin-top: 16px;
+    }
     font-size: 11.5px;
     font-weight: 650;
     letter-spacing: 0.05em;
@@ -266,31 +277,64 @@ const HelpButton = styled.button`
   }
 `;
 
-/** Status and every balance with full precision, used in the popover and the mobile menu. */
-export const WalletBreakdown = ({ style }: { style?: React.CSSProperties }) => {
-  const { status, items } = useWallet();
+const BreakdownRows = ({ items }: { items: WalletItem[] }) => (
+  <>
+    {items.map((item) => (
+      <div
+        className={`row ${item.key}`}
+        key={item.key}
+      >
+        {item.long}
+        <span>
+          <b>{item.value ? shrinkNumber(item.value) : '-'}</b>
+          <span className="unit">{item.unit}</span>
+          {item.value && item.value !== shrinkNumber(item.value) && <span className="full">{item.value}</span>}
+        </span>
+      </div>
+    ))}
+  </>
+);
+
+/** Status and every balance with full precision, used in the popovers (one group) and the mobile menu (both). */
+export const WalletBreakdown = ({ style, group }: { style?: React.CSSProperties; group?: Group }) => {
+  const wallet = useWallet();
   return (
     <Breakdown style={style}>
-      <h4>Node wallet</h4>
-      <div className="row">
-        Connectivity <StatusPill status={status} />
-      </div>
-      {items.map((item) => (
-        <div
-          className={`row ${item.key}`}
-          key={item.key}
-        >
-          {item.long}
-          <span>
-            <b>{item.value ? shrinkNumber(item.value) : '-'}</b>
-            <span className="unit">{item.unit}</span>
-            {item.value && item.value !== shrinkNumber(item.value) && <span className="full">{item.value}</span>}
-          </span>
-        </div>
-      ))}
+      {group !== 'safe' && (
+        <>
+          <h4>Node</h4>
+          <div className="row">
+            Connectivity <StatusPill status={wallet.status} />
+          </div>
+          <BreakdownRows items={wallet.node} />
+        </>
+      )}
+      {group !== 'node' && (
+        <>
+          <h4>Safe</h4>
+          <BreakdownRows items={wallet.safe} />
+        </>
+      )}
     </Breakdown>
   );
 };
+
+const ChipStats = ({ items }: { items: WalletItem[] }) => (
+  <>
+    {items.map((item) => (
+      <span
+        key={item.key}
+        className={`stat ${item.key} ${item.level ?? ''}`}
+      >
+        <span className="label">{item.label}</span>
+        <span>
+          <span className="value">{item.value ? shrinkNumber(item.value) : '-'}</span>
+          <span className="unit">{item.unit}</span>
+        </span>
+      </span>
+    ))}
+  </>
+);
 
 /**
  * Node status and the main balances in the header; a click opens the full
@@ -298,9 +342,15 @@ export const WalletBreakdown = ({ style }: { style?: React.CSSProperties }) => {
  */
 export default function InfoBar() {
   const nodeConnected = useAppSelector((store) => store.auth.status.connected);
-  const { status, items } = useWallet();
+  const wallet = useWallet();
   const currentRoute = useLocation().pathname;
   const [anchor, set_anchor] = useState<HTMLElement | null>(null);
+  // kept after closing so the popover doesn't switch content while fading out
+  const [group, set_group] = useState<Group>('node');
+  const openBreakdown = (el: HTMLElement, group: Group) => {
+    set_anchor(el);
+    set_group(group);
+  };
   const [faqAnchor, set_faqAnchor] = useState<HTMLElement | null>(null);
 
   if (!nodeConnected) return null;
@@ -310,22 +360,18 @@ export default function InfoBar() {
   return (
     <Bar className="InfoBar">
       <Chip
-        onClick={(e) => set_anchor(e.currentTarget)}
-        aria-label="Node wallet"
+        onClick={(e) => openBreakdown(e.currentTarget, 'node')}
+        aria-label="Node"
       >
-        <span className={`dot ${status ?? ''}`} />
-        {items.map((item) => (
-          <span
-            key={item.key}
-            className={`stat ${item.key} ${item.level ?? ''}`}
-          >
-            <span className="label">{item.label}</span>
-            <span>
-              <span className="value">{item.value ? shrinkNumber(item.value) : '-'}</span>
-              <span className="unit">{item.unit}</span>
-            </span>
-          </span>
-        ))}
+        <span className={`dot ${wallet.status ?? ''}`} />
+        <ChipStats items={wallet.node} />
+        <ExpandMoreIcon />
+      </Chip>
+      <Chip
+        onClick={(e) => openBreakdown(e.currentTarget, 'safe')}
+        aria-label="Safe"
+      >
+        <ChipStats items={wallet.safe} />
         <ExpandMoreIcon />
       </Chip>
       <Popover
@@ -337,7 +383,7 @@ export default function InfoBar() {
         slotProps={{ paper: { style: { marginTop: 6, border: '1px solid var(--border-strong)' } } }}
         disableScrollLock
       >
-        <WalletBreakdown />
+        <WalletBreakdown group={group} />
       </Popover>
       {faq && (
         <>
