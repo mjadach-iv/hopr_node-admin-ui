@@ -14,9 +14,11 @@ import { fetchNetworkDashboardData } from '../../store/slices/networkDashboard/f
 import { utils as networkDashboardUtils } from '../../networkDashboard';
 import { checkHowChannelsHaveChanged } from './channels';
 import { isAddress } from 'viem';
+import { useHoprdUpdateNotification } from '../useHoprdUpdate';
 
 export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: number }) => {
   const dispatch = useAppDispatch();
+  useHoprdUpdateNotification();
   const { apiEndpoint, apiToken } = useAppSelector((store) => store.auth.loginData);
   const isNodeReady = useAppSelector((store) => store.node.nodeIsReady.data);
   const messages = useAppSelector((store) => store.node.messages.data);

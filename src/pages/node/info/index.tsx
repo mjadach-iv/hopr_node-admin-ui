@@ -5,6 +5,7 @@ import { formatEther } from 'viem';
 // Mui
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Visibility from '@mui/icons-material/Visibility';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 // HOPR Components
 import Section from '../../../future-hopr-lib-components/Section';
@@ -16,6 +17,7 @@ import { SubpageTitle } from '../../../components/SubpageTitle';
 import WithdrawModal from '../../../components/Modal/node/WithdrawModal';
 import SmallActionButton from '../../../future-hopr-lib-components/Button/SmallActionButton';
 import { shortenAddress } from '../../../utils/amount';
+import { useHoprdUpdate } from '../../../hooks/useHoprdUpdate';
 import IconButton from '../../../future-hopr-lib-components/Button/IconButton';
 
 //Icons
@@ -39,6 +41,7 @@ function InfoPage() {
   const channelsFetching = useAppSelector((store) => store.node.channels.isFetching);
   const version = useAppSelector((store) => store.node.version.data);
   const versionFetching = useAppSelector((store) => store.node.version.isFetching);
+  const hoprdUpdate = useHoprdUpdate();
   const info = useAppSelector((store) => store.node.info.data);
   const infoFetching = useAppSelector((store) => store.node.info.isFetching);
   const peersAnnounced = useAppSelector((store) => store.node.peersAnnounced.data);
@@ -255,8 +258,25 @@ function InfoPage() {
               ? 'red'
               : 'orange'
           }`}
-          sub={`up ${uptime} · ${version?.replaceAll('"', '') ?? '-'}`}
-          tip="Connectivity status: Unknown right after start, Red no connection, Orange low quality, Yellow/Green high quality"
+          sub={
+            <>
+              up {uptime} · {version?.replaceAll('"', '') ?? '-'}
+              {hoprdUpdate && <WarningAmberIcon className="update" />}
+            </>
+          }
+          tip={
+            <>
+              Connectivity status: Unknown right after start, Red no connection, Orange low quality, Yellow/Green high
+              quality
+              {hoprdUpdate && (
+                <>
+                  <br />
+                  <br />
+                  hoprd {hoprdUpdate} is available, update your node.
+                </>
+              )}
+            </>
+          }
         />
         <Kpi
           label="Node gas"

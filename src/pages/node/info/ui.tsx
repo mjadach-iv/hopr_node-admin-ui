@@ -371,6 +371,13 @@ const SKpi = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    svg.update {
+      width: 14px;
+      height: 14px;
+      margin-left: 4px;
+      vertical-align: -3px;
+      color: var(--orange);
+    }
   }
   &.highlight {
     border-color: rgba(255, 255, 122, 0.35);

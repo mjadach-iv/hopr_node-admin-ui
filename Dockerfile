@@ -23,7 +23,9 @@ RUN pnpm run build && \
 
 FROM nginx:stable-alpine AS runtime
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# a template, so the entrypoint fills in the container's DNS resolvers for the registry proxy
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 COPY --from=build /app/build /usr/share/nginx/html
 
 EXPOSE 4677

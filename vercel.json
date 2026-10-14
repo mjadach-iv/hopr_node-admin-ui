@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/hoprd-tags",
+      "destination": "https://europe-west3-docker.pkg.dev/v2/hoprassociation/docker-images/hoprd/tags/list"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
