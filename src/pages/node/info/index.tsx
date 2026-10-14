@@ -19,6 +19,7 @@ import SmallActionButton from '../../../future-hopr-lib-components/Button/SmallA
 import { shortenAddress } from '../../../utils/amount';
 import { useHoprdUpdate } from '../../../hooks/useHoprdUpdate';
 import IconButton from '../../../future-hopr-lib-components/Button/IconButton';
+import Tooltip from '../../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 
 //Icons
 import DataObjectIcon from '@mui/icons-material/DataObject';
@@ -260,23 +261,18 @@ function InfoPage() {
           }`}
           sub={
             <>
-              up {uptime} · {version?.replaceAll('"', '') ?? '-'}
-              {hoprdUpdate && <WarningAmberIcon className="update" />}
-            </>
-          }
-          tip={
-            <>
-              Connectivity status: Unknown right after start, Red no connection, Orange low quality, Yellow/Green high
-              quality
+              up {uptime} · <span className={hoprdUpdate ? 'outdated' : ''}>{version?.replaceAll('"', '') ?? '-'}</span>
               {hoprdUpdate && (
-                <>
-                  <br />
-                  <br />
-                  hoprd {hoprdUpdate} is available, update your node.
-                </>
+                <Tooltip
+                  title={`hoprd ${hoprdUpdate} is available, update your node`}
+                  notWide
+                >
+                  <WarningAmberIcon className="update own-tip" />
+                </Tooltip>
               )}
             </>
           }
+          tip="Connectivity status: Unknown right after start, Red no connection, Orange low quality, Yellow/Green high quality"
         />
         <Kpi
           label="Node gas"

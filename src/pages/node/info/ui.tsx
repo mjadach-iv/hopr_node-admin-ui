@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import Tooltip from '../../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
@@ -371,6 +371,9 @@ const SKpi = styled.div`
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    .outdated {
+      color: var(--orange);
+    }
     svg.update {
       width: 14px;
       height: 14px;
@@ -414,6 +417,9 @@ export const Kpi = ({
   to?: string;
   className?: string;
 }) => {
+  const [hovered, set_hovered] = useState(false);
+  // elements marked .own-tip show their own tooltip instead of the card's
+  const [overOwnTip, set_overOwnTip] = useState(false);
   const content = (
     <>
       {value}
@@ -424,8 +430,14 @@ export const Kpi = ({
     <Tooltip
       title={tip ?? ''}
       notWide
+      open={hovered && !overOwnTip}
+      onOpen={() => set_hovered(true)}
+      onClose={() => set_hovered(false)}
     >
-      <SKpi className={`Kpi ${className ?? ''}`}>
+      <SKpi
+        className={`Kpi ${className ?? ''}`}
+        onMouseOver={(e) => set_overOwnTip(!!(e.target as Element).closest('.own-tip'))}
+      >
         <span className="label">{label}</span>
         {to ? (
           <Link
