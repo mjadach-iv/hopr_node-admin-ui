@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import styled from '@emotion/styled';
 import { formatEther } from 'viem';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { actionsAsync as nodeActionsAsync } from '../../store/slices/node/actionsAsync';
@@ -13,7 +14,15 @@ import { shortenAddress } from '../../utils/amount';
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
 import { WithUnit } from '../../components/Unit';
-import { AddressLinks, Card, CardGrid, KV, Kpi, KpiGrid, Stat, Stats, short } from '../node/info/ui';
+import { AddressLinks, Card, KV, Kpi, KpiGrid, Stat, Stats, short } from '../node/info/ui';
+
+// cards side by side while each gets 360px, unlike the node page's masonry columns
+const CardRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+  align-items: start;
+  gap: 12px;
+`;
 
 const { formatAvailability, formatLatency, formatMbps } = dashboardUtils;
 
@@ -190,7 +199,7 @@ function SafeInfoPage() {
         />
       </KpiGrid>
 
-      <CardGrid>
+      <CardRow>
         <Card title="Addresses">
           <KV
             label="Safe"
@@ -281,7 +290,7 @@ function SafeInfoPage() {
             </>
           )}
         </Card>
-      </CardGrid>
+      </CardRow>
     </Section>
   );
 }
