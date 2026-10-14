@@ -261,14 +261,19 @@ function InfoPage() {
           }`}
           sub={
             <>
-              up {uptime} · <span className={hoprdUpdate ? 'outdated' : ''}>{version?.replaceAll('"', '') ?? '-'}</span>
-              {hoprdUpdate && (
+              up {uptime} ·{' '}
+              {hoprdUpdate ? (
                 <Tooltip
                   title={`hoprd ${hoprdUpdate} is available, update your node`}
                   notWide
                 >
-                  <WarningAmberIcon className="update own-tip" />
+                  <span className="outdated own-tip">
+                    {version?.replaceAll('"', '')}
+                    <WarningAmberIcon className="update" />
+                  </span>
                 </Tooltip>
+              ) : (
+                version?.replaceAll('"', '') ?? '-'
               )}
             </>
           }
