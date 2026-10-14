@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { actionsAsync as nodeActionsAsync } from '../../store/slices/node/actionsAsync';
 import { fetchBlokliData } from '../../store/slices/blokli/fetchBlokliData';
 import { fetchNetworkDashboardData } from '../../store/slices/networkDashboard/fetchNetworkDashboardData';
-import { selectBlokliUrl, sumSafeNodes } from '../../store/selectors/blokli';
+import { selectBlokliUrl, selectSafeFunds, sumSafeNodes } from '../../store/selectors/blokli';
 import { utils as dashboardUtils, api as dashboardApi } from '../../networkDashboard';
 import type { NodeStatsType } from '../../networkDashboard';
 import { shortenAddress } from '../../utils/amount';
@@ -56,7 +56,7 @@ function SafeInfoPage() {
   const info = useAppSelector((store) => store.node.info.data);
   const aliases = useAppSelector((store) => store.node.aliases);
   const blokliUrl = useAppSelector(selectBlokliUrl);
-  const safeChannelsOut = useAppSelector((store) => store.blokli.channelStats.data);
+  const safeFunds = useAppSelector(selectSafeFunds);
   const channelStatsFetching = useAppSelector((store) => store.blokli.channelStats.isFetching);
   const safeNodes = useAppSelector((store) => store.blokli.safeNodes.data);
   const safeNodesFetching = useAppSelector((store) => store.blokli.safeNodes.isFetching);
@@ -91,10 +91,7 @@ function SafeInfoPage() {
     true,
   );
 
-  const totalStaked =
-    safeChannelsOut?.value && balances.safeHopr?.value
-      ? formatEther(BigInt(safeChannelsOut.value) + BigInt(balances.safeHopr.value))
-      : null;
+  const totalStaked = safeFunds.total?.formatted ?? null;
   const earned = sumSafeNodes(safeNodes, 'redeemed');
   const spent = sumSafeNodes(safeNodes, 'spent');
   const net = earned !== null && spent !== null ? earned - spent : null;
@@ -147,17 +144,21 @@ function SafeInfoPage() {
         />
         <Kpi
           label="Safe"
-          value={short(balances.safeHopr?.formatted)}
+          value={short(safeFunds.safe?.formatted)}
           unit="wxHOPR"
           sub={`allowance ${short(balances.safeHoprAllowance?.formatted).toLowerCase()}`}
-          tip={`${balances.safeHopr?.formatted ?? '-'} wxHOPR stored on your Safe`}
+          tip={`${safeFunds.safe?.formatted ?? '-'} wxHOPR stored on your Safe`}
         />
         <Kpi
           label="Safe channels"
-          value={short(safeChannelsOut?.formatted)}
+          value={short(safeFunds.channels?.formatted)}
           unit="wxHOPR"
-          sub={safeChannelsOut ? `${safeChannelsOut.count} channels` : '-'}
-          tip="wxHOPR in the open outgoing channels of every node registered to your Safe. Read from blokli."
+          sub={
+            safeFunds.openCount === null
+              ? '-'
+              : `${safeFunds.openCount} channels${safeFunds.closingCount ? ` · ${safeFunds.closingCount} closing` : ''}`
+          }
+          tip="wxHOPR in the outgoing channels of every node registered to your Safe, closing ones included until their funds return to the Safe. Read from blokli."
         />
         <Kpi
           label="Earned"

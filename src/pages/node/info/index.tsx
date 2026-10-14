@@ -1,6 +1,5 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
-import { formatEther } from 'viem';
 
 // Mui
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -12,7 +11,8 @@ import Section from '../../../future-hopr-lib-components/Section';
 import { actionsAsync as nodeActionsAsync } from '../../../store/slices/node/actionsAsync';
 import { fetchBlokliData } from '../../../store/slices/blokli/fetchBlokliData';
 import { fetchNetworkDashboardData } from '../../../store/slices/networkDashboard/fetchNetworkDashboardData';
-import { selectBlokliUrl } from '../../../store/selectors/blokli';
+import { selectBlokliUrl, selectSafeFunds } from '../../../store/selectors/blokli';
+import { blokliGraphqlUrl } from '../../../blokli/client';
 import { SubpageTitle } from '../../../components/SubpageTitle';
 import WithdrawModal from '../../../components/Modal/node/WithdrawModal';
 import SmallActionButton from '../../../future-hopr-lib-components/Button/SmallActionButton';
@@ -61,7 +61,15 @@ function InfoPage() {
   const minimumNetworkProbability = useAppSelector((store) => store.node.probability.data);
   // blokli: safe wide channel stake and this node's on chain ticket redemptions
   const blokliUrl = useAppSelector(selectBlokliUrl);
-  const safeChannelsOut = useAppSelector((store) => store.blokli.channelStats.data);
+  // host only, the url may carry an api key in its path like the provider
+  const blokliHost = (() => {
+    try {
+      return blokliUrl ? new URL(blokliUrl).host : null;
+    } catch {
+      return blokliUrl;
+    }
+  })();
+  const safeFunds = useAppSelector(selectSafeFunds);
   const channelStatsFetching = useAppSelector((store) => store.blokli.channelStats.isFetching);
   const ticketRedemption = useAppSelector((store) => store.blokli.ticketRedemption.data);
   const ticketRedemptionFetching = useAppSelector((store) => store.blokli.ticketRedemption.isFetching);
@@ -177,10 +185,7 @@ function InfoPage() {
     dashboardFetching,
   ].includes(true);
 
-  const totalStaked =
-    safeChannelsOut?.value && balances.safeHopr?.value
-      ? formatEther(BigInt(safeChannelsOut.value) + BigInt(balances.safeHopr.value))
-      : null;
+  const totalStaked = safeFunds.total?.formatted ?? null;
 
   // check if user is logged in
   if (!apiEndpoint) {
@@ -298,10 +303,10 @@ function InfoPage() {
         />
         <Kpi
           label="Safe"
-          value={short(balances.safeHopr?.formatted)}
+          value={short(safeFunds.safe?.formatted)}
           unit="wxHOPR"
           sub={`allowance ${short(balances.safeHoprAllowance?.formatted).toLowerCase()}`}
-          tip={`${balances.safeHopr?.formatted ?? '-'} wxHOPR stored on your Safe`}
+          tip={`${safeFunds.safe?.formatted ?? '-'} wxHOPR stored on your Safe`}
         />
         <Kpi
           label="Node channels"
@@ -408,6 +413,23 @@ function InfoPage() {
             actions={info?.hoprNodeSafe && <AddressLinks address={info.hoprNodeSafe} />}
           >
             {info?.hoprNodeSafe ? shortenAddress(info.hoprNodeSafe) : '-'}
+          </KV>
+          <KV
+            label="Blokli"
+            tip="The blokli indexer on-chain data is read from. Opens its GraphQL IDE"
+            mono
+          >
+            {blokliUrl ? (
+              <a
+                href={blokliGraphqlUrl(blokliUrl)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {blokliHost}
+              </a>
+            ) : (
+              '-'
+            )}
           </KV>
           <KV
             label="Announced"

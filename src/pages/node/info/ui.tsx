@@ -143,6 +143,10 @@ const SKV = styled.div`
       font-size: 0.85em;
     }
   }
+  .v a:hover {
+    color: var(--primary);
+    text-decoration: underline;
+  }
   .v.mono {
     font-family: var(--font-mono);
     font-weight: 450;

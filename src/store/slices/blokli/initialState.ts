@@ -1,4 +1,4 @@
-import type { ChannelStatsType, NodeChannelsType, SafeNodeType, TicketRedemptionType } from '../../../blokli';
+import type { NodeChannelsType, SafeChannelStatsType, SafeNodeType, TicketRedemptionType } from '../../../blokli';
 
 type InitialState = {
   // the node these figures belong to, used to drop results after a node switch
@@ -9,7 +9,7 @@ type InitialState = {
   // responses that belong to a previous url
   urlInUse: string | null;
   channelStats: {
-    data: ChannelStatsType | null;
+    data: SafeChannelStatsType | null;
     isFetching: boolean;
   };
   ticketRedemption: {

@@ -8,6 +8,7 @@ import {
   type BlokliChannelType,
   type ChannelStatsType,
   type NodeChannelsType,
+  type SafeChannelStatsType,
   type SafeNodeType,
   type TicketRedemptionType,
   type TokenValueString,
@@ -19,12 +20,29 @@ export type BlokliPayloadType = {
   timeout?: number;
 };
 
-const CHANNEL_STATS_QUERY = `
-  query AdminChannelStats($safeAddress: String!) {
-    channelStats(safeAddress: $safeAddress, status: OPEN) {
+const CHANNEL_STATS_RESULT = `{
       __typename
       ... on ChannelStats {
         count
+        balance
+      }
+      ... on InvalidAddressError {
+        code
+        message
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }`;
+
+const CHANNEL_STATS_QUERY = `
+  query AdminChannelStats($safeAddress: String!) {
+    channelStats(safeAddress: $safeAddress, status: OPEN) ${CHANNEL_STATS_RESULT}
+    closing: channelStats(safeAddress: $safeAddress, status: PENDINGTOCLOSE) ${CHANNEL_STATS_RESULT}
+    safeBalance: hoprBalance(address: $safeAddress) {
+      __typename
+      ... on HoprBalance {
         balance
       }
       ... on InvalidAddressError {
@@ -39,25 +57,36 @@ const CHANNEL_STATS_QUERY = `
   }
 `;
 
+const toChannelStats = (stats: { count: number; balance: TokenValueString }): ChannelStatsType => ({
+  count: stats.count,
+  ...parseTokenValue(stats.balance),
+});
+
 /**
- * Total wxHOPR held in the OPEN outgoing channels of every node registered to the safe.
- * The safeAddress filter is source-side only, so this is outgoing-only by definition,
- * and blokli does the sum server side - no need to enumerate the safe's nodes.
+ * wxHOPR in the OPEN outgoing channels of every node registered to the safe, and
+ * alongside it the closing channels and the safe's own balance, so a channel being
+ * opened or closed is counted on one side or the other. The safeAddress filter is
+ * source-side only, so this is outgoing-only by definition, and blokli does the sums
+ * server side - no need to enumerate the safe's nodes.
  */
 export const getChannelStats = async (
   payload: BlokliPayloadType & { safeAddress: string },
-): Promise<ChannelStatsType> => {
+): Promise<SafeChannelStatsType> => {
+  type StatsResult = { __typename?: string; count?: number; balance?: TokenValueString } | null;
   const data = await queryBlokli<{
-    channelStats: { __typename?: string; count?: number; balance?: TokenValueString } | null;
+    channelStats: StatsResult;
+    closing: StatsResult;
+    safeBalance: { __typename?: string; balance?: TokenValueString } | null;
   }>(payload.blokliUrl, CHANNEL_STATS_QUERY, { safeAddress: payload.safeAddress }, payload.timeout);
 
-  const stats = unwrapUnion<{ count: number; balance: TokenValueString }>(data.channelStats, 'ChannelStats');
-  const balance = parseTokenValue(stats.balance);
+  const open = unwrapUnion<{ count: number; balance: TokenValueString }>(data.channelStats, 'ChannelStats');
+  const closing = tryUnwrapUnion<{ count: number; balance: TokenValueString }>(data.closing, 'ChannelStats');
+  const safeBalance = tryUnwrapUnion<{ balance: TokenValueString }>(data.safeBalance, 'HoprBalance');
 
   return {
-    count: stats.count,
-    value: balance.value,
-    formatted: balance.formatted,
+    ...toChannelStats(open),
+    closing: closing ? toChannelStats(closing) : null,
+    safeBalance: safeBalance ? parseTokenValue(safeBalance.balance) : null,
   };
 };
 

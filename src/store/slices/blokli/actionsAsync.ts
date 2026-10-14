@@ -2,7 +2,7 @@ import { ActionReducerMapBuilder, createAsyncThunk } from '@reduxjs/toolkit';
 import {
   api,
   utils,
-  type ChannelStatsType,
+  type SafeChannelStatsType,
   type NodeChannelsType,
   type SafeNodeType,
   type TicketRedemptionType,
@@ -24,7 +24,7 @@ type BlokliThunkPayload = {
 };
 
 const getChannelStatsThunk = createAsyncThunk<
-  ChannelStatsType | undefined,
+  SafeChannelStatsType | undefined,
   BlokliThunkPayload & { safeAddress: string },
   { state: RootState }
 >(

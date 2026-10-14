@@ -16,6 +16,7 @@ export type {
   BlokliChannelStatus,
   BlokliChannelType,
   ChannelStatsType,
+  SafeChannelStatsType,
   NodeChannelsType,
   SafeNodeType,
   TicketRedemptionType,

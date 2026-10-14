@@ -17,6 +17,13 @@ export type ChannelStatsType = {
   formatted: string;
 };
 
+// the safe's funds read in one blokli request, so they add up to a consistent total
+export type SafeChannelStatsType = ChannelStatsType & {
+  // PENDINGTOCLOSE channels keep their funds until the closure is finalized
+  closing: ChannelStatsType | null;
+  safeBalance: TokenValueType | null;
+};
+
 export type TicketRedemptionType = {
   redeemed: TokenValueType;
   redemptionCount: string;

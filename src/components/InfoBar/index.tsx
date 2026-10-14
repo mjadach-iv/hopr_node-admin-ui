@@ -6,7 +6,7 @@ import { Popover } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useAppSelector } from '../../store';
-import { sumSafeNodes } from '../../store/selectors/blokli';
+import { selectSafeFunds, sumSafeNodes } from '../../store/selectors/blokli';
 import { shrinkNumber } from '../../utils/amount';
 import { StatusPill } from '../StatusPill';
 
@@ -22,15 +22,10 @@ type WalletItem = { key: string; label: string; long: string; value?: string | n
 export const useWallet = () => {
   const balances = useAppSelector((store) => store.node.balances.data);
   const info = useAppSelector((store) => store.node.info.data);
-  const safeChannelsOut = useAppSelector((store) => store.blokli.channelStats.data);
+  const safeFunds = useAppSelector(selectSafeFunds);
   const safeNodes = useAppSelector((store) => store.blokli.safeNodes.data);
   const redeemed = sumSafeNodes(safeNodes, 'redeemed');
   const spent = sumSafeNodes(safeNodes, 'spent');
-
-  const total =
-    safeChannelsOut?.value && balances.safeHopr?.value
-      ? formatEther(BigInt(safeChannelsOut.value) + BigInt(balances.safeHopr?.value))
-      : null;
 
   let xDaiLevel: Level = '';
   if (balances.native.value && BigInt(balances.native.value) < BigInt('1000000000000000')) xDaiLevel = 'low';
@@ -49,12 +44,12 @@ export const useWallet = () => {
       },
     ] as WalletItem[],
     safe: [
-      { key: 'safe', label: 'Safe', long: 'wxHOPR · safe', value: balances.safeHopr?.formatted, unit: 'wxHOPR' },
+      { key: 'safe', label: 'Safe', long: 'wxHOPR · safe', value: safeFunds.safe?.formatted, unit: 'wxHOPR' },
       {
         key: 'channels',
         label: 'Safe channels',
         long: 'In safe channels',
-        value: safeChannelsOut?.formatted,
+        value: safeFunds.channels?.formatted,
         unit: 'wxHOPR',
       },
       {
@@ -71,7 +66,7 @@ export const useWallet = () => {
         value: spent === null ? null : formatEther(spent),
         unit: 'wxHOPR',
       },
-      { key: 'total', label: 'Total', long: 'Total staked', value: total, unit: 'wxHOPR' },
+      { key: 'total', label: 'Total', long: 'Total staked', value: safeFunds.total?.formatted, unit: 'wxHOPR' },
     ] as WalletItem[],
   };
 };
