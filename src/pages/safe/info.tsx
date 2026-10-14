@@ -14,7 +14,7 @@ import { shortenAddress } from '../../utils/amount';
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
 import { WithUnit } from '../../components/Unit';
-import { AddressLinks, Card, KV, Kpi, KpiGrid, Stat, Stats, short } from '../node/info/ui';
+import { AddressLinks, Card, KV, Kpi, KpiGrid, SafeWalletLink, Stat, Stats, short } from '../node/info/ui';
 
 // same columns as the node page's CardGrid (min 360px, max 3), but filled left to right
 const CardRow = styled.div`
@@ -207,14 +207,8 @@ function SafeInfoPage() {
             tip="Your safe's Ethereum address"
             mono
             title={safeAddress ?? ''}
-            actions={
-              safeAddress && (
-                <AddressLinks
-                  address={safeAddress}
-                  safe
-                />
-              )
-            }
+            leading={safeAddress && <SafeWalletLink safeAddress={safeAddress} />}
+            actions={safeAddress && <AddressLinks address={safeAddress} />}
           >
             {safeAddress ? shortenAddress(safeAddress) : '-'}
           </KV>

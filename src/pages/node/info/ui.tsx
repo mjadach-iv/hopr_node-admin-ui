@@ -20,7 +20,7 @@ const noCopyPaste = !(
   window.location.hostname === '127.0.0.1'
 );
 
-export const AddressLinks = ({ address, safe }: { address: string; safe?: boolean }) => (
+export const AddressLinks = ({ address }: { address: string }) => (
   <>
     <SmallActionButton
       onClick={() => navigator.clipboard.writeText(address)}
@@ -37,23 +37,24 @@ export const AddressLinks = ({ address, safe }: { address: string; safe?: boolea
         <LaunchIcon />
       </Link>
     </SmallActionButton>
-    {safe && (
-      <SmallActionButton tooltip={'Open in Safe{Wallet}'}>
-        <Link
-          to={`https://app.safe.global/apps/open?safe=gno:${address}`}
-          target="_blank"
-        >
-          <img
-            src="/assets/safe-global-favicon.png"
-            alt="Safe{Wallet}"
-            width={15}
-            height={15}
-            style={{ display: 'block' }}
-          />
-        </Link>
-      </SmallActionButton>
-    )}
   </>
+);
+
+export const SafeWalletLink = ({ safeAddress }: { safeAddress: string }) => (
+  <SmallActionButton tooltip={'Open in Safe{Wallet}'}>
+    <Link
+      to={`https://app.safe.global/apps/open?safe=gno:${safeAddress}`}
+      target="_blank"
+    >
+      <img
+        src="/assets/safe-global-favicon.png"
+        alt="Safe{Wallet}"
+        width={15}
+        height={15}
+        style={{ display: 'block' }}
+      />
+    </Link>
+  </SmallActionButton>
 );
 
 /** Masonry of cards: 1-3 columns depending on the width, cards never split. */
@@ -150,6 +151,9 @@ const SKV = styled.div`
   .v > span:not(.unit):not(.sub) {
     vertical-align: middle;
   }
+  .leading {
+    margin-right: 4px;
+  }
   .unit,
   .sub {
     margin-left: 3px;
@@ -176,6 +180,7 @@ export const KV = ({
   children,
   mono,
   title,
+  leading,
   actions,
 }: {
   label: ReactNode;
@@ -184,7 +189,8 @@ export const KV = ({
   mono?: boolean;
   // full value shown on hover when the cell is shortened
   title?: string;
-  // buttons after the value, outside its title tooltip
+  // buttons before and after the value, outside its title tooltip
+  leading?: ReactNode;
   actions?: ReactNode;
 }) => (
   <SKV className="KV">
@@ -196,6 +202,7 @@ export const KV = ({
       <span className="k">{label}</span>
     </Tooltip>
     <span className={`v ${mono ? 'mono' : ''}`}>
+      {leading && <span className="leading">{leading}</span>}
       <Tooltip title={title ?? ''}>
         <span>{children ?? '-'}</span>
       </Tooltip>

@@ -26,7 +26,7 @@ import { useUptime } from './node-uptime';
 import Traffic from './traffic';
 import Transport from './transport';
 import NetworkDashboard from './networkDashboard';
-import { AddressLinks, Card, CardGrid, KV, Kpi, KpiGrid, short } from './ui';
+import { AddressLinks, Card, CardGrid, KV, Kpi, KpiGrid, SafeWalletLink, short } from './ui';
 
 function InfoPage() {
   const dispatch = useAppDispatch();
@@ -383,14 +383,8 @@ function InfoPage() {
             tip="Your safe's Ethereum address"
             mono
             title={info?.hoprNodeSafe ?? ''}
-            actions={
-              info?.hoprNodeSafe && (
-                <AddressLinks
-                  address={info.hoprNodeSafe}
-                  safe
-                />
-              )
-            }
+            leading={info?.hoprNodeSafe && <SafeWalletLink safeAddress={info.hoprNodeSafe} />}
+            actions={info?.hoprNodeSafe && <AddressLinks address={info.hoprNodeSafe} />}
           >
             {info?.hoprNodeSafe ? shortenAddress(info.hoprNodeSafe) : '-'}
           </KV>
