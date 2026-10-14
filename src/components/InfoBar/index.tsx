@@ -20,8 +20,15 @@ export const useWallet = () => {
   const balances = useAppSelector((store) => store.node.balances.data);
   const info = useAppSelector((store) => store.node.info.data);
   const safeChannelsOut = useAppSelector((store) => store.blokli.channelStats.data);
-  const redeemed = useAppSelector((store) => store.blokli.ticketRedemption.data?.redeemed.formatted);
-  const spent = useAppSelector((store) => store.blokli.nodeChannels.data?.spent?.formatted);
+  const safeNodes = useAppSelector((store) => store.blokli.safeNodes.data);
+
+  // null when any safe node's figure is missing, so a partial sum never passes for the whole safe
+  const sumSafeNodes = (key: 'redeemed' | 'spent') =>
+    safeNodes?.length && safeNodes.every((node) => node[key])
+      ? formatEther(safeNodes.reduce((sum, node) => sum + BigInt(node[key]!.value), BigInt(0)))
+      : null;
+  const redeemed = sumSafeNodes('redeemed');
+  const spent = sumSafeNodes('spent');
 
   const total =
     safeChannelsOut?.value && balances.safeHopr?.value
@@ -51,8 +58,8 @@ export const useWallet = () => {
         value: safeChannelsOut?.formatted,
         unit: 'wxHOPR',
       },
-      { key: 'earned', label: 'Earned', long: 'Node earned', value: redeemed, unit: 'wxHOPR' },
-      { key: 'spent', label: 'Spent', long: 'Node spent', value: spent, unit: 'wxHOPR' },
+      { key: 'earned', label: 'Earned', long: 'Safe earned', value: redeemed, unit: 'wxHOPR' },
+      { key: 'spent', label: 'Spent', long: 'Safe spent', value: spent, unit: 'wxHOPR' },
       { key: 'total', label: 'Total', long: 'Total staked', value: total, unit: 'wxHOPR' },
     ] as { key: string; label: string; long: string; value?: string | null; unit: string; level?: Level }[],
   };
