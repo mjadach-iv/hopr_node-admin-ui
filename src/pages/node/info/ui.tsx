@@ -152,7 +152,7 @@ const SKV = styled.div`
     vertical-align: middle;
   }
   .leading {
-    margin-right: 4px;
+    margin-right: 3px;
   }
   .unit,
   .sub {
