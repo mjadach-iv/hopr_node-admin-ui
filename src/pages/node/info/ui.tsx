@@ -2,6 +2,43 @@ import type { ReactNode } from 'react';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import Tooltip from '../../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
+import SmallActionButton from '../../../future-hopr-lib-components/Button/SmallActionButton';
+import { shrinkNumber } from '../../../utils/amount';
+import CopyIcon from '@mui/icons-material/ContentCopy';
+import LaunchIcon from '@mui/icons-material/Launch';
+
+// allowances are usually set to 'unlimited', a 27 digit number says nothing
+export const short = (value?: string | null) => {
+  if (!value) return '-';
+  if (Number(value) > 1e12) return 'Unlimited';
+  return shrinkNumber(value);
+};
+
+const noCopyPaste = !(
+  window.location.protocol === 'https:' ||
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+);
+
+export const AddressLinks = ({ address }: { address: string }) => (
+  <>
+    <SmallActionButton
+      onClick={() => navigator.clipboard.writeText(address)}
+      disabled={noCopyPaste}
+      tooltip={noCopyPaste ? 'Clipboard not supported on HTTP' : 'Copy'}
+    >
+      <CopyIcon />
+    </SmallActionButton>
+    <SmallActionButton tooltip={'Open in gnosisscan.io'}>
+      <Link
+        to={`https://gnosisscan.io/address/${address}`}
+        target="_blank"
+      >
+        <LaunchIcon />
+      </Link>
+    </SmallActionButton>
+  </>
+);
 
 /** Masonry of cards: 1-3 columns depending on the width, cards never split. */
 export const CardGrid = styled.div`

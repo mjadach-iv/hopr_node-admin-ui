@@ -1,7 +1,5 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store';
-import { Link } from 'react-router-dom';
-import { copyStringToClipboard } from '../../../utils/functions';
 import { formatEther } from 'viem';
 
 // Mui
@@ -17,12 +15,10 @@ import { selectBlokliUrl } from '../../../store/selectors/blokli';
 import { SubpageTitle } from '../../../components/SubpageTitle';
 import WithdrawModal from '../../../components/Modal/node/WithdrawModal';
 import SmallActionButton from '../../../future-hopr-lib-components/Button/SmallActionButton';
-import { shortenAddress, shrinkNumber } from '../../../utils/amount';
+import { shortenAddress } from '../../../utils/amount';
 import IconButton from '../../../future-hopr-lib-components/Button/IconButton';
 
 //Icons
-import CopyIcon from '@mui/icons-material/ContentCopy';
-import LaunchIcon from '@mui/icons-material/Launch';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 
 //Info Components
@@ -30,40 +26,7 @@ import { useUptime } from './node-uptime';
 import Traffic from './traffic';
 import Transport from './transport';
 import NetworkDashboard from './networkDashboard';
-import { Card, CardGrid, KV, Kpi, KpiGrid } from './ui';
-
-// allowances are usually set to 'unlimited', a 27 digit number says nothing
-const short = (value?: string | null) => {
-  if (!value) return '-';
-  if (Number(value) > 1e12) return 'Unlimited';
-  return shrinkNumber(value);
-};
-
-const noCopyPaste = !(
-  window.location.protocol === 'https:' ||
-  window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1'
-);
-
-const AddressLinks = ({ address }: { address: string }) => (
-  <>
-    <SmallActionButton
-      onClick={() => navigator.clipboard.writeText(address)}
-      disabled={noCopyPaste}
-      tooltip={noCopyPaste ? 'Clipboard not supported on HTTP' : 'Copy'}
-    >
-      <CopyIcon />
-    </SmallActionButton>
-    <SmallActionButton tooltip={'Open in gnosisscan.io'}>
-      <Link
-        to={`https://gnosisscan.io/address/${address}`}
-        target="_blank"
-      >
-        <LaunchIcon />
-      </Link>
-    </SmallActionButton>
-  </>
-);
+import { AddressLinks, Card, CardGrid, KV, Kpi, KpiGrid, short } from './ui';
 
 function InfoPage() {
   const dispatch = useAppDispatch();
@@ -237,7 +200,7 @@ function InfoPage() {
       yellow
     >
       <SubpageTitle
-        title="INFO"
+        title="NODE INFO"
         refreshFunction={fetchInfoData}
         reloading={isFetchingAnyData}
         actions={

@@ -4,6 +4,7 @@ import { environment } from '../config';
 // Sections
 import AliasesPage from './pages/node/aliases';
 import InfoPage from './pages/node/info';
+import SafeInfoPage from './pages/safe/info';
 import PeersPage from './pages/node/peers';
 import TicketsPage from './pages/node/tickets';
 import ChannelsPageIncoming from './pages/node/channelsIncoming';
@@ -58,7 +59,7 @@ export const applicationMapNode: ApplicationMapType = [
     icon: <NodeIcon />,
     items: [
       {
-        name: 'INFO',
+        name: 'NODE INFO',
         path: 'info',
         icon: <InfoIcon />,
         element: <InfoPage />,
@@ -136,6 +137,13 @@ export const applicationMapNode: ApplicationMapType = [
     path: 'safe',
     icon: <SafeIcon />,
     items: [
+      {
+        name: 'SAFE INFO',
+        path: 'info',
+        icon: <InfoIcon />,
+        element: <SafeInfoPage />,
+        loginNeeded: 'node',
+      },
       {
         name: 'NODES',
         path: 'nodes',
