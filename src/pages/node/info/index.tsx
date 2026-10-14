@@ -353,16 +353,18 @@ function InfoPage() {
             label="Provider"
             tip="The blokli provider address your node uses sync"
             mono
+            actions={
+              providerContainsSecret && (
+                <SmallActionButton
+                  tooltip={showWholeProvider ? 'Hide full URL' : 'Show full URL'}
+                  onClick={() => set_showWholeProvider(!showWholeProvider)}
+                >
+                  {showWholeProvider ? <Visibility /> : <VisibilityOff />}
+                </SmallActionButton>
+              )
+            }
           >
             {showWholeProvider ? provider : providerShort}
-            {providerContainsSecret && (
-              <SmallActionButton
-                tooltip={showWholeProvider ? 'Hide full URL' : 'Show full URL'}
-                onClick={() => set_showWholeProvider(!showWholeProvider)}
-              >
-                {showWholeProvider ? <Visibility /> : <VisibilityOff />}
-              </SmallActionButton>
-            )}
           </KV>
         </Card>
 
@@ -372,23 +374,25 @@ function InfoPage() {
             tip="Your node's Ethereum address"
             mono
             title={addresses?.native ?? ''}
+            actions={addresses?.native && <AddressLinks address={addresses.native} />}
           >
             {addresses?.native ? shortenAddress(addresses.native) : '-'}
-            {addresses?.native && <AddressLinks address={addresses.native} />}
           </KV>
           <KV
             label="Safe"
             tip="Your safe's Ethereum address"
             mono
             title={info?.hoprNodeSafe ?? ''}
+            actions={
+              info?.hoprNodeSafe && (
+                <AddressLinks
+                  address={info.hoprNodeSafe}
+                  safe
+                />
+              )
+            }
           >
             {info?.hoprNodeSafe ? shortenAddress(info.hoprNodeSafe) : '-'}
-            {info?.hoprNodeSafe && (
-              <AddressLinks
-                address={info.hoprNodeSafe}
-                safe
-              />
-            )}
           </KV>
           <KV
             label="Announced"

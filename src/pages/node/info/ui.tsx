@@ -176,6 +176,7 @@ export const KV = ({
   children,
   mono,
   title,
+  actions,
 }: {
   label: ReactNode;
   tip?: ReactNode;
@@ -183,6 +184,8 @@ export const KV = ({
   mono?: boolean;
   // full value shown on hover when the cell is shortened
   title?: string;
+  // buttons after the value, outside its title tooltip
+  actions?: ReactNode;
 }) => (
   <SKV className="KV">
     <Tooltip
@@ -192,9 +195,12 @@ export const KV = ({
     >
       <span className="k">{label}</span>
     </Tooltip>
-    <Tooltip title={title ?? ''}>
-      <span className={`v ${mono ? 'mono' : ''}`}>{children ?? '-'}</span>
-    </Tooltip>
+    <span className={`v ${mono ? 'mono' : ''}`}>
+      <Tooltip title={title ?? ''}>
+        <span>{children ?? '-'}</span>
+      </Tooltip>
+      {actions}
+    </span>
   </SKV>
 );
 

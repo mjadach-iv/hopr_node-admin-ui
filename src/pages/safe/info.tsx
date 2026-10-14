@@ -206,14 +206,16 @@ function SafeInfoPage() {
             tip="Your safe's Ethereum address"
             mono
             title={safeAddress ?? ''}
+            actions={
+              safeAddress && (
+                <AddressLinks
+                  address={safeAddress}
+                  safe
+                />
+              )
+            }
           >
             {safeAddress ? shortenAddress(safeAddress) : '-'}
-            {safeAddress && (
-              <AddressLinks
-                address={safeAddress}
-                safe
-              />
-            )}
           </KV>
           {(safeNodes ?? []).map((node) => (
             <KV
@@ -225,9 +227,9 @@ function SafeInfoPage() {
               tip="A node registered to your safe"
               mono
               title={node.nodeAddress}
+              actions={<AddressLinks address={node.nodeAddress} />}
             >
               {shortenAddress(node.nodeAddress)}
-              <AddressLinks address={node.nodeAddress} />
             </KV>
           ))}
         </Card>
