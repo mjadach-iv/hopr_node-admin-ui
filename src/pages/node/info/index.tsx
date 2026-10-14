@@ -99,6 +99,10 @@ function InfoPage() {
   const ticketRedemption = useAppSelector((store) => store.blokli.ticketRedemption.data);
   const ticketRedemptionFetching = useAppSelector((store) => store.blokli.ticketRedemption.isFetching);
   const safeNodes = useAppSelector((store) => store.blokli.safeNodes.data);
+  const safeNodesFetching = useAppSelector((store) => store.blokli.safeNodes.isFetching);
+  const nodeChannelsOut = safeNodes?.find(
+    (node) => node.nodeAddress.toLowerCase() === addresses?.native?.toLowerCase(),
+  )?.channels;
   const dashboardFetching = useAppSelector((store) => store.networkDashboard.nodes.isFetching);
   const [showWholeProvider, set_showWholeProvider] = useState(false);
   const [providerShort, set_providerShort] = useState('');
@@ -201,6 +205,7 @@ function InfoPage() {
     peersConnectedFetching,
     peersAnnouncedFetching,
     channelStatsFetching,
+    safeNodesFetching,
     ticketRedemptionFetching,
     dashboardFetching,
   ].includes(true);
@@ -308,11 +313,11 @@ function InfoPage() {
           tip={`${balances.safeHopr?.formatted ?? '-'} wxHOPR stored on your Safe`}
         />
         <Kpi
-          label="Safe channels"
-          value={short(safeChannelsOut?.formatted)}
+          label="Node channels"
+          value={short(nodeChannelsOut?.formatted)}
           unit="wxHOPR"
-          sub={safeChannelsOut ? `${safeChannelsOut.count} channels` : '-'}
-          tip="wxHOPR in the open outgoing channels of every node registered to your Safe. Read from blokli."
+          sub={nodeChannelsOut ? `${nodeChannelsOut.count} channels` : '-'}
+          tip="wxHOPR in this node's open outgoing channels. Read from blokli."
         />
         <Kpi
           label="Earned"
