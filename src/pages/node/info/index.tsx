@@ -259,6 +259,13 @@ function InfoPage() {
           tip="Connectivity status: Unknown right after start, Red no connection, Orange low quality, Yellow/Green high quality"
         />
         <Kpi
+          label="Node gas"
+          value={short(balances.native?.formatted)}
+          unit="xDAI"
+          sub={`safe ${short(balances.safeNative?.formatted)} xDAI`}
+          tip={`${balances.native?.formatted ?? '-'} xDAI on the node, used to pay for transactions`}
+        />
+        <Kpi
           label="Total staked"
           value={short(totalStaked)}
           unit="wxHOPR"
@@ -288,13 +295,6 @@ function InfoPage() {
           unit="wxHOPR"
           sub="redeemed on-chain"
           tip="wxHOPR this node redeemed from winning tickets. Read from blokli."
-        />
-        <Kpi
-          label="Node gas"
-          value={short(balances.native?.formatted)}
-          unit="xDAI"
-          sub={`safe ${short(balances.safeNative?.formatted)} xDAI`}
-          tip={`${balances.native?.formatted ?? '-'} xDAI on the node, used to pay for transactions`}
         />
         <Kpi
           label="Peers"
