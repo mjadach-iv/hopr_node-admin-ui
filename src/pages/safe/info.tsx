@@ -137,10 +137,12 @@ function SafeInfoPage() {
           value={short(totalStaked)}
           unit="wxHOPR"
           className="highlight"
-          sub="safe + safe channels"
+          sub={`${short(safeFunds.inTransit?.formatted)} wxHOPR in transit`}
           tip={`${
             totalStaked ?? '-'
-          } wxHOPR staked in your Safe and in the outgoing channels of every node registered to it`}
+          } wxHOPR staked in your Safe and in the outgoing channels of every node registered to it. ${
+            safeFunds.inTransit?.formatted ?? '-'
+          } wxHOPR of it is in transit: held by closing channels until their closure is finalized and the funds return to the Safe`}
         />
         <Kpi
           label="Safe"

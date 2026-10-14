@@ -41,6 +41,8 @@ export const selectSafeFunds = createSelector(
     return {
       safe,
       channels,
+      // funds of closing channels, on their way back to the safe
+      inTransit: stats?.closing ? { value: stats.closing.value, formatted: stats.closing.formatted } : null,
       openCount: stats?.count ?? null,
       closingCount: stats?.closing?.count ?? null,
       total: safe && channels ? toTokenValue(BigInt(safe.value) + BigInt(channels.value)) : null,
