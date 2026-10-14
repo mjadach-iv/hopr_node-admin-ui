@@ -208,7 +208,12 @@ function SafeInfoPage() {
             title={safeAddress ?? ''}
           >
             {safeAddress ? shortenAddress(safeAddress) : '-'}
-            {safeAddress && <AddressLinks address={safeAddress} />}
+            {safeAddress && (
+              <AddressLinks
+                address={safeAddress}
+                safe
+              />
+            )}
           </KV>
           {(safeNodes ?? []).map((node) => (
             <KV

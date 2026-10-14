@@ -383,7 +383,12 @@ function InfoPage() {
             title={info?.hoprNodeSafe ?? ''}
           >
             {info?.hoprNodeSafe ? shortenAddress(info.hoprNodeSafe) : '-'}
-            {info?.hoprNodeSafe && <AddressLinks address={info.hoprNodeSafe} />}
+            {info?.hoprNodeSafe && (
+              <AddressLinks
+                address={info.hoprNodeSafe}
+                safe
+              />
+            )}
           </KV>
           <KV
             label="Announced"

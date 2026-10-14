@@ -20,7 +20,7 @@ const noCopyPaste = !(
   window.location.hostname === '127.0.0.1'
 );
 
-export const AddressLinks = ({ address }: { address: string }) => (
+export const AddressLinks = ({ address, safe }: { address: string; safe?: boolean }) => (
   <>
     <SmallActionButton
       onClick={() => navigator.clipboard.writeText(address)}
@@ -37,6 +37,22 @@ export const AddressLinks = ({ address }: { address: string }) => (
         <LaunchIcon />
       </Link>
     </SmallActionButton>
+    {safe && (
+      <SmallActionButton tooltip={'Open in Safe{Wallet}'}>
+        <Link
+          to={`https://app.safe.global/apps/open?safe=gno:${address}`}
+          target="_blank"
+        >
+          <img
+            src="/assets/safe-global-favicon.png"
+            alt="Safe{Wallet}"
+            width={15}
+            height={15}
+            style={{ display: 'block' }}
+          />
+        </Link>
+      </SmallActionButton>
+    )}
   </>
 );
 
