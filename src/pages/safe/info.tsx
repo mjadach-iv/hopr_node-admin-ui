@@ -16,10 +16,11 @@ import { SubpageTitle } from '../../components/SubpageTitle';
 import { WithUnit } from '../../components/Unit';
 import { AddressLinks, Card, KV, Kpi, KpiGrid, Stat, Stats, short } from '../node/info/ui';
 
-// cards side by side while each gets 360px, unlike the node page's masonry columns
+// same columns as the node page's CardGrid (min 360px, max 3), but filled left to right
 const CardRow = styled.div`
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, max(360px, calc((100% - 24px) / 3 - 1px))), 1fr));
   align-items: start;
   gap: 12px;
 `;
