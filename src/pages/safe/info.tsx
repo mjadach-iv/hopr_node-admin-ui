@@ -191,6 +191,33 @@ function SafeInfoPage() {
       </KpiGrid>
 
       <CardGrid>
+        <Card title="Addresses">
+          <KV
+            label="Safe"
+            tip="Your safe's Ethereum address"
+            mono
+            title={safeAddress ?? ''}
+          >
+            {safeAddress ? shortenAddress(safeAddress) : '-'}
+            {safeAddress && <AddressLinks address={safeAddress} />}
+          </KV>
+          {(safeNodes ?? []).map((node) => (
+            <KV
+              key={node.nodeAddress}
+              label={
+                aliases?.[node.nodeAddress] ??
+                (node.nodeAddress.toLowerCase() === nodeAddress?.toLowerCase() ? 'This node' : 'Node')
+              }
+              tip="A node registered to your safe"
+              mono
+              title={node.nodeAddress}
+            >
+              {shortenAddress(node.nodeAddress)}
+              <AddressLinks address={node.nodeAddress} />
+            </KV>
+          ))}
+        </Card>
+
         <Card
           title="Network dashboard"
           extra={
@@ -253,33 +280,6 @@ function SafeInfoPage() {
               </KV>
             </>
           )}
-        </Card>
-
-        <Card title="Addresses">
-          <KV
-            label="Safe"
-            tip="Your safe's Ethereum address"
-            mono
-            title={safeAddress ?? ''}
-          >
-            {safeAddress ? shortenAddress(safeAddress) : '-'}
-            {safeAddress && <AddressLinks address={safeAddress} />}
-          </KV>
-          {(safeNodes ?? []).map((node) => (
-            <KV
-              key={node.nodeAddress}
-              label={
-                aliases?.[node.nodeAddress] ??
-                (node.nodeAddress.toLowerCase() === nodeAddress?.toLowerCase() ? 'This node' : 'Node')
-              }
-              tip="A node registered to your safe"
-              mono
-              title={node.nodeAddress}
-            >
-              {shortenAddress(node.nodeAddress)}
-              <AddressLinks address={node.nodeAddress} />
-            </KV>
-          ))}
         </Card>
       </CardGrid>
     </Section>
