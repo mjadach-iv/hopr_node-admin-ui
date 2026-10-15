@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { formatEther } from 'viem';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { blokliActionsAsync } from '../../store/slices/blokli';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
@@ -81,6 +82,10 @@ function SafeNodesPage() {
   const parsedTableData = (safeNodes.data ?? []).map((safeNode, index) => {
     const nodeAddress = safeNode.nodeAddress;
     const stats = dashboardNodes.data?.byAddress[nodeAddress];
+    const net =
+      safeNode.redeemed && safeNode.spent
+        ? formatEther(BigInt(safeNode.redeemed.value) - BigInt(safeNode.spent.value))
+        : null;
     return {
       id: nodeAddress,
       key: index.toString(),
@@ -105,6 +110,13 @@ function SafeNodesPage() {
           unit="wxHOPR"
         />
       ),
+      net: (
+        <TokenAmount
+          value={net}
+          unit="wxHOPR"
+        />
+      ),
+      netValue: net,
       redeemed: (
         <TokenAmount
           value={safeNode.redeemed?.formatted}
@@ -203,6 +215,13 @@ function SafeNodesPage() {
       name: 'In channels',
       sortKey: 'channelsFundsValue',
       align: 'right' as const,
+    },
+    {
+      key: 'net',
+      name: 'Net',
+      sortKey: 'netValue',
+      align: 'right' as const,
+      tooltipHeader: 'Earned - spent',
     },
     {
       key: 'redeemed',

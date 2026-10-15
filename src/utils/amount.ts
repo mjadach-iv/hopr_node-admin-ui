@@ -6,6 +6,11 @@ import numbro from 'numbro';
  */
 export function shrinkNumber(value?: string | number | null): string {
   if (value === undefined || value === null || value === '') return '-';
+  // numbro floors away from zero, so negatives shrink as their absolute value
+  if (typeof value === 'string' ? value.trim().startsWith('-') : value < 0) {
+    const shrank = shrinkNumber(typeof value === 'string' ? value.trim().slice(1) : -value);
+    return shrank.startsWith('~') ? '~-' + shrank.slice(1) : '-' + shrank;
+  }
   let originalValue;
   if (typeof value === 'string') {
     originalValue = parseFloat(value);

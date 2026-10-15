@@ -1,4 +1,5 @@
 import { useState, useEffect, type CSSProperties } from 'react';
+import { formatEther } from 'viem';
 import { useAppDispatch, useAppSelector } from '../../../store';
 
 // Mui
@@ -11,7 +12,7 @@ import Section from '../../../future-hopr-lib-components/Section';
 import { actionsAsync as nodeActionsAsync } from '../../../store/slices/node/actionsAsync';
 import { fetchBlokliData } from '../../../store/slices/blokli/fetchBlokliData';
 import { fetchNetworkDashboardData } from '../../../store/slices/networkDashboard/fetchNetworkDashboardData';
-import { selectBlokliUrl, selectSafeFunds } from '../../../store/selectors/blokli';
+import { selectBlokliUrl } from '../../../store/selectors/blokli';
 import { blokliGraphqlUrl } from '../../../blokli/client';
 import { SubpageTitle } from '../../../components/SubpageTitle';
 import WithdrawModal from '../../../components/Modal/node/WithdrawModal';
@@ -69,15 +70,14 @@ function InfoPage() {
       return blokliUrl;
     }
   })();
-  const safeFunds = useAppSelector(selectSafeFunds);
   const channelStatsFetching = useAppSelector((store) => store.blokli.channelStats.isFetching);
   const ticketRedemption = useAppSelector((store) => store.blokli.ticketRedemption.data);
   const ticketRedemptionFetching = useAppSelector((store) => store.blokli.ticketRedemption.isFetching);
   const safeNodes = useAppSelector((store) => store.blokli.safeNodes.data);
   const safeNodesFetching = useAppSelector((store) => store.blokli.safeNodes.isFetching);
-  const nodeChannelsOut = safeNodes?.find(
-    (node) => node.nodeAddress.toLowerCase() === addresses?.native?.toLowerCase(),
-  )?.channels;
+  const safeNode = safeNodes?.find((node) => node.nodeAddress.toLowerCase() === addresses?.native?.toLowerCase());
+  const nodeChannelsOut = safeNode?.channels;
+  const nodeSpent = safeNode?.spent;
   const dashboardFetching = useAppSelector((store) => store.networkDashboard.nodes.isFetching);
   const [showWholeProvider, set_showWholeProvider] = useState(false);
   const [providerShort, set_providerShort] = useState('');
@@ -185,7 +185,7 @@ function InfoPage() {
     dashboardFetching,
   ].includes(true);
 
-  const totalStaked = safeFunds.total?.formatted ?? null;
+  const net = ticketRedemption && nodeSpent ? BigInt(ticketRedemption.redeemed.value) - BigInt(nodeSpent.value) : null;
 
   // check if user is logged in
   if (!apiEndpoint) {
@@ -292,25 +292,6 @@ function InfoPage() {
           tip={`${balances.native?.formatted ?? '-'} xDAI on the node, used to pay for transactions`}
         />
         <Kpi
-          label="Total staked"
-          value={short(totalStaked)}
-          unit="wxHOPR"
-          className="highlight"
-          sub={`${short(safeFunds.inTransit?.formatted)} wxHOPR in transit`}
-          tip={`${
-            totalStaked ?? '-'
-          } wxHOPR staked in your Safe and in the outgoing channels of every node registered to it. ${
-            safeFunds.inTransit?.formatted ?? '-'
-          } wxHOPR of it is in transit: held by closing channels until their closure is finalized and the funds return to the Safe`}
-        />
-        <Kpi
-          label="Safe"
-          value={short(safeFunds.safe?.formatted)}
-          unit="wxHOPR"
-          sub={`allowance ${short(balances.safeHoprAllowance?.formatted).toLowerCase()}`}
-          tip={`${safeFunds.safe?.formatted ?? '-'} wxHOPR stored on your Safe`}
-        />
-        <Kpi
           label="Node channels"
           value={short(nodeChannelsOut?.formatted)}
           unit="wxHOPR"
@@ -318,11 +299,32 @@ function InfoPage() {
           tip="wxHOPR in this node's open outgoing channels. Read from blokli."
         />
         <Kpi
+          label="Net"
+          value={
+            net !== null && net < BigInt(0)
+              ? `-${short(formatEther(-net))}`
+              : short(net === null ? null : formatEther(net))
+          }
+          unit="wxHOPR"
+          className={net === null ? '' : net < BigInt(0) ? 'tone-red' : 'tone-green'}
+          sub="earned - spent"
+          tip={`${net === null ? '-' : formatEther(net)} wxHOPR this node earned beyond what it spent`}
+        />
+        <Kpi
           label="Earned"
           value={short(ticketRedemption?.redeemed.formatted)}
           unit="wxHOPR"
           sub="redeemed on-chain"
           tip="wxHOPR this node redeemed from winning tickets. Read from blokli."
+        />
+        <Kpi
+          label="Spent"
+          value={short(nodeSpent?.formatted)}
+          unit="wxHOPR"
+          sub="redeemed by counterparties"
+          tip={`${
+            nodeSpent?.formatted ?? '-'
+          } wxHOPR redeemed from the channels this node opened, closed ones included`}
         />
         <Kpi
           label="Peers"

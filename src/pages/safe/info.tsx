@@ -163,6 +163,14 @@ function SafeInfoPage() {
           tip="wxHOPR in the outgoing channels of every node registered to your Safe, closing ones included until their funds return to the Safe. Read from blokli."
         />
         <Kpi
+          label="Net"
+          value={net !== null && net < BigInt(0) ? `-${short(formatEther(-net))}` : short(toFormatted(net))}
+          unit="wxHOPR"
+          className={net === null ? '' : net < BigInt(0) ? 'tone-red' : 'tone-green'}
+          sub="earned - spent"
+          tip={`${toFormatted(net) ?? '-'} wxHOPR the safe's nodes earned beyond what they spent`}
+        />
+        <Kpi
           label="Earned"
           value={short(toFormatted(earned))}
           unit="wxHOPR"
@@ -177,14 +185,6 @@ function SafeInfoPage() {
           tip={`${
             toFormatted(spent) ?? '-'
           } wxHOPR redeemed from the channels the safe's nodes opened, closed ones included`}
-        />
-        <Kpi
-          label="Net"
-          value={net !== null && net < BigInt(0) ? `-${short(formatEther(-net))}` : short(toFormatted(net))}
-          unit="wxHOPR"
-          className={net === null ? '' : net < BigInt(0) ? 'tone-red' : 'tone-green'}
-          sub="earned - spent"
-          tip={`${toFormatted(net) ?? '-'} wxHOPR the safe's nodes earned beyond what they spent`}
         />
         <Kpi
           label="Nodes"

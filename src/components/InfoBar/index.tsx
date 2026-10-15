@@ -26,6 +26,7 @@ export const useWallet = () => {
   const safeNodes = useAppSelector((store) => store.blokli.safeNodes.data);
   const redeemed = sumSafeNodes(safeNodes, 'redeemed');
   const spent = sumSafeNodes(safeNodes, 'spent');
+  const net = redeemed !== null && spent !== null ? redeemed - spent : null;
 
   let xDaiLevel: Level = '';
   if (balances.native.value && BigInt(balances.native.value) < BigInt('1000000000000000')) xDaiLevel = 'low';
@@ -53,17 +54,10 @@ export const useWallet = () => {
         unit: 'wxHOPR',
       },
       {
-        key: 'earned',
-        label: 'Earned',
-        long: 'Safe earned',
-        value: redeemed === null ? null : formatEther(redeemed),
-        unit: 'wxHOPR',
-      },
-      {
-        key: 'spent',
-        label: 'Spent',
-        long: 'Safe spent',
-        value: spent === null ? null : formatEther(spent),
+        key: 'net',
+        label: 'Net',
+        long: 'Safe net (earned - spent)',
+        value: net === null ? null : formatEther(net),
         unit: 'wxHOPR',
       },
       { key: 'total', label: 'Total', long: 'Total staked', value: safeFunds.total?.formatted, unit: 'wxHOPR' },
@@ -165,8 +159,7 @@ const Chip = styled.button`
   /* fewer figures as the bar gets narrower, the rest is one click away */
   @media (max-width: 1280px) {
     .stat.channels,
-    .stat.earned,
-    .stat.spent {
+    .stat.net {
       display: none;
     }
   }
