@@ -1,5 +1,70 @@
 # Changelog
 
+## 5.0.0-alpha.7
+
+Changes since 5.0.0-alpha.6.
+
+### Changed
+
+- The header's safe chip and its breakdown show Net (earned - spent) in place of Earned and Spent.
+- NODE INFO: Total staked and the Safe tile are gone. After Node gas come Node channels, Net, Earned and Spent, all for this node.
+- SAFE INFO: Net moves to the fourth tile, before Earned and Spent.
+- SAFE → NODES: a Net column before Earned and Spent.
+
+### Fixed
+
+- Shortened negative amounts were rounded away from zero, so -0.0001 showed as -0.01.
+
+## 5.0.0-alpha.6
+
+Changes since 5.0.0-alpha.5.
+
+### Added
+
+- SAFE INFO page, above Nodes in the safe menu, laid out like node info: total staked, safe balance and channels, earned, spent and net over all safe nodes, the node count with a low xDAI warning, combined gas, the network dashboard's availability and throughput across the nodes, and the safe and node addresses. INFO in the node menu becomes NODE INFO.
+- NODE INFO tells you when a newer stable hoprd is released: a warning triangle next to the outdated version, shown in orange, with the new version in its tooltip, and a notification once per node and release if node info notifications are on. Checked at most every 6 hours.
+- The safe address on node and safe info opens the safe in Safe{Wallet}.
+- NODE INFO: a Blokli row under Safe in the addresses card, showing the host and opening blokli's GraphiQL IDE.
+- Total staked on node and safe info shows how much of it is in transit, held by closing channels until their closure is finalized.
+
+### Changed
+
+- The header's wallet chip is split in two: the node chip with connectivity and xDAI, the safe chip with the safe balance, channels, earned, spent and total. Each opens its own breakdown, and the mobile menu shows both.
+- Earned and Spent in the header sum every node registered to the safe. They show "-" until every node's figure is known.
+- Total staked and safe channels include closing channels, whose funds stay locked until the closure is finalized. The safe, channel and total figures come from one blokli response, so funds moving between the safe and a channel are not lost from the total. SAFE INFO lists closing channels next to the channel count.
+- NODE INFO: the channels tile shows this node's open outgoing channels instead of the whole safe's, and Node gas comes right after Status.
+- The update dialog's `docker run` command uses the admin UI's actual host port, or 4677 when served on 80/443.
+
+### Removed
+
+- NAT status on NODE INFO: libp2p autonat reports Private for nodes that peers do reach.
+
+### Fixed
+
+- Address tooltips no longer cover the copy and explorer buttons next to the address.
+
+## 5.0.0-alpha.5
+
+Changes since 5.0.0-alpha.4.
+
+### Added
+
+- Tables sort by clicking a column header. Numbers sort numerically and empty values go last.
+- Spent next to Earned in the header: what counterparties redeemed from the node's outgoing channels, closed channels and earlier epochs included, read from the HoprChannels events.
+- SAFE → NODES: a Spent column for each safe node, closed channels included.
+- CHANNELS: the closed channels title is always shown, with its show/hide toggle next to it, and the choice is remembered. Closed channel rows get the ping, alias, channel and session actions.
+
+### Changed
+
+- Channel tables show the exact amount spent and earned per channel over all its epochs, closed channels included, instead of the ticket index × ticket price estimate, which undercounted multi-hop tickets. The estimate remains as a fallback, marked ≈, when the chain cannot be read.
+- Channel events are requested in chunks of 200 channels, so safes with many nodes and channels can be read from public RPCs.
+- The Scalar icon on NODE INFO is drawn in the primary yellow like the other icons, and the node dropdown button sits 8px further from the edge.
+
+### Fixed
+
+- SAFE → NODES loads the network dashboard figures for every safe node when the page opens, not only for the connected node.
+- ALIASES: the last update date stays on one line.
+
 ## 5.0.0-alpha.4
 
 Changes since 5.0.0-alpha.3.
