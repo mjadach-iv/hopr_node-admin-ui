@@ -10,6 +10,12 @@ Changes since 5.0.0-alpha.6.
 - NODE INFO: Total staked and the Safe tile are gone. After Node gas come Node channels, Net, Earned and Spent, all for this node.
 - SAFE INFO: Net moves to the fourth tile, before Earned and Spent.
 - SAFE → NODES: a Net column before Earned and Spent.
+- CHANNELS: closing channels count down to when they can be closed ("closable in 1:15"), with the exact time on hover.
+- NODE INFO: the Blokli row in the addresses card is renamed Blokli provider and shows the URL scheme, e.g. `https://`.
+
+### Removed
+
+- NODE INFO: the Provider row in the Node & network card.
 
 ### Fixed
 

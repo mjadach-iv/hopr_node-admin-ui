@@ -17,12 +17,12 @@ import CloseChannelIcon from '../../future-hopr-lib-components/Icons/CloseChanne
 import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
 import { TokenAmount } from '../../components/TokenAmount';
-import { StatusPill } from '../../components/StatusPill';
 import {
   useBlokliChannels,
   blokliChannelHeader,
   blokliChannelCells,
   statusWithClosure,
+  ChannelStatus,
   ClosedChannelsTable,
 } from '../../components/BlokliChannels';
 
@@ -247,7 +247,12 @@ function ChannelsPage() {
         ),
         peerAddress: getAliasByPeerAddress(peerAddress as string),
         statusText: statusWithClosure(channelsOutgoingObject[id].status as string, blokliChannel),
-        status: <StatusPill status={statusWithClosure(channelsOutgoingObject[id].status as string, blokliChannel)} />,
+        status: (
+          <ChannelStatus
+            status={channelsOutgoingObject[id].status as string}
+            channel={blokliChannel}
+          />
+        ),
         fundsValue: channelsOutgoingObject[id].balance,
         funds: (
           <TokenAmount

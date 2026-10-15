@@ -1,10 +1,8 @@
-import { useState, useEffect, type CSSProperties } from 'react';
+import { useEffect, type CSSProperties } from 'react';
 import { formatEther } from 'viem';
 import { useAppDispatch, useAppSelector } from '../../../store';
 
 // Mui
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Visibility from '@mui/icons-material/Visibility';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 // HOPR Components
@@ -16,7 +14,6 @@ import { selectBlokliUrl } from '../../../store/selectors/blokli';
 import { blokliGraphqlUrl } from '../../../blokli/client';
 import { SubpageTitle } from '../../../components/SubpageTitle';
 import WithdrawModal from '../../../components/Modal/node/WithdrawModal';
-import SmallActionButton from '../../../future-hopr-lib-components/Button/SmallActionButton';
 import { shortenAddress } from '../../../utils/amount';
 import { useHoprdUpdate } from '../../../hooks/useHoprdUpdate';
 import IconButton from '../../../future-hopr-lib-components/Button/IconButton';
@@ -62,10 +59,10 @@ function InfoPage() {
   const minimumNetworkProbability = useAppSelector((store) => store.node.probability.data);
   // blokli: safe wide channel stake and this node's on chain ticket redemptions
   const blokliUrl = useAppSelector(selectBlokliUrl);
-  // host only, the url may carry an api key in its path like the provider
-  const blokliHost = (() => {
+  // origin only, the url may carry an api key in its path
+  const blokliOrigin = (() => {
     try {
-      return blokliUrl ? new URL(blokliUrl).host : null;
+      return blokliUrl ? new URL(blokliUrl).origin : null;
     } catch {
       return blokliUrl;
     }
@@ -79,31 +76,9 @@ function InfoPage() {
   const nodeChannelsOut = safeNode?.channels;
   const nodeSpent = safeNode?.spent;
   const dashboardFetching = useAppSelector((store) => store.networkDashboard.nodes.isFetching);
-  const [showWholeProvider, set_showWholeProvider] = useState(false);
-  const [providerShort, set_providerShort] = useState('');
-  const [providerContainsSecret, set_providerContainsSecret] = useState(true);
-  const provider = info?.providerUrl;
-
   useEffect(() => {
     fetchInfoData();
   }, [apiEndpoint, apiToken]);
-
-  useEffect(() => {
-    try {
-      if (!provider) {
-        set_providerShort('');
-        return;
-      }
-      const providerObject = new URL(provider);
-      const providerContainsSecret = providerObject.pathname !== '/' || providerObject.search !== '';
-      set_providerContainsSecret(providerContainsSecret);
-      const providerShort = providerContainsSecret ? providerObject.origin + '/************' : provider;
-      set_providerShort(providerShort || '');
-    } catch (e) {
-      console.error('Error parsing provider URL', e);
-      set_providerShort('***Invalid URL***');
-    }
-  }, [provider]);
 
   const fetchInfoData = () => {
     if (!apiEndpoint) return;
@@ -379,23 +354,6 @@ function InfoPage() {
           >
             {minimumNetworkProbability ? minimumNetworkProbability.toPrecision(3) : '-'}
           </KV>
-          <KV
-            label="Provider"
-            tip="The blokli provider address your node uses sync"
-            mono
-            actions={
-              providerContainsSecret && (
-                <SmallActionButton
-                  tooltip={showWholeProvider ? 'Hide full URL' : 'Show full URL'}
-                  onClick={() => set_showWholeProvider(!showWholeProvider)}
-                >
-                  {showWholeProvider ? <Visibility /> : <VisibilityOff />}
-                </SmallActionButton>
-              )
-            }
-          >
-            {showWholeProvider ? provider : providerShort}
-          </KV>
         </Card>
 
         <Card title="Addresses">
@@ -419,7 +377,7 @@ function InfoPage() {
             {info?.hoprNodeSafe ? shortenAddress(info.hoprNodeSafe) : '-'}
           </KV>
           <KV
-            label="Blokli"
+            label="Blokli provider"
             tip="The blokli indexer on-chain data is read from. Opens its GraphQL IDE"
             mono
           >
@@ -429,7 +387,7 @@ function InfoPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                {blokliHost}
+                {blokliOrigin}
               </a>
             ) : (
               '-'

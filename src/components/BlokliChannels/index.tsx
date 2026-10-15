@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { blokliActionsAsync } from '../../store/slices/blokli';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
@@ -15,6 +15,7 @@ import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
 import IconButton from '../../future-hopr-lib-components/Button/IconButton';
 import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
+import { StatusPill } from '../StatusPill';
 
 // Modals
 import { PingModal } from '../Modal/node/PingModal';
@@ -144,6 +145,40 @@ export const statusWithClosure = (status: string, channel: BlokliChannelType | u
   const closable =
     new Date(channel.closureTime).getTime() < Date.now() ? 'now' : formatTimeToUserTimezone(channel.closureTime);
   return `${status} · closable ${closable}`;
+};
+
+// m:ss, h:mm:ss from an hour up
+const formatCountdown = (ms: number) => {
+  const total = Math.ceil(ms / 1000);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = String(total % 60).padStart(2, '0');
+  return hours ? `${hours}:${String(minutes).padStart(2, '0')}:${seconds}` : `${minutes}:${seconds}`;
+};
+
+/** Status pill counting down to when a closing channel can be finalized, the exact time on hover. */
+export const ChannelStatus = ({ status, channel }: { status: string; channel: BlokliChannelType | undefined }) => {
+  const closureTime = channel?.status === 'PENDINGTOCLOSE' ? channel.closureTime : null;
+  const closureMs = closureTime ? new Date(closureTime).getTime() : null;
+  const [now, set_now] = useState(Date.now);
+  const closable = closureMs !== null && closureMs <= now;
+
+  useEffect(() => {
+    if (closureMs === null || closable) return;
+    const timer = setInterval(() => set_now(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [closureMs, closable]);
+
+  if (!closureTime || closureMs === null) return <StatusPill status={status} />;
+  return (
+    <Tooltip title={`closable ${formatTimeToUserTimezone(closureTime)}`}>
+      <span>
+        <StatusPill
+          status={`${status} · ${closable ? 'closable now' : `closable in ${formatCountdown(closureMs - now)}`}`}
+        />
+      </span>
+    </Tooltip>
+  );
 };
 
 export const ClosedChannelsTable = ({
