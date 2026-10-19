@@ -192,7 +192,7 @@ export const ClosedChannelsTable = ({
   direction: Direction;
   channels: BlokliChannelType[];
 }) => {
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);
   const rpcBroken = useAppSelector((store) => !!store.blokli.nodeChannels.data?.rpcBroken);
   const showKey = `app/closedChannels/${direction}/show`;

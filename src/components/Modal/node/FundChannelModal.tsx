@@ -44,12 +44,12 @@ export const FundChannelModal = ({ ...props }: FundChannelModalModalProps) => {
   const [address, set_address] = useState(props.address ? props.address : '');
   const canFund = !(!amount || parseFloat(amount) <= 0 || !address);
 
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const myAddress = useAppSelector((store) => store.node.addresses.data.native || '');
-  const sortedAliases = useAppSelector((store) => store.node.links.sortedAliases);
-  const aliasTopeerAddress = useAppSelector((store) => store.node.links.aliasTopeerAddress);
+  const sortedAliases = useAppSelector((store) => store.app.aliasLinks.sortedAliases);
+  const aliasTopeerAddress = useAppSelector((store) => store.app.aliasLinks.aliasTopeerAddress);
   const sortedAnnouncedPeers = useAppSelector((store) => store.node.peersAnnounced.parsed.sorted);
-  const peerAddressesWithAliases = useAppSelector((store) => store.node.links.peerAddressesWithAliases);
+  const peerAddressesWithAliases = useAppSelector((store) => store.app.aliasLinks.peerAddressesWithAliases);
   const addressBook = [
     myAddress,
     ...sortedAliases.map((alias) => aliasTopeerAddress[alias]),

@@ -50,7 +50,7 @@ function InfoPage() {
   const peersAnnouncedFetching = useAppSelector((store) => store.node.peersAnnounced.isFetching);
   const peersConnected = useAppSelector((store) => store.node.peersConnected.data);
   const peersConnectedFetching = useAppSelector((store) => store.node.peersConnected.isFetching);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const nodeStartedEpoch = useAppSelector((store) => store.node.metricsParsed.nodeStartEpoch);
   const nodeStartedTime =
     nodeStartedEpoch && typeof nodeStartedEpoch === 'number'

@@ -82,19 +82,6 @@ type InitialState = {
     data: AddressesType;
     isFetching: boolean;
   };
-  // aliases displayed across the app, merged from the other saved nodes
-  // depending on app.configuration.aliases.mergeMode
-  aliases: {
-    [peerAddress: string]: string;
-  };
-  // aliases owned by the connected node, this is what gets saved to local storage
-  aliasesOwn: {
-    [peerAddress: string]: string;
-  };
-  // which node each displayed alias came from, needed to delete a merged in alias
-  aliasesSource: {
-    [peerAddress: string]: string;
-  };
   balances: {
     data: {
       hopr: {
@@ -170,11 +157,6 @@ type InitialState = {
     incomingChannelTopeerAddress: {
       [channelId: string]: string;
     };
-    aliasTopeerAddress: {
-      [alias: string]: string;
-    };
-    sortedAliases: string[];
-    peerAddressesWithAliases: string[];
   };
   messages: {
     data: Message[];
@@ -294,9 +276,6 @@ export const initialState: InitialState = {
     },
     isFetching: false,
   },
-  aliases: {},
-  aliasesOwn: {},
-  aliasesSource: {},
   balances: {
     data: {
       hopr: {
@@ -439,9 +418,6 @@ export const initialState: InitialState = {
     peerAddressToOutgoingChannel: {},
     peerAddressToIncomingChannel: {},
     incomingChannelTopeerAddress: {},
-    aliasTopeerAddress: {},
-    sortedAliases: [],
-    peerAddressesWithAliases: [],
   },
   apiEndpoint: null,
   nodeIsReady: {

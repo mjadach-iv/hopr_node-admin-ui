@@ -55,7 +55,7 @@ function SafeInfoPage() {
   const balancesFetching = useAppSelector((store) => store.node.balances.isFetching);
   const nodeAddress = useAppSelector((store) => store.node.addresses.data.native);
   const info = useAppSelector((store) => store.node.info.data);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const blokliUrl = useAppSelector(selectBlokliUrl);
   const safeFunds = useAppSelector(selectSafeFunds);
   const channelStatsFetching = useAppSelector((store) => store.blokli.channelStats.isFetching);

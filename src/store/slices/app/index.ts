@@ -2,6 +2,8 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { initialState } from './initialState';
 import { GetBalancesResponseType, GetChannelsResponseType, GetInfoResponseType } from '@hoprnet/hopr-sdk';
 import { saveStateToLocalStorage } from '../../../utils/localStorage';
+import { isAddress, getAddress } from 'viem';
+import { buildAliasLinks, saveAliases } from '../../../utils/aliases';
 import { ChannelsOutgoingType, ChannelsIncomingType } from '../../../store/slices/node/initialState';
 
 const appSlice = createSlice({
@@ -27,15 +29,24 @@ const appSlice = createSlice({
         saveStateToLocalStorage('app/configuration/notifications', action.payload);
       }
     },
-    setAliasSettings: (state, action: PayloadAction<typeof initialState.configuration.aliases>) => {
-      if (action.payload) {
-        state.configuration.aliases = action.payload;
-        saveStateToLocalStorage('app/configuration/aliases', action.payload);
-      }
-    },
     setRpcSettings: (state, action: PayloadAction<typeof initialState.configuration.rpc>) => {
       state.configuration.rpc = action.payload;
       saveStateToLocalStorage('app/configuration/rpc', action.payload);
+    },
+    // handle aliases
+    setAlias: (state, action: PayloadAction<{ peerAddress: string; alias: string }>) => {
+      const { peerAddress, alias } = action.payload;
+      if (!peerAddress || !alias || !isAddress(peerAddress)) return;
+      state.aliases[getAddress(peerAddress)] = alias;
+      saveAliases(state.aliases);
+      state.aliasLinks = buildAliasLinks(state.aliases);
+    },
+    removeAlias: (state, action: PayloadAction<string>) => {
+      const peerAddress = action.payload;
+      if (!peerAddress || !isAddress(peerAddress)) return;
+      delete state.aliases[getAddress(peerAddress)];
+      saveAliases(state.aliases);
+      state.aliasLinks = buildAliasLinks(state.aliases);
     },
     addNotification: (
       state,

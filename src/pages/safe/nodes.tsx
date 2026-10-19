@@ -43,7 +43,7 @@ const Throughput = ({ mbps, maxMbps }: { mbps?: number | null; maxMbps?: number 
 function SafeNodesPage() {
   const dispatch = useAppDispatch();
   const safeNodes = useAppSelector((store) => store.blokli.safeNodes);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const peersObject = useAppSelector((store) => store.node.peersConnected.parsed.obj);
   const mypeerAddress = useAppSelector((store) => store.node.addresses.data.native);
   const hoprNodeSafe = useAppSelector((store) => store.node.info.data?.hoprNodeSafe);

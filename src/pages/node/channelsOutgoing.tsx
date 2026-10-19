@@ -44,7 +44,7 @@ function ChannelsPage() {
   const channelsOutgoingObject = useAppSelector((store) => store.node.channels.parsed.outgoing);
   const channelsOutgoing = useAppSelector((store) => store.node.channels.data?.outgoing);
   const channelsFetching = useAppSelector((store) => store.node.channels.isFetching);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const loginData = useAppSelector((store) => store.auth.loginData);
   const currentApiEndpoint = useAppSelector((store) => store.node.apiEndpoint);
   const tabLabel = 'outgoing';

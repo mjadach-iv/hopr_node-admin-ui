@@ -28,7 +28,7 @@ function PeersPage() {
   const loginData = useAppSelector((store) => store.auth.loginData);
   const peersConnected = useAppSelector((store) => store.node.peersConnected.data);
   const peersFetching = useAppSelector((store) => store.node.peersConnected.isFetching);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);
 
   useEffect(() => {

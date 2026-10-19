@@ -1,5 +1,23 @@
 # Changelog
 
+## 5.0.0-alpha.12
+
+Changes since 5.0.0-alpha.11.
+
+### Added
+
+- A NODE ADMIN group at the top of the menu, usable without connecting to a node: CONFIGURATION (notifications, plus the connected node's strategy and configuration), ALIASES and WATCHLIST (coming soon).
+
+### Changed
+
+- Aliases are one list shared by every node. The aliases saved per node are merged into it the first time the app starts: saved nodes are taken A-Z by name, then the nodes that were never saved, and the first alias for a peer address wins.
+- CONFIGURATION under NODE keeps the Blokli URL and the Gnosis RPC list. Notifications, Strategy and Configuration move to NODE ADMIN → CONFIGURATION.
+- ALIASES moves from NETWORKING to NODE ADMIN. An old /networking/aliases link falls through to the home page.
+
+### Removed
+
+- The "merge aliases between nodes" switches, since there is one list now.
+
 ## 5.0.0-alpha.11
 
 Changes since 5.0.0-alpha.10.

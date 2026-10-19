@@ -2,7 +2,7 @@ import { useState, useEffect, type JSX } from 'react';
 import { DialogTitle, TextField, DialogActions, Alert } from '@mui/material';
 import { SDialog, SDialogContent, SIconButton, TopBar } from '../../../future-hopr-lib-components/Modal/styled';
 import { useAppDispatch, useAppSelector } from '../../../store';
-import { nodeActions } from '../../../store/slices/node';
+import { appActions } from '../../../store/slices/app';
 import CloseIcon from '@mui/icons-material/Close';
 import { utils as hoprdUlils } from '@hoprnet/hopr-sdk';
 import { isAddress } from 'viem';
@@ -21,7 +21,7 @@ type CreateAliasModalProps = {
 export const CreateAliasModal = (props: CreateAliasModalProps) => {
   const dispatch = useAppDispatch();
   const loginData = useAppSelector((store) => store.auth.loginData);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const peerAddress = useAppSelector((store) => store.node.addresses.data.native);
   const [alias, set_alias] = useState<string>('');
   const [address, set_address] = useState<string>(props.address ? props.address : '');
@@ -90,7 +90,7 @@ export const CreateAliasModal = (props: CreateAliasModalProps) => {
   };
 
   const handleAddAlias = () => {
-    dispatch(nodeActions.setAlias({ peerAddress: address, alias }));
+    dispatch(appActions.setAlias({ peerAddress: address, alias }));
     handleCloseModal();
   };
 

@@ -128,7 +128,7 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
   const [flowControl, set_flowControl] = useState<SessionFlowControlType | 'default'>('default');
   const [openModal, set_openModal] = useState<boolean>(false);
   const loginData = useAppSelector((store) => store.auth.loginData);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
 
   const [destination, set_destination] = useState<string | null>(props.destination ? props.destination : null);
   const [listenHost, set_listenHost] = useState<string>(''); //('127.0.0.1:10000');
@@ -139,10 +139,10 @@ export const OpenSessionModal = (props: OpenSessionModalProps) => {
   const fullReturnPath = [...intermediateReturnPath, destination];
 
   const myAddress = useAppSelector((store) => store.node.addresses.data.native || '');
-  const sortedAliases = useAppSelector((store) => store.node.links.sortedAliases);
-  const aliasTopeerAddress = useAppSelector((store) => store.node.links.aliasTopeerAddress);
+  const sortedAliases = useAppSelector((store) => store.app.aliasLinks.sortedAliases);
+  const aliasTopeerAddress = useAppSelector((store) => store.app.aliasLinks.aliasTopeerAddress);
   const sortedAnnouncedPeers = useAppSelector((store) => store.node.peersAnnounced.parsed.sorted);
-  const peerAddressesWithAliases = useAppSelector((store) => store.node.links.peerAddressesWithAliases);
+  const peerAddressesWithAliases = useAppSelector((store) => store.app.aliasLinks.peerAddressesWithAliases);
   const addressBook = [
     myAddress,
     ...sortedAliases.map((alias) => aliasTopeerAddress[alias]),

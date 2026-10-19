@@ -1,9 +1,7 @@
+import { useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { useEffect, useRef, useState } from 'react';
-import { actionsAsync } from '../../store/slices/node/actionsAsync';
+import { appActions } from '../../store/slices/app';
 import { exportToCsv } from '../../utils/helpers';
-import { utils } from '@hoprnet/hopr-sdk';
-const { sdkApiError } = utils;
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
@@ -23,34 +21,31 @@ import { OpenSessionModal } from '../../components/Modal/node/OpenSessionModal';
 //Mui
 import GetAppIcon from '@mui/icons-material/GetApp';
 import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
-import { nodeActions } from '../../store/slices/node';
 
 function AliasesPage() {
   const dispatch = useAppDispatch();
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
+  // the aliases are kept in the browser, only the actions that talk to a node need one
+  const connected = useAppSelector((store) => store.auth.status.connected);
   const peersObject = useAppSelector((store) => store.node.peersConnected.parsed.obj);
   const mypeerAddress = useAppSelector((store) => store.node.addresses.data.native);
-  const loginData = useAppSelector((store) => store.auth.loginData);
   const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);
 
   const handleExport = () => {
-    if (aliases) {
-      exportToCsv(
-        Object.keys(aliases).map((address) => ({
-          address,
-          alias: aliases[address],
-        })),
-        `aliases-${mypeerAddress}.csv`,
-      );
-    }
+    exportToCsv(
+      Object.keys(aliases).map((address) => ({
+        address,
+        alias: aliases[address],
+      })),
+      'aliases.csv',
+    );
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCSVUpload = async (parsedData: any[]) => {
-    if (!mypeerAddress) return;
     for (const data of parsedData) {
       dispatch(
-        nodeActions.setAlias({
+        appActions.setAlias({
           peerAddress: data.address || data.peerAddress,
           alias: data.alias,
         }),
@@ -58,7 +53,7 @@ function AliasesPage() {
     }
   };
 
-  const parsedTableData = Object.keys(aliases ?? {}).map((peerAddress, index) => {
+  const parsedTableData = Object.keys(aliases).map((peerAddress, index) => {
     const alias = aliases[peerAddress];
     const lastUpdateNumeric = peerAddress ? peersObject[peerAddress]?.lastUpdate : 0;
     const lastUpdate =
@@ -83,22 +78,25 @@ function AliasesPage() {
       peerAddress: peerAddress,
       actions: (
         <>
-          <PingModal
-            address={peerAddress}
-            disabled={peerAddress === mypeerAddress}
-            tooltip={peerAddress === mypeerAddress ? `You can't ping yourself` : undefined}
-          />
-          <CreateAliasModal address={peerAddress} />
-          {peerAddress && peerAddressToOutgoingChannelLink[peerAddress] ? (
-            <FundChannelModal address={peerAddress} />
-          ) : (
-            <OpenChannelModal
-              peerAddress={peerAddress}
+          {connected && (
+            <PingModal
+              address={peerAddress}
               disabled={peerAddress === mypeerAddress}
-              tooltip={peerAddress === mypeerAddress ? `You can't open a channel to yourself` : undefined}
+              tooltip={peerAddress === mypeerAddress ? `You can't ping yourself` : undefined}
             />
           )}
-          <OpenSessionModal destination={peerAddress} />
+          <CreateAliasModal address={peerAddress} />
+          {connected &&
+            (peerAddress && peerAddressToOutgoingChannelLink[peerAddress] ? (
+              <FundChannelModal address={peerAddress} />
+            ) : (
+              <OpenChannelModal
+                peerAddress={peerAddress}
+                disabled={peerAddress === mypeerAddress}
+                tooltip={peerAddress === mypeerAddress ? `You can't open a channel to yourself` : undefined}
+              />
+            ))}
+          {connected && <OpenSessionModal destination={peerAddress} />}
           <IconButton
             iconComponent={<RemoveAliasIcon />}
             aria-label="delete alias"
@@ -110,7 +108,7 @@ function AliasesPage() {
               </span>
             }
             onClick={() => {
-              dispatch(nodeActions.removeAlias(peerAddress));
+              dispatch(appActions.removeAlias(peerAddress));
             }}
           />
         </>
@@ -131,11 +129,16 @@ function AliasesPage() {
       grow: true,
       sortKey: 'alias',
     },
-    {
-      key: 'lastUpdate',
-      name: 'Last update',
-      sortKey: 'lastUpdateValue',
-    },
+    // last seen comes from the connected node's peers, meaningless without one
+    ...(connected
+      ? [
+          {
+            key: 'lastUpdate',
+            name: 'Last update',
+            sortKey: 'lastUpdateValue',
+          },
+        ]
+      : []),
     {
       key: 'peerAddress',
       name: 'Node Address',
@@ -159,7 +162,6 @@ function AliasesPage() {
     >
       <SubpageTitle
         title={`ALIASES (${parsedTableData.length})`}
-        //  refreshFunction={handleRefresh}
         actions={
           <>
             <CreateAliasModal />
@@ -173,7 +175,7 @@ function AliasesPage() {
                   aliases as a CSV
                 </span>
               }
-              disabled={aliases !== null && Object.keys(aliases).length === 0}
+              disabled={Object.keys(aliases).length === 0}
               onClick={handleExport}
             />
           </>
@@ -181,61 +183,10 @@ function AliasesPage() {
       />
       <TablePro
         data={parsedTableData}
-        // search={true}
-        // id={'node-aliases-table'}
         header={header}
-        // loading={parsedTableData.length === 0 && aliasesFetching}
         orderByDefault="alias"
       />
     </Section>
-  );
-}
-
-function CreateAliasForm() {
-  const dispatch = useAppDispatch();
-  const loginData = useAppSelector((store) => store.auth.loginData);
-  const [error, set_error] = useState<{
-    status: string | undefined;
-    error: string | undefined;
-  }>();
-  const [success, set_success] = useState(false);
-  const [form, set_form] = useState<{ peerAddress: string; alias: string }>({
-    alias: '',
-    peerAddress: '',
-  });
-
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    set_form({
-      ...form,
-      [name]: value,
-    });
-  };
-
-  return (
-    <div>
-      <input
-        type="text"
-        name="peerAddress"
-        placeholder="peerAddress"
-        onChange={handleChange}
-        value={form.peerAddress}
-      />
-      <input
-        type="text"
-        name="alias"
-        placeholder="alias"
-        onChange={handleChange}
-        value={form.alias}
-      />
-      <button
-        disabled={form.alias.length === 0 || form.peerAddress.length === 0}
-        onClick={() => {}}
-      >
-        add
-      </button>
-      <p>{success ? 'created alias!' : error?.status}</p>
-    </div>
   );
 }
 

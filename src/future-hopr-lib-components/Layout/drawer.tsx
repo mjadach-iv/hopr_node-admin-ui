@@ -317,8 +317,7 @@ const Drawer = ({
                             drawerNumbers &&
                             drawerNumbersLoading &&
                             openedNavigationDrawer &&
-                            item.loginNeeded &&
-                            drawerLoginState?.[item.loginNeeded] &&
+                            (!item.loginNeeded || drawerLoginState?.[item.loginNeeded]) &&
                             typeof drawerNumbers[item.numberKey] !== 'number' &&
                             drawerNumbersLoading[item.fetchingKey] && (
                               <NumbersLoading>
@@ -328,8 +327,7 @@ const Drawer = ({
                           {item.numberKey &&
                             drawerNumbers &&
                             openedNavigationDrawer &&
-                            item.loginNeeded &&
-                            drawerLoginState?.[item.loginNeeded] &&
+                            (!item.loginNeeded || drawerLoginState?.[item.loginNeeded]) &&
                             typeof drawerNumbers[item.numberKey] === 'number' && (
                               <Numbers className="drawer-number">{rounder2(drawerNumbers[item.numberKey])}</Numbers>
                             )}

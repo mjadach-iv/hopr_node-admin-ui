@@ -22,7 +22,7 @@ type ChannelTicketStatisticsModalProps = {
 export const ChannelTicketStatisticsModal = (props: ChannelTicketStatisticsModalProps) => {
   const dispatch = useAppDispatch();
   const loginData = useAppSelector((store) => store.auth.loginData);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const [openModal, set_openModal] = useState(false);
   const [loading, set_loading] = useState(false);
   const [statistics, set_statistics] = useState<GetTicketStatisticsResponseType | null>(null);

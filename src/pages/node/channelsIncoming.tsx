@@ -44,7 +44,7 @@ function ChannelsPage() {
   const channelsIncoming = useAppSelector((store) => store.node.channels.data?.incoming);
   const channelsIncomingObject = useAppSelector((store) => store.node.channels.parsed.incoming);
   const channelsFetching = useAppSelector((store) => store.node.channels.isFetching);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const currentApiEndpoint = useAppSelector((store) => store.node.apiEndpoint);
   const loginData = useAppSelector((store) => store.auth.loginData);
   const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);

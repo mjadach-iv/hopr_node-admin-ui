@@ -237,7 +237,7 @@ const nodeFaq: FaqData = {
         'Generally having more visible nodes is better. If nodes on the network are not visible to you, this could be a sign of lower performance or node health. But as long as this number is not zero or very low, you are likely fine.',
     },
   ],
-  '/networking/aliases': [
+  '/admin/aliases': [
     {
       id: 1,
       title: 'What is an alias?',

@@ -2,7 +2,9 @@ import type { JSX } from 'react';
 import { environment } from '../config';
 
 // Sections
-import AliasesPage from './pages/node/aliases';
+import AdminConfigurationPage from './pages/admin/configuration';
+import AliasesPage from './pages/admin/aliases';
+import WatchlistPage from './pages/admin/watchlist';
 import InfoPage from './pages/node/info';
 import SafeInfoPage from './pages/safe/info';
 import PeersPage from './pages/node/peers';
@@ -29,6 +31,8 @@ import OutgoingChannelsIcon from './future-hopr-lib-components/Icons/channelsOut
 import SettingsPhoneIcon from '@mui/icons-material/SettingsPhone';
 import SafeIcon from '@mui/icons-material/Shield';
 import SafeNodesIcon from '@mui/icons-material/Dns';
+import AdminIcon from '@mui/icons-material/AdminPanelSettings';
+import WatchlistIcon from '@mui/icons-material/Visibility';
 
 export type ApplicationMapType = {
   groupName: string;
@@ -51,6 +55,33 @@ export type ApplicationMapType = {
 }[];
 
 export const applicationMapNode: ApplicationMapType = [
+  // everything in this group lives in the browser, no node login needed
+  {
+    groupName: 'NODE ADMIN',
+    path: 'admin',
+    icon: <AdminIcon />,
+    items: [
+      {
+        name: 'CONFIGURATION',
+        path: 'configuration',
+        icon: <SettingsIcon />,
+        element: <AdminConfigurationPage />,
+      },
+      {
+        name: 'ALIASES',
+        path: 'aliases',
+        icon: <ContactPhone />,
+        element: <AliasesPage />,
+        numberKey: 'numberOfAliases',
+      },
+      {
+        name: 'WATCHLIST',
+        path: 'watchlist',
+        icon: <WatchlistIcon />,
+        element: <WatchlistPage />,
+      },
+    ],
+  },
   {
     groupName: 'NODE',
     path: 'node',
@@ -85,14 +116,6 @@ export const applicationMapNode: ApplicationMapType = [
         loginNeeded: 'node',
         numberKey: 'numberOfPeers',
         fetchingKey: 'fetchingPeers',
-      },
-      {
-        name: 'ALIASES',
-        path: 'aliases',
-        icon: <ContactPhone />,
-        element: <AliasesPage />,
-        loginNeeded: 'node',
-        numberKey: 'numberOfAliases',
       },
       {
         name: 'CHANNELS: IN',

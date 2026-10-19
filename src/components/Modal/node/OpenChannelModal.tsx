@@ -43,17 +43,17 @@ export const OpenChannelModal = ({ ...props }: OpenChannelModalProps) => {
   const dispatch = useAppDispatch();
   const loginData = useAppSelector((store) => store.auth.loginData);
   const outgoingOpening = useAppSelector((store) => store.node.channels.parsed.outgoingOpening);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const channelIsBeingOpened = props.peerAddress ? !!outgoingOpening[props.peerAddress] : false;
   const [openChannelModal, set_openChannelModal] = useState(false);
   const [amount, set_amount] = useState('');
   const [peerAddress, set_peerAddress] = useState(props.peerAddress ? props.peerAddress : '');
   const canOpen = !(!amount || parseFloat(amount) <= 0 || !peerAddress);
   const myAddress = useAppSelector((store) => store.node.addresses.data.native || '');
-  const sortedAliases = useAppSelector((store) => store.node.links.sortedAliases);
-  const aliasTopeerAddress = useAppSelector((store) => store.node.links.aliasTopeerAddress);
+  const sortedAliases = useAppSelector((store) => store.app.aliasLinks.sortedAliases);
+  const aliasTopeerAddress = useAppSelector((store) => store.app.aliasLinks.aliasTopeerAddress);
   const sortedAnnouncedPeers = useAppSelector((store) => store.node.peersAnnounced.parsed.sorted);
-  const peerAddressesWithAliases = useAppSelector((store) => store.node.links.peerAddressesWithAliases);
+  const peerAddressesWithAliases = useAppSelector((store) => store.app.aliasLinks.peerAddressesWithAliases);
   const addressBook = [
     myAddress,
     ...sortedAliases.map((alias) => aliasTopeerAddress[alias]),

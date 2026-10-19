@@ -22,7 +22,7 @@ type PingModalProps = {
 export const PingModal = (props: PingModalProps) => {
   const dispatch = useAppDispatch();
   const loginData = useAppSelector((selector) => selector.auth.loginData);
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const [address, set_address] = useState<string>(props.address ? props.address : '');
   const [openModal, set_OpenModal] = useState(false);
   const [disableButton, set_disableButton] = useState(false);

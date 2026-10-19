@@ -132,7 +132,7 @@ const getAddressesThunk = createAsyncThunk<
             jazzIcon: addresses.native,
           }),
         );
-        // links the saved node to its `node/aliases/<nodeAddress>` entry
+        // records the node address on the saved node
         dispatch(
           authActions.updateNodeMetadata({
             apiEndpoint: payload.apiEndpoint as string,

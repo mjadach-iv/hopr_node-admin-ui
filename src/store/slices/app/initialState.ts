@@ -1,7 +1,7 @@
 import type { GetBalancesResponseType, GetInfoResponseType } from '@hoprnet/hopr-sdk';
 import { loadStateFromLocalStorage } from '../../../utils/localStorage';
 import { ChannelsOutgoingType, ChannelsIncomingType } from '../node/initialState';
-import { AliasMergeMode } from '../../../utils/aliases';
+import { AliasLinks, AliasMap, buildAliasLinks, loadAliases } from '../../../utils/aliases';
 import { GNOSIS_RPC_URLS } from '../../../../config';
 
 type InitialState = {
@@ -22,14 +22,14 @@ type InitialState = {
       message: boolean;
       pendingSafeTransaction: boolean;
     };
-    aliases: {
-      mergeMode: AliasMergeMode;
-    };
     rpc: {
       // Gnosis RPCs in fallback order
       urls: string[];
     };
   };
+  // nicknames for peer addresses, shared by every node
+  aliases: AliasMap;
+  aliasLinks: AliasLinks;
   previousStates: {
     prevApiEndpoint: string | null;
     prevOutgoingChannels: ChannelsOutgoingType | null;
@@ -45,6 +45,8 @@ const loadRpcSettings = (): InitialState['configuration']['rpc'] => {
   return Array.isArray(stored?.urls) ? { urls: stored.urls } : { urls: GNOSIS_RPC_URLS };
 };
 
+const aliases = loadAliases();
+
 export const initialState: InitialState = {
   notifications: [],
   configuration: {
@@ -57,13 +59,10 @@ export const initialState: InitialState = {
       nodeInfo: true,
       pendingSafeTransaction: true,
     },
-    aliases: {
-      ...{ mergeMode: 'network' as AliasMergeMode },
-      ...((loadStateFromLocalStorage('app/configuration/aliases') as InitialState['configuration']['aliases'] | null) ??
-        {}),
-    },
     rpc: loadRpcSettings(),
   },
+  aliases,
+  aliasLinks: buildAliasLinks(aliases),
   // previous states used to compare for notifications
   previousStates: {
     prevApiEndpoint: null,

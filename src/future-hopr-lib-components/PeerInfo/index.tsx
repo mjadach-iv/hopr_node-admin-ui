@@ -62,7 +62,7 @@ const Container = styled.div`
 
 const PeersInfo: React.FC<Props> = (props) => {
   const { peerAddress, shortAddress, ...rest } = props;
-  const aliases = useAppSelector((store) => store.node.aliases);
+  const aliases = useAppSelector((store) => store.app.aliases);
 
   const noCopyPaste = !(
     window.location.protocol === 'https:' ||
