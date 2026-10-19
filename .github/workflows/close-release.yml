@@ -2,7 +2,8 @@ name: Close release
 
 # Closes a release on a manual run: reads the version from package.json, pushes the
 # Node Admin image to Docker Hub as `latest` and `<version>` (plus any extra tags you
-# enter), then tags the commit with `<version>`. The run fails before building if
+# enter), then creates the GitHub release `<version>` on the commit, with that
+# version's CHANGELOG.md section as its notes. The run fails before building if
 # that git tag already exists.
 # Pull requests only build the image to check that it still builds. Nothing is pushed.
 #
@@ -38,7 +39,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # create the release tag
+      contents: write # create the release and its tag
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -122,18 +123,42 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Create release tag
+      - name: Create release
         if: env.PUSH == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
           IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$VERSION" -f sha="$GITHUB_SHA" --silent
+          # the "## <version>" section up to the next heading, without surrounding blank lines
+          awk -v heading="## $VERSION" '
+            $0 == heading { found = 1; next }
+            found && /^## / { exit }
+            found { lines[++n] = $0 }
+            END {
+              first = 1; while (first <= n && lines[first] ~ /^[[:space:]]*$/) first++
+              last = n; while (last >= first && lines[last] ~ /^[[:space:]]*$/) last--
+              for (i = first; i <= last; i++) print lines[i]
+            }
+          ' CHANGELOG.md > release-notes.md
+          prerelease=()
+          [[ "$VERSION" == *-* ]] && prerelease=(--prerelease)
+          gh release create "$VERSION" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --notes-file release-notes.md \
+            "${prerelease[@]}"
           {
             echo "### Released $VERSION"
             echo
-            echo "Tagged \`$GITHUB_SHA\` as \`$VERSION\` and pushed:"
+            echo "Released \`$GITHUB_SHA\` as \`$VERSION\` and pushed:"
             echo
             while read -r tag; do [ -n "$tag" ] && echo "- \`$tag\`"; done <<< "$IMAGE_TAGS"
+            echo
+            if [ -s release-notes.md ]; then
+              echo "Release notes taken from CHANGELOG.md."
+            else
+              echo "No CHANGELOG.md section for $VERSION, the release has no notes."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
