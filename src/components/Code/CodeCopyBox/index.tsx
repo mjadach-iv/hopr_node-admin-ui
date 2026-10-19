@@ -6,9 +6,10 @@ type CodeCopyBoxProps = {
   code: string | JSX.Element;
   copy?: string;
   breakSpaces?: boolean;
+  small?: boolean;
 };
 
-const CodeCopyBox = ({ code, copy: copyText, breakSpaces }: CodeCopyBoxProps) => {
+const CodeCopyBox = ({ code, copy: copyText, breakSpaces, small }: CodeCopyBoxProps) => {
   const [copied, setCopied] = useState(false);
 
   const copy = (copyText: string) => {
@@ -35,7 +36,10 @@ const CodeCopyBox = ({ code, copy: copyText, breakSpaces }: CodeCopyBoxProps) =>
           data-testid="copyPullCommandPullCommand"
           className="styles__darkInput___tirFS styles__copyable___2FDeL"
           role="button"
-          style={breakSpaces ? { whiteSpace: 'break-spaces' } : {}}
+          style={{
+            ...(breakSpaces && { whiteSpace: 'break-spaces' }),
+            ...(small && { fontSize: 12, lineHeight: '17px' }),
+          }}
         >
           {code}
         </code>

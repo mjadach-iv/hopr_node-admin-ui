@@ -303,9 +303,8 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
     prevIncomingChannels,
   ]);
 
-  // Blokli url saved for this node
   useEffect(() => {
-    dispatch(blokliActions.loadUrlFromLocalStorage(peerAddress));
+    dispatch(blokliActions.setNodeAddress(peerAddress));
   }, [peerAddress]);
 
   // Effective blokli url changed: drop figures fetched with the previous url,

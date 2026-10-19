@@ -15,6 +15,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import Paper from '@mui/material/Paper';
+import CircularProgress from '@mui/material/CircularProgress';
 import InputBase from '@mui/material/InputBase';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -337,6 +338,7 @@ const EmptyState = styled.div`
   height: 48px;
   display: flex;
   align-items: center;
+  gap: 10px;
   color: var(--muted);
 `;
 
@@ -458,7 +460,21 @@ export default function CustomPaginationActionsTable(props: Props) {
   const [order, setOrder] = React.useState<Order>('asc');
   const [orderBy, setOrderBy] = React.useState<string>(props.orderByDefault || props.header[0].key || 'id');
   const [searchPhrase, set_searchPhrase] = React.useState('');
-  const [filteredData, set_filteredData] = React.useState<typeof props.data>([]);
+  const [filteredData, set_filteredData] = React.useState<typeof props.data>(props.data);
+  // rows mount after the first paint so the loader shows while a long table renders
+  const [rowsMounted, set_rowsMounted] = useState(false);
+  const rowsPending = !rowsMounted && props.data.length > 0;
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    const frame = requestAnimationFrame(() => {
+      timeout = setTimeout(() => set_rowsMounted(true));
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timeout);
+    };
+  }, []);
 
   useEffect(() => {
     filterData(searchPhrase);
@@ -532,9 +548,9 @@ export default function CustomPaginationActionsTable(props: Props) {
       )}
       <TableVirtuoso
         useWindowScroll
-        data={sortedRows}
-        overscan={{ main: 1200, reverse: 1200 }}
-        increaseViewportBy={{ top: 600, bottom: 600 }}
+        data={rowsMounted ? sortedRows : []}
+        overscan={{ main: 400, reverse: 400 }}
+        increaseViewportBy={{ top: 200, bottom: 200 }}
         computeItemKey={(_index, row) => `${props.id}_row_${row.id}`}
         context={{
           tableId: props.id,
@@ -581,7 +597,21 @@ export default function CustomPaginationActionsTable(props: Props) {
           />
         )}
       />
-      {sortedRows.length === 0 && <EmptyState>{props.loading ? 'Loading...' : 'No entries'}</EmptyState>}
+      {(sortedRows.length === 0 || rowsPending) && (
+        <EmptyState>
+          {props.loading || rowsPending ? (
+            <>
+              <CircularProgress
+                size={16}
+                sx={{ color: 'var(--primary)' }}
+              />
+              Loading...
+            </>
+          ) : (
+            'No entries'
+          )}
+        </EmptyState>
+      )}
     </STableContainer>
   );
 }

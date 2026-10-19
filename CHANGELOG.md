@@ -6,13 +6,26 @@ Changes since 5.0.0-alpha.11.
 
 ### Added
 
-- A NODE ADMIN group at the top of the menu, usable without connecting to a node: CONFIGURATION (notifications, plus the connected node's strategy and configuration), ALIASES and WATCHLIST (coming soon).
+- A NODE ADMIN group at the top of the menu, usable without connecting to a node: WATCHLIST (coming soon), ALIASES and CONFIGURATION (notifications, the Blokli URL and the Gnosis RPC list).
 
 ### Changed
 
 - Aliases are one list shared by every node. The aliases saved per node are merged into it the first time the app starts: saved nodes are taken A-Z by name, then the nodes that were never saved, and the first alias for a peer address wins.
-- CONFIGURATION under NODE keeps the Blokli URL and the Gnosis RPC list. Notifications, Strategy and Configuration move to NODE ADMIN → CONFIGURATION.
+- CONFIGURATION under NODE keeps the Strategy and Configuration. Notifications, the Blokli URL and the Gnosis RPC list move to NODE ADMIN → CONFIGURATION.
 - ALIASES moves from NETWORKING to NODE ADMIN. An old /networking/aliases link falls through to the home page.
+- NETWORKING merges into NODE: PEERS, CHANNELS: IN, CHANNELS: OUT and SESSIONS now sit under NODE, at /node/... instead of /networking/.... An old /networking link falls through to the home page.
+- CONFIGURATION is the last entry in NODE and in NODE ADMIN.
+- The Blokli URL is one setting for every node, https://blokli.piz-palu.gnosisvpn.io by default, instead of the URL each node reports, and can be changed without connecting to a node. "Load url from node", enabled while connected, saves the URL the connected node reports. URLs saved per node are dropped.
+- Smaller font in the Strategy and Configuration boxes on NODE → CONFIGURATION.
+- Disconnecting on a NODE ADMIN page keeps you on that page instead of going to the home page.
+
+### Fixed
+
+- PEERS, CHANNELS: IN and CHANNELS: OUT show a loader until the first list arrives instead of "No entries", and the Epoch, Tickets and Spent/Earned cells show one while blokli reads the channels, which takes a while with many channels.
+- Opening PEERS, CHANNELS: IN and CHANNELS: OUT with a few hundred rows is about 2-3x faster: tooltips mount on first hover, action dialogs on first open, fewer off-screen rows are rendered and node icons are cached. A loader shows while the rows render.
+- The RPC error link opens NODE ADMIN → CONFIGURATION, where the RPC list now is.
+- The Add button next to a new Gnosis RPC is as wide as the Save button instead of half the line.
+- Outlined buttons keep their text readable on hover instead of turning yellow on yellow.
 
 ### Removed
 

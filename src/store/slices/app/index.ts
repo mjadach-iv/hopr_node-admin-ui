@@ -33,6 +33,10 @@ const appSlice = createSlice({
       state.configuration.rpc = action.payload;
       saveStateToLocalStorage('app/configuration/rpc', action.payload);
     },
+    setBlokliSettings: (state, action: PayloadAction<typeof initialState.configuration.blokli>) => {
+      state.configuration.blokli = action.payload;
+      saveStateToLocalStorage('app/configuration/blokli', action.payload);
+    },
     // handle aliases
     setAlias: (state, action: PayloadAction<{ peerAddress: string; alias: string }>) => {
       const { peerAddress, alias } = action.payload;

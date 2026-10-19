@@ -2,7 +2,7 @@ import type { GetBalancesResponseType, GetInfoResponseType } from '@hoprnet/hopr
 import { loadStateFromLocalStorage } from '../../../utils/localStorage';
 import { ChannelsOutgoingType, ChannelsIncomingType } from '../node/initialState';
 import { AliasLinks, AliasMap, buildAliasLinks, loadAliases } from '../../../utils/aliases';
-import { GNOSIS_RPC_URLS } from '../../../../config';
+import { DEFAULT_BLOKLI_URL, GNOSIS_RPC_URLS } from '../../../../config';
 
 type InitialState = {
   notifications: {
@@ -26,6 +26,9 @@ type InitialState = {
       // Gnosis RPCs in fallback order
       urls: string[];
     };
+    blokli: {
+      url: string;
+    };
   };
   // nicknames for peer addresses, shared by every node
   aliases: AliasMap;
@@ -45,6 +48,16 @@ const loadRpcSettings = (): InitialState['configuration']['rpc'] => {
   return Array.isArray(stored?.urls) ? { urls: stored.urls } : { urls: GNOSIS_RPC_URLS };
 };
 
+const loadBlokliSettings = (): InitialState['configuration']['blokli'] => {
+  const stored = loadStateFromLocalStorage('app/configuration/blokli') as { url?: unknown } | null;
+  return typeof stored?.url === 'string' && stored.url ? { url: stored.url } : { url: DEFAULT_BLOKLI_URL };
+};
+
+// the blokli url used to be saved per node
+Object.keys(localStorage)
+  .filter((key) => key.startsWith('blokli/url/'))
+  .forEach((key) => localStorage.removeItem(key));
+
 const aliases = loadAliases();
 
 export const initialState: InitialState = {
@@ -60,6 +73,7 @@ export const initialState: InitialState = {
       pendingSafeTransaction: true,
     },
     rpc: loadRpcSettings(),
+    blokli: loadBlokliSettings(),
   },
   aliases,
   aliasLinks: buildAliasLinks(aliases),

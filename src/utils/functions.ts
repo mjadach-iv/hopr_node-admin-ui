@@ -154,7 +154,14 @@ export function toHexMD5(d: string) {
   return md5(d);
 }
 
+const jazzCache = new Map<string, string | null>();
+
 export function generateBase64Jazz(input: string) {
+  if (!jazzCache.has(input)) jazzCache.set(input, buildBase64Jazz(input));
+  return jazzCache.get(input)!;
+}
+
+function buildBase64Jazz(input: string) {
   try {
     const jazzSvg = jazzicon(16, parseInt(input.slice(2, 10), 16));
     const html = jazzSvg.children[0].outerHTML.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');

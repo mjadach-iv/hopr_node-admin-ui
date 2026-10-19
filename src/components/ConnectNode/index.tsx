@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toHexMD5, generateBase64Jazz } from '../../utils/functions';
 
 // Components
@@ -17,6 +17,7 @@ import { appActions } from '../../store/slices/app';
 //MUI
 import { Button, Menu, MenuItem, CircularProgress } from '@mui/material';
 import { abortAllPending } from '../../store/abortRegistry';
+import { isNodeAdminPage } from '../../applicationMap';
 
 const Container = styled(Button)`
   align-items: center;
@@ -111,6 +112,7 @@ const Overlay = styled.div`
 export default function ConnectNode() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [modalVisible, set_modalVisible] = useState(false);
   const connected = useAppSelector((store) => store.auth.status.connected);
   const connecting = useAppSelector((store) => store.auth.status.connecting);
@@ -173,7 +175,7 @@ export default function ConnectNode() {
     dispatch(networkDashboardActions.resetState());
     dispatch(appActions.resetNodeState());
     dispatch(appActions.clearNotifications());
-    navigate('/');
+    navigate(isNodeAdminPage(location.pathname) ? location.pathname : '/');
   };
 
   // New function to handle opening the menu

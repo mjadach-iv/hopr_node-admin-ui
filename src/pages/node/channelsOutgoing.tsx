@@ -260,7 +260,7 @@ function ChannelsPage() {
             unit={HOPR_TOKEN_USED}
           />
         ),
-        ...blokliChannelCells(blokliChannel, blokliChannels.rpcBroken),
+        ...blokliChannelCells(blokliChannel, blokliChannels.rpcBroken, blokliChannels.loading),
         actions: (
           <>
             <PingModal
@@ -361,7 +361,7 @@ function ChannelsPage() {
         id={'node-channels-out-table'}
         header={header}
         search
-        loading={parsedTableData.length === 0 && channelsFetching}
+        loading={channelsFetching || !channels}
         orderByDefault="number"
       />
       <ClosedChannelsTable

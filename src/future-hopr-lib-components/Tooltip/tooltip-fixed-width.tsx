@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
-import MuiTooltip, { TooltipProps } from '@mui/material/Tooltip';
+import { TooltipProps } from '@mui/material/Tooltip';
+import LazyTooltip from './lazy-tooltip';
 
 interface Props extends TooltipProps {
   notWide?: boolean;
@@ -8,7 +9,7 @@ interface Props extends TooltipProps {
 const Tooltip: React.FC<Props> = (props) => {
   const { className, notWide, ...rest } = props;
   return (
-    <MuiTooltip
+    <LazyTooltip
       classes={{ popper: `STooltip ${className} ${notWide ? 'notWide' : ''}` }}
       {...rest}
     />

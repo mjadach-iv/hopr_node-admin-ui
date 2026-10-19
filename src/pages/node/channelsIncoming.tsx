@@ -266,7 +266,7 @@ function ChannelsPage() {
             unit={HOPR_TOKEN_USED}
           />
         ),
-        ...blokliChannelCells(blokliChannel, blokliChannels.rpcBroken),
+        ...blokliChannelCells(blokliChannel, blokliChannels.rpcBroken, blokliChannels.loading),
         tickets: unredeemedTicketsPerChannel,
         actions: (
           <>
@@ -371,7 +371,7 @@ function ChannelsPage() {
         id={'node-channels-in-table'}
         header={headerIncoming}
         search
-        loading={parsedTableData.length === 0 && channelsFetching}
+        loading={channelsFetching || !channels}
         orderByDefault="number"
       />
       <ClosedChannelsTable

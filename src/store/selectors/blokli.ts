@@ -3,11 +3,7 @@ import { formatEther } from 'viem';
 import type { RootState } from '..';
 import type { SafeNodeType, TokenValueType } from '../../blokli/types';
 
-/**
- * The url the node reports is the default, store.blokli.url is the per node override.
- */
-export const selectBlokliUrl = (state: RootState): string | null =>
-  state.blokli.url ?? state.node.info.data?.providerUrl ?? null;
+export const selectBlokliUrl = (state: RootState): string | null => state.app.configuration.blokli.url || null;
 
 // Gnosis RPCs in the order they are tried
 export const selectRpcUrls = (state: RootState): string[] => state.app.configuration.rpc.urls;

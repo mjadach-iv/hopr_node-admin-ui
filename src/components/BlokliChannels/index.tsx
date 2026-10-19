@@ -26,6 +26,7 @@ import { FundChannelModal } from '../Modal/node/FundChannelModal';
 import { OpenSessionModal } from '../Modal/node/OpenSessionModal';
 
 // Mui
+import CircularProgress from '@mui/material/CircularProgress';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
@@ -62,6 +63,8 @@ export const useBlokliChannels = (direction: Direction) => {
     byId,
     closed,
     rpcBroken: !!nodeChannels.data?.rpcBroken,
+    // the first read scans the chain for every channel, slow with many channels
+    loading: nodeChannels.isFetching && !nodeChannels.data,
     refresh,
   };
 };
@@ -111,7 +114,14 @@ const Amount = ({ value, approximate }: { value: string; approximate?: boolean }
   </Tooltip>
 );
 
-export const redeemedCells = (channel: BlokliChannelType | undefined, rpcBroken?: boolean) => {
+const CellLoader = () => (
+  <CircularProgress
+    size={12}
+    sx={{ color: 'var(--muted)' }}
+  />
+);
+
+export const redeemedCells = (channel: BlokliChannelType | undefined, rpcBroken?: boolean, loading?: boolean) => {
   const exact = channel?.redeemed?.formatted;
   const estimate = channel?.estimatedValue?.formatted;
   return {
@@ -125,23 +135,27 @@ export const redeemedCells = (channel: BlokliChannelType | undefined, rpcBroken?
       />
     ) : rpcBroken ? (
       <RpcError />
+    ) : loading ? (
+      <CellLoader />
     ) : (
       '-'
     ),
   };
 };
 
-export const blokliChannelCells = (channel: BlokliChannelType | undefined, rpcBroken?: boolean) => ({
-  epoch: channel ? channel.epoch.toString() : '-',
+export const blokliChannelCells = (channel: BlokliChannelType | undefined, rpcBroken?: boolean, loading?: boolean) => ({
+  epoch: channel ? channel.epoch.toString() : loading ? <CellLoader /> : '-',
   ticketIndexValue: channel?.ticketIndex,
   ticketIndex: channel ? (
     <Tooltip title={BigInt(channel.ticketIndex).toLocaleString('en-US')}>
       <span>{formatCount(channel.ticketIndex)}</span>
     </Tooltip>
+  ) : loading ? (
+    <CellLoader />
   ) : (
     '-'
   ),
-  ...redeemedCells(channel, rpcBroken),
+  ...redeemedCells(channel, rpcBroken, loading),
 });
 
 export const statusWithClosure = (status: string, channel: BlokliChannelType | undefined): string => {

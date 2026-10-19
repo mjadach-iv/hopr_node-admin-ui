@@ -2,7 +2,8 @@ import type { JSX } from 'react';
 import styled from '@emotion/styled';
 
 // Mui
-import { Tooltip, IconButton as MuiIconButton } from '@mui/material';
+import { IconButton as MuiIconButton } from '@mui/material';
+import Tooltip from '../Tooltip/lazy-tooltip';
 import CircularProgress from '@mui/material/CircularProgress';
 
 type SubpageTitleProps = {

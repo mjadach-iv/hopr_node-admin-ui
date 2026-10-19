@@ -21,7 +21,6 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ContactPhone from '@mui/icons-material/ContactPhone';
 import SavingsIcon from '@mui/icons-material/Savings';
 import NodeIcon from '@mui/icons-material/Router';
-import NetworkingIcon from '@mui/icons-material/Diversity3';
 import DevelopIcon from '@mui/icons-material/Code';
 import LinkIcon from '@mui/icons-material/Link';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
@@ -62,10 +61,10 @@ export const applicationMapNode: ApplicationMapType = [
     icon: <AdminIcon />,
     items: [
       {
-        name: 'CONFIGURATION',
-        path: 'configuration',
-        icon: <SettingsIcon />,
-        element: <AdminConfigurationPage />,
+        name: 'WATCHLIST',
+        path: 'watchlist',
+        icon: <WatchlistIcon />,
+        element: <WatchlistPage />,
       },
       {
         name: 'ALIASES',
@@ -75,10 +74,10 @@ export const applicationMapNode: ApplicationMapType = [
         numberKey: 'numberOfAliases',
       },
       {
-        name: 'WATCHLIST',
-        path: 'watchlist',
-        icon: <WatchlistIcon />,
-        element: <WatchlistPage />,
+        name: 'CONFIGURATION',
+        path: 'configuration',
+        icon: <SettingsIcon />,
+        element: <AdminConfigurationPage />,
       },
     ],
   },
@@ -94,20 +93,6 @@ export const applicationMapNode: ApplicationMapType = [
         element: <InfoPage />,
         loginNeeded: 'node',
       },
-      {
-        name: 'CONFIGURATION',
-        path: 'configuration',
-        icon: <SettingsIcon />,
-        element: <ConfigurationPage />,
-        loginNeeded: 'node',
-      },
-    ],
-  },
-  {
-    groupName: 'NETWORKING',
-    path: 'networking',
-    icon: <NetworkingIcon />,
-    items: [
       {
         name: 'PEERS',
         path: 'peers',
@@ -143,6 +128,13 @@ export const applicationMapNode: ApplicationMapType = [
         loginNeeded: 'node',
         numberKey: 'numberOfSessions',
         fetchingKey: 'fetchingSessions',
+      },
+      {
+        name: 'CONFIGURATION',
+        path: 'configuration',
+        icon: <SettingsIcon />,
+        element: <ConfigurationPage />,
+        loginNeeded: 'node',
       },
     ],
   },
@@ -222,3 +214,6 @@ export const subpagePaths: string[] = applicationMap.flatMap((group) =>
 );
 
 export const isNodeSubpage = (pathname: string) => subpagePaths.includes(pathname);
+
+// NODE ADMIN pages work without a node
+export const isNodeAdminPage = (pathname: string) => pathname.startsWith('/admin/') && isNodeSubpage(pathname);

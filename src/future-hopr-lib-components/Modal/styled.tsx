@@ -1,7 +1,8 @@
+import { useRef } from 'react';
 import styled from '@emotion/styled';
 import { Dialog, DialogContent, IconButton } from '@mui/material';
 
-export const SDialog = styled(({ maxWidth, ...rest }: any) => <Dialog {...rest} />)`
+const StyledDialog = styled(({ maxWidth, ...rest }: any) => <Dialog {...rest} />)`
   .MuiPaper-root {
     width: 100%;
     ${(props) =>
@@ -11,6 +12,14 @@ export const SDialog = styled(({ maxWidth, ...rest }: any) => <Dialog {...rest} 
     `}
   }
 `;
+
+// tables mount a dialog per row action, render nothing until the first open
+export const SDialog = (props: any) => {
+  const opened = useRef(false);
+  if (props.open) opened.current = true;
+  if (!opened.current) return null;
+  return <StyledDialog {...props} />;
+};
 
 export const TopBar = styled.div`
   width: 100%;

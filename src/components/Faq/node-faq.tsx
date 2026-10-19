@@ -229,7 +229,7 @@ const nodeFaq: FaqData = {
         'A ping is a great way to see if a node is active and available. Send a ping to see if the node you want to communicate with or open a channel to is actually responsive or not.',
     },
   ],
-  '/networking/peers': [
+  '/node/peers': [
     {
       id: 1,
       title: 'Does the number of peers impact my node performance?',
@@ -245,7 +245,7 @@ const nodeFaq: FaqData = {
         'An alias is a nickname you set a node so you can keep a reminder of who they are. E.g. Great Node 3, John etc...',
     },
   ],
-  '/networking/channels-INCOMING': [
+  '/node/channels-INCOMING': [
     {
       id: 1,
       title: 'Unredeemed tickets value',
@@ -259,7 +259,7 @@ const nodeFaq: FaqData = {
         'The table of the Incomming Channels shows the value of tickets counted from last reset of your node, and the Tickets card on the Node info page shows the ticket values from the last reset of the node database.',
     },
   ],
-  '/networking/channels': [
+  '/node/channels': [
     {
       id: 1,
       title: 'How much wxHOPR should be in channels?',

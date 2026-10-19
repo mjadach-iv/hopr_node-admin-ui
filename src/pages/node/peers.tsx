@@ -189,6 +189,7 @@ function PeersPage() {
         search={true}
         header={header}
         id={'node-peers-table'}
+        loading={peersFetching || !peersConnected}
       />
     </Section>
   );

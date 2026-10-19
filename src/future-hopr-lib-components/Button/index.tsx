@@ -98,6 +98,9 @@ const StyledButton = styled(MuiButton)<StyledButtonProps>`
     background: transparent;
     color: var(--hopr-yellow);
     border: 1px solid var(--hopr-yellow);
+    &:hover {
+      background: var(--primary-soft);
+    }
   }
 `;
 

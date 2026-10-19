@@ -343,7 +343,7 @@ function InfoPage() {
         <Kpi
           label="Peers"
           value={peersConnected?.length ?? '-'}
-          to="/networking/peers"
+          to="/node/peers"
           sub={`${peersAnnounced?.length ?? '-'} announced`}
           tip="Nodes your node can reach, and all announced nodes it can see"
         />
@@ -356,7 +356,7 @@ function InfoPage() {
               <span className="unit">out</span>
             </>
           }
-          to="/networking/channels-OUTGOING"
+          to="/node/channels-OUTGOING"
           sub={`ticket ${ticketPrice ?? '-'}`}
           tip="Open incoming and outgoing channels of this node, and the current price of a ticket"
         />
