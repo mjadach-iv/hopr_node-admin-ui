@@ -415,11 +415,16 @@ export const getSafeNodes = async (
       'RedeemedStats',
     );
 
-    // a resolved keyid with no matching channels is real data (0 channels),
-    // an unresolved keyid or a failed channels request is unknown ('-')
+    // a resolved keyid with no matching channels is real data (0 channels), and so
+    // is a node blokli answered for without an account: it never announced, so it
+    // cannot have opened a channel. A failed accounts or channels request is unknown ('-')
+    const notOnChain = accountsList !== null && keyid === null;
     let channels: ChannelStatsType | null = null;
     let spent: TokenValueType | null = null;
-    if (channelsList.channels && keyid !== null) {
+    if (notOnChain) {
+      channels = { count: 0, value: '0', formatted: '0' };
+      spent = { value: '0', formatted: '0' };
+    } else if (channelsList.channels && keyid !== null) {
       const outgoing = channelsList.channels.filter((channel) => channel.source === keyid);
       const open = outgoing.filter((channel) => channel.status === 'OPEN');
       const value = open.reduce((sum, channel) => sum + BigInt(parseTokenValue(channel.balance).value), BigInt(0));
@@ -443,7 +448,7 @@ export const getSafeNodes = async (
       channels,
       redeemed: redeemedStats ? parseTokenValue(redeemedStats.redeemedAmount) : null,
       spent,
-      rpcBroken,
+      rpcBroken: rpcBroken && !notOnChain,
     };
   });
 };
@@ -583,7 +588,7 @@ export const getNodeChannels = async (
   )?.keyid;
   if (keyid === undefined) {
     console.warn(`Blokli does not know node ${payload.nodeAddress}`);
-    return { ticketPrice, spent: null, rpcBroken: false, incoming: [], outgoing: [] };
+    return { ticketPrice, spent: { value: '0', formatted: '0' }, rpcBroken: false, incoming: [], outgoing: [] };
   }
 
   const channelsData = await queryBlokli<{

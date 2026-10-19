@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.0-alpha.10
+
+Changes since 5.0.0-alpha.9.
+
+### Fixed
+
+- A safe with a node that never announced itself on chain showed Net as "-". Such a node cannot have opened a channel, so its channels and spent now count as 0. Values blokli could not answer for still show "-".
+
 ## 5.0.0-alpha.9
 
 Changes since 5.0.0-alpha.8.
