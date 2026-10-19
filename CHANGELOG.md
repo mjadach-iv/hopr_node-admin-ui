@@ -1,5 +1,21 @@
 # Changelog
 
+## 5.0.0-alpha.11
+
+Changes since 5.0.0-alpha.10.
+
+### Added
+
+- NODE INFO: a Tickets card with the unredeemed, neglected and rejected ticket values and the number of on-chain redemptions. The Redeem all tickets button is in the page header, and the ticket questions are in the page's FAQ.
+
+### Changed
+
+- The Safe{Wallet} button next to the safe address opens the safe's home page in Safe{Wallet} instead of its apps page.
+
+### Removed
+
+- The TICKETS page. Its ticket price, minimum winning probability and earned value were already on NODE INFO, and the rest is in the new Tickets card.
+
 ## 5.0.0-alpha.10
 
 Changes since 5.0.0-alpha.9.

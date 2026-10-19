@@ -6,7 +6,6 @@ import AliasesPage from './pages/node/aliases';
 import InfoPage from './pages/node/info';
 import SafeInfoPage from './pages/safe/info';
 import PeersPage from './pages/node/peers';
-import TicketsPage from './pages/node/tickets';
 import ChannelsPageIncoming from './pages/node/channelsIncoming';
 import ChannelsPageOutgoing from './pages/node/channelsOutgoing';
 import ConfigurationPage from './pages/node/configuration';
@@ -16,7 +15,6 @@ import SafeNodesPage from './pages/safe/nodes';
 // Icons
 import InfoIcon from '@mui/icons-material/Info';
 import LanIcon from '@mui/icons-material/Lan';
-import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ContactPhone from '@mui/icons-material/ContactPhone';
 import SavingsIcon from '@mui/icons-material/Savings';
@@ -63,13 +61,6 @@ export const applicationMapNode: ApplicationMapType = [
         path: 'info',
         icon: <InfoIcon />,
         element: <InfoPage />,
-        loginNeeded: 'node',
-      },
-      {
-        name: 'TICKETS',
-        path: 'tickets',
-        icon: <ConfirmationNumberIcon />,
-        element: <TicketsPage />,
         loginNeeded: 'node',
       },
       {

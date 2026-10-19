@@ -22,11 +22,13 @@ import Tooltip from '../../../future-hopr-lib-components/Tooltip/tooltip-fixed-w
 
 //Icons
 import DataObjectIcon from '@mui/icons-material/DataObject';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 
 //Info Components
 import { useUptime } from './node-uptime';
 import Traffic from './traffic';
 import Transport from './transport';
+import Tickets from './tickets';
 import NetworkDashboard from './networkDashboard';
 import { AddressLinks, Card, CardGrid, KV, Kpi, KpiGrid, SafeWalletLink, short } from './ui';
 
@@ -58,6 +60,8 @@ function InfoPage() {
   const nodeSync = useAppSelector((store) => store.node.metricsParsed.nodeSync);
   const ticketPrice = useAppSelector((store) => store.node.ticketPrice.data);
   const minimumNetworkProbability = useAppSelector((store) => store.node.probability.data);
+  const statisticsFetching = useAppSelector((store) => store.node.statistics.isFetching);
+  const redeemAllTicketsFetching = useAppSelector((store) => store.node.redeemAllTickets.isFetching);
   // blokli: safe wide channel stake and this node's on chain ticket redemptions
   const blokliUrl = useAppSelector(selectBlokliUrl);
   // origin only, the url may carry an api key in its path
@@ -147,6 +151,21 @@ function InfoPage() {
     });
   };
 
+  const handleRedeemAllTickets = () => {
+    if (!apiEndpoint) return;
+
+    dispatch(
+      nodeActionsAsync.redeemAllTicketsThunk({
+        apiEndpoint,
+        apiToken: apiToken ? apiToken : '',
+      }),
+    )
+      .unwrap()
+      .then(() => {
+        fetchInfoData();
+      });
+  };
+
   // This will allow us to improve readability on the reloading prop for SubpageTitle
   const isFetchingAnyData = [
     balancesFetching,
@@ -156,6 +175,7 @@ function InfoPage() {
     infoFetching,
     peersConnectedFetching,
     peersAnnouncedFetching,
+    statisticsFetching,
     channelStatsFetching,
     safeNodesFetching,
     ticketRedemptionFetching,
@@ -192,6 +212,18 @@ function InfoPage() {
         actions={
           <>
             <WithdrawModal />
+            <IconButton
+              iconComponent={<ExitToAppIcon />}
+              tooltipText={
+                <span>
+                  REDEEM
+                  <br />
+                  all tickets
+                </span>
+              }
+              reloading={redeemAllTicketsFetching}
+              onClick={handleRedeemAllTickets}
+            />
             <IconButton
               iconComponent={<DataObjectIcon />}
               tooltipText={
@@ -341,6 +373,8 @@ function InfoPage() {
         <Transport />
 
         <NetworkDashboard />
+
+        <Tickets />
 
         <Card title="Node & network">
           <KV

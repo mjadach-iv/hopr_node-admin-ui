@@ -64,29 +64,19 @@ const nodeFaq: FaqData = {
       content:
         'Payment channels are funded connections between two nodes. Without a payment channel open to node X, you cannot use node X to relay data. You want to have a set of well-funded, well-connected channels to and from your node, so it is used for relays and you earn more tickets/wxHOPR.',
     },
-  ],
-  '/node/logs': [
     {
-      id: 1,
-      title: 'What are these logs for?',
-      content:
-        'Here you can see the running logs of your node. These are great for real-time information on your node and diagnostic information.',
-    },
-  ],
-  '/node/tickets': [
-    {
-      id: 1,
+      id: 8,
       title: 'What are tickets?',
       content:
         'You earn tickets for relaying data. Each ticket may or may not contain wxHOPR, by using probabilistic payment and aggregating tickets when you redeem them on-chain, it reduces the on-chain transaction fees and exposes less metadata on-chain in comparison to paying directly in wxHOPR.',
     },
     {
-      id: 2,
+      id: 9,
       title: 'What are unredeemed tickets?',
       content: 'The tickets earned by your node that have yet to be redeemed.',
     },
     {
-      id: 3,
+      id: 10,
       title: 'When should my node redeem tickets?',
       content: (
         <span>
@@ -117,7 +107,7 @@ const nodeFaq: FaqData = {
       ),
     },
     {
-      id: 4,
+      id: 11,
       title: 'Why do I have rejected tickets?',
       content: (
         <span>
@@ -135,7 +125,7 @@ const nodeFaq: FaqData = {
       ),
     },
     {
-      id: 5,
+      id: 12,
       title: 'How do I redeem neglected tickets?',
       content: (
         <span>
@@ -152,9 +142,17 @@ const nodeFaq: FaqData = {
     //     'Ticket redemption costs a small fee in xDAI to complete the on-chain transaction. To lower this cost, the HOPR protocol batches ticket redemption, so it is generally more efficient to redeem multiple tickets at once. For maximum margins, only redeem tickets when you would otherwise lose them due to channel closure.',
     // },
     {
-      id: 6,
+      id: 13,
       title: 'How is ticket value calculated?',
       content: 'Ticket value is the total wxHOPR earned from all your winning tickets redeemed.',
+    },
+  ],
+  '/node/logs': [
+    {
+      id: 1,
+      title: 'What are these logs for?',
+      content:
+        'Here you can see the running logs of your node. These are great for real-time information on your node and diagnostic information.',
     },
   ],
   '/node/metrics': [
@@ -258,7 +256,7 @@ const nodeFaq: FaqData = {
       id: 2,
       title: 'Tickets values are different?',
       content:
-        'The table of the Incomming Channels shows the value of tickets counted from last reset of your node, and the Tickets subpage shows the ticket number from the last reset of the node databse.',
+        'The table of the Incomming Channels shows the value of tickets counted from last reset of your node, and the Tickets card on the Node info page shows the ticket values from the last reset of the node database.',
     },
   ],
   '/networking/channels': [

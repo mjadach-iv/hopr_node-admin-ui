@@ -120,7 +120,7 @@ export default function Details(props: Props) {
   // safe wide channel stake, same source as the info page. Blokli only, no fallback
   // to this node's own channels, so it stays honest about what it is showing.
   const safeChannelsOut = useAppSelector((store) => store.blokli.channelStats.data);
-  // on chain redemptions, same source as the info and tickets pages
+  // on chain redemptions, same source as the info page
   const redeemed = useAppSelector((store) => store.blokli.ticketRedemption.data?.redeemed.formatted);
 
   const totalwxHOPR =

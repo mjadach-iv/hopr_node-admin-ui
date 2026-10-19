@@ -43,7 +43,7 @@ export const AddressLinks = ({ address }: { address: string }) => (
 export const SafeWalletLink = ({ safeAddress }: { safeAddress: string }) => (
   <SmallActionButton tooltip={'Open in Safe{Wallet}'}>
     <Link
-      to={`https://app.safe.global/apps/open?safe=gno:${safeAddress}`}
+      to={`https://app.safe.global/home?safe=gno:${safeAddress}`}
       target="_blank"
     >
       <img
