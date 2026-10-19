@@ -260,7 +260,7 @@ function ChannelsPage() {
             unit={HOPR_TOKEN_USED}
           />
         ),
-        ...blokliChannelCells(blokliChannel),
+        ...blokliChannelCells(blokliChannel, blokliChannels.rpcBroken),
         actions: (
           <>
             <PingModal

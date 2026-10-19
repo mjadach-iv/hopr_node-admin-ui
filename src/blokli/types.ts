@@ -42,6 +42,8 @@ export type SafeNodeType = {
   redeemed: TokenValueType | null;
   // redeemed by the counterparties from every channel the node opened, closed ones included
   spent: TokenValueType | null;
+  // every RPC failed, so spent is unknown
+  rpcBroken: boolean;
 };
 
 export type BlokliChannelStatus = 'OPEN' | 'PENDINGTOCLOSE' | 'CLOSED';
@@ -70,6 +72,8 @@ export type NodeChannelsType = {
   ticketPrice: TokenValueType;
   // redeemed by the counterparties from all our outgoing channels, null when the RPC failed
   spent: TokenValueType | null;
+  // every RPC failed, so spent and the per channel redeemed are unknown
+  rpcBroken: boolean;
   incoming: BlokliChannelType[];
   outgoing: BlokliChannelType[];
 };

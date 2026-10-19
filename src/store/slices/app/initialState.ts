@@ -2,6 +2,7 @@ import type { GetBalancesResponseType, GetInfoResponseType } from '@hoprnet/hopr
 import { loadStateFromLocalStorage } from '../../../utils/localStorage';
 import { ChannelsOutgoingType, ChannelsIncomingType } from '../node/initialState';
 import { AliasMergeMode } from '../../../utils/aliases';
+import { GNOSIS_RPC_URLS } from '../../../../config';
 
 type InitialState = {
   notifications: {
@@ -24,6 +25,10 @@ type InitialState = {
     aliases: {
       mergeMode: AliasMergeMode;
     };
+    rpc: {
+      // Gnosis RPCs in fallback order
+      urls: string[];
+    };
   };
   previousStates: {
     prevApiEndpoint: string | null;
@@ -33,6 +38,11 @@ type InitialState = {
     prevNodeBalances: GetBalancesResponseType | null;
     prevMessagesUuids: string[];
   };
+};
+
+const loadRpcSettings = (): InitialState['configuration']['rpc'] => {
+  const stored = loadStateFromLocalStorage('app/configuration/rpc') as { urls?: unknown } | null;
+  return Array.isArray(stored?.urls) ? { urls: stored.urls } : { urls: GNOSIS_RPC_URLS };
 };
 
 export const initialState: InitialState = {
@@ -52,6 +62,7 @@ export const initialState: InitialState = {
       ...((loadStateFromLocalStorage('app/configuration/aliases') as InitialState['configuration']['aliases'] | null) ??
         {}),
     },
+    rpc: loadRpcSettings(),
   },
   // previous states used to compare for notifications
   previousStates: {

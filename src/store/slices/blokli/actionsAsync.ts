@@ -9,6 +9,7 @@ import {
 } from '../../../blokli';
 import { initialState } from './initialState';
 import { RootState } from '../..';
+import { selectRpcUrls } from '../../selectors/blokli';
 
 const { blokliApiError } = utils;
 const { getChannelStats, getNodeChannels, getSafeNodes, getTicketRedemptionStats } = api;
@@ -95,10 +96,11 @@ const getSafeNodesThunk = createAsyncThunk<
   { state: RootState }
 >(
   'blokli/getSafeNodes',
-  async (payload, { rejectWithValue }) => {
+  async (payload, { rejectWithValue, getState }) => {
     try {
       const safeNodes = await getSafeNodes({
         blokliUrl: payload.blokliUrl,
+        rpcUrls: selectRpcUrls(getState()),
         safeAddress: payload.safeAddress,
       });
       return safeNodes;
@@ -124,10 +126,11 @@ const getSafeNodesThunk = createAsyncThunk<
 
 const getNodeChannelsThunk = createAsyncThunk<NodeChannelsType | undefined, BlokliThunkPayload, { state: RootState }>(
   'blokli/getNodeChannels',
-  async (payload, { rejectWithValue }) => {
+  async (payload, { rejectWithValue, getState }) => {
     try {
       const nodeChannels = await getNodeChannels({
         blokliUrl: payload.blokliUrl,
+        rpcUrls: selectRpcUrls(getState()),
         nodeAddress: payload.nodeAddress,
       });
       return nodeChannels;

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import styled from '@emotion/styled';
 import { formatEther } from 'viem';
+import { RpcError } from '../../components/RpcError';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { actionsAsync as nodeActionsAsync } from '../../store/slices/node/actionsAsync';
 import { fetchBlokliData } from '../../store/slices/blokli/fetchBlokliData';
@@ -95,6 +96,7 @@ function SafeInfoPage() {
   const earned = sumSafeNodes(safeNodes, 'redeemed');
   const spent = sumSafeNodes(safeNodes, 'spent');
   const net = earned !== null && spent !== null ? earned - spent : null;
+  const rpcBroken = spent === null && !!safeNodes?.some((node) => node.rpcBroken);
   const nodesXDai = sumSafeNodes(safeNodes, 'xDai');
   const lowXDaiNodes = safeNodes?.filter((node) => node.xDai && BigInt(node.xDai.value) < LOW_XDAI).length;
 
@@ -164,9 +166,17 @@ function SafeInfoPage() {
         />
         <Kpi
           label="Net"
-          value={net !== null && net < BigInt(0) ? `-${short(formatEther(-net))}` : short(toFormatted(net))}
-          unit="wxHOPR"
-          className={net === null ? '' : net < BigInt(0) ? 'tone-red' : 'tone-green'}
+          value={
+            rpcBroken ? (
+              <RpcError />
+            ) : net !== null && net < BigInt(0) ? (
+              `-${short(formatEther(-net))}`
+            ) : (
+              short(toFormatted(net))
+            )
+          }
+          unit={rpcBroken ? undefined : 'wxHOPR'}
+          className={rpcBroken ? 'tone-red' : net === null ? '' : net < BigInt(0) ? 'tone-red' : 'tone-green'}
           sub="earned - spent"
           tip={`${toFormatted(net) ?? '-'} wxHOPR the safe's nodes earned beyond what they spent`}
         />
@@ -179,8 +189,9 @@ function SafeInfoPage() {
         />
         <Kpi
           label="Spent"
-          value={short(toFormatted(spent))}
-          unit="wxHOPR"
+          value={rpcBroken ? <RpcError /> : short(toFormatted(spent))}
+          unit={rpcBroken ? undefined : 'wxHOPR'}
+          className={rpcBroken ? 'tone-red' : ''}
           sub="redeemed by counterparties"
           tip={`${
             toFormatted(spent) ?? '-'

@@ -7,6 +7,7 @@ import { formatCount } from '../../utils/metrics';
 import { shrinkNumber } from '../../utils/amount';
 import { formatTimeToUserTimezone } from '../../utils/date';
 import { HOPR_TOKEN_USED } from '../../../config';
+import { RpcError } from '../RpcError';
 import { loadStateFromLocalStorage, saveStateToLocalStorage } from '../../utils/localStorage';
 
 // HOPR Components
@@ -60,6 +61,7 @@ export const useBlokliChannels = (direction: Direction) => {
   return {
     byId,
     closed,
+    rpcBroken: !!nodeChannels.data?.rpcBroken,
     refresh,
   };
 };
@@ -109,7 +111,7 @@ const Amount = ({ value, approximate }: { value: string; approximate?: boolean }
   </Tooltip>
 );
 
-export const redeemedCells = (channel: BlokliChannelType | undefined) => {
+export const redeemedCells = (channel: BlokliChannelType | undefined, rpcBroken?: boolean) => {
   const exact = channel?.redeemed?.formatted;
   const estimate = channel?.estimatedValue?.formatted;
   return {
@@ -121,13 +123,15 @@ export const redeemedCells = (channel: BlokliChannelType | undefined) => {
         value={estimate}
         approximate
       />
+    ) : rpcBroken ? (
+      <RpcError />
     ) : (
       '-'
     ),
   };
 };
 
-export const blokliChannelCells = (channel: BlokliChannelType | undefined) => ({
+export const blokliChannelCells = (channel: BlokliChannelType | undefined, rpcBroken?: boolean) => ({
   epoch: channel ? channel.epoch.toString() : '-',
   ticketIndexValue: channel?.ticketIndex,
   ticketIndex: channel ? (
@@ -137,7 +141,7 @@ export const blokliChannelCells = (channel: BlokliChannelType | undefined) => ({
   ) : (
     '-'
   ),
-  ...redeemedCells(channel),
+  ...redeemedCells(channel, rpcBroken),
 });
 
 export const statusWithClosure = (status: string, channel: BlokliChannelType | undefined): string => {
@@ -190,6 +194,7 @@ export const ClosedChannelsTable = ({
 }) => {
   const aliases = useAppSelector((store) => store.node.aliases);
   const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);
+  const rpcBroken = useAppSelector((store) => !!store.blokli.nodeChannels.data?.rpcBroken);
   const showKey = `app/closedChannels/${direction}/show`;
   const [show, set_show] = useState(() => loadStateFromLocalStorage(showKey) === true);
 
@@ -214,7 +219,7 @@ export const ClosedChannelsTable = ({
       peerAddress: address ? (aliases?.[address] ? `${aliases[address]} (${address})` : address) : '',
       channelId: channel.channelId,
       epoch: channel.epoch.toString(),
-      ...redeemedCells(channel),
+      ...redeemedCells(channel, rpcBroken),
       actions: address ? (
         <>
           <PingModal address={address} />

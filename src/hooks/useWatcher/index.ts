@@ -35,6 +35,7 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
   // inputs of the blokli queries
   const blokliUrl = useAppSelector(selectBlokliUrl);
   const hoprNodeSafe = useAppSelector((store) => store.node.info.data?.hoprNodeSafe);
+  const rpcUrlsKey = useAppSelector((store) => store.app.configuration.rpc.urls.join(','));
   // joined so the dashboard effect only reruns when the safe's node list really changes
   const safeNodeAddressesKey = useAppSelector((store) =>
     (store.blokli.safeNodes.data ?? []).map((node) => node.nodeAddress).join(','),
@@ -325,7 +326,8 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
 
   // Blokli data. The url, the node address and the safe all arrive asynchronously
   // after a node switch, so this keys on all 3 rather than firing once, then keeps
-  // the figures fresh alongside the balances and channels above.
+  // the figures fresh alongside the balances and channels above. An RPC list change
+  // refetches right away so a broken one shows without waiting for the interval.
   useEffect(() => {
     const fetch = () =>
       fetchBlokliData({
@@ -339,7 +341,7 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
     return () => {
       clearInterval(watchBlokliInterval);
     };
-  }, [blokliUrl, peerAddress, hoprNodeSafe, intervalDuration]);
+  }, [blokliUrl, peerAddress, hoprNodeSafe, intervalDuration, rpcUrlsKey]);
 
   // Network dashboard context: node or network changed, drop the previous figures
   useEffect(() => {

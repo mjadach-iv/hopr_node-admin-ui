@@ -114,6 +114,7 @@ function SafeNodesPage() {
         <TokenAmount
           value={net}
           unit="wxHOPR"
+          broken={safeNode.rpcBroken}
         />
       ),
       netValue: net,
@@ -127,6 +128,7 @@ function SafeNodesPage() {
         <TokenAmount
           value={safeNode.spent?.formatted}
           unit="wxHOPR"
+          broken={safeNode.rpcBroken}
         />
       ),
       spentValue: safeNode.spent?.formatted,

@@ -1,7 +1,6 @@
 import { formatEther, getAddress } from 'viem';
 import { queryBlokli, tryUnwrapUnion, unwrapUnion } from './client';
 import { getRedeemedPerChannel } from '../chain/spent';
-import { GNOSIS_RPC_URL } from '../../config';
 import {
   parseTokenValue,
   type BlokliChannelStatus,
@@ -19,6 +18,9 @@ export type BlokliPayloadType = {
   blokliUrl: string;
   timeout?: number;
 };
+
+// Gnosis RPCs for the channel events blokli does not index, in fallback order
+type RpcPayloadType = { rpcUrls: string[] };
 
 const CHANNEL_STATS_RESULT = `{
       __typename
@@ -344,7 +346,9 @@ type SafeChannelType = { concreteChannelId: string; source: number; balance: Tok
 
 const safeChannelId = (channel: SafeChannelType) => `0x${channel.concreteChannelId.toLowerCase().replace(/^0x/, '')}`;
 
-export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: string }): Promise<SafeNodeType[]> => {
+export const getSafeNodes = async (
+  payload: BlokliPayloadType & RpcPayloadType & { safeAddress: string },
+): Promise<SafeNodeType[]> => {
   const safeData = await queryBlokli<{
     safe: { __typename?: string; registeredNodes?: string[] } | null;
   }>(payload.blokliUrl, SAFE_NODES_QUERY, { safeAddress: payload.safeAddress }, payload.timeout);
@@ -383,14 +387,16 @@ export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: s
 
   // every channel the safe funded, closed ones too, so a node's spent covers its whole history
   let redeemedById: Record<string, bigint> | null = null;
+  let rpcBroken = false;
   if (channelsList.channels && channelsList.contractAddresses) {
     try {
       redeemedById = await getRedeemedPerChannel({
-        rpcUrl: GNOSIS_RPC_URL,
+        rpcUrls: payload.rpcUrls,
         channelsContract: (JSON.parse(channelsList.contractAddresses) as { channels: string }).channels,
         channelIds: channelsList.channels.map(safeChannelId),
       });
     } catch (e) {
+      rpcBroken = true;
       console.warn('Could not read the safe channel redemptions', e);
     }
   }
@@ -437,6 +443,7 @@ export const getSafeNodes = async (payload: BlokliPayloadType & { safeAddress: s
       channels,
       redeemed: redeemedStats ? parseTokenValue(redeemedStats.redeemedAmount) : null,
       spent,
+      rpcBroken,
     };
   });
 };
@@ -559,7 +566,7 @@ type AccountsListType = { accounts: { keyid: number; chainKey: string }[] };
  * every ticket issued this epoch up to the last on-chain redemption, valued at one hop.
  */
 export const getNodeChannels = async (
-  payload: BlokliPayloadType & { nodeAddress: string },
+  payload: BlokliPayloadType & RpcPayloadType & { nodeAddress: string },
 ): Promise<NodeChannelsType> => {
   const accountData = await queryBlokli<{
     accounts: { __typename?: string } | null;
@@ -576,7 +583,7 @@ export const getNodeChannels = async (
   )?.keyid;
   if (keyid === undefined) {
     console.warn(`Blokli does not know node ${payload.nodeAddress}`);
-    return { ticketPrice, spent: null, incoming: [], outgoing: [] };
+    return { ticketPrice, spent: null, rpcBroken: false, incoming: [], outgoing: [] };
   }
 
   const channelsData = await queryBlokli<{
@@ -617,13 +624,14 @@ export const getNodeChannels = async (
   let redeemedById: Record<string, bigint> | null = null;
   try {
     redeemedById = await getRedeemedPerChannel({
-      rpcUrl: GNOSIS_RPC_URL,
+      rpcUrls: payload.rpcUrls,
       channelsContract: (JSON.parse(chainInfo.contractAddresses) as { channels: string }).channels,
       channelIds: [...outgoing, ...incoming].map(channelId),
     });
   } catch (e) {
     console.warn('Could not read the channel redemptions', e);
   }
+  const rpcBroken = redeemedById === null;
   const toTokenValue = (value: bigint): TokenValueType => ({ value: value.toString(), formatted: formatEther(value) });
 
   const toChannel = (channel: BlokliRawChannelType, counterpartyKeyid: number): BlokliChannelType => ({
@@ -645,6 +653,7 @@ export const getNodeChannels = async (
           outgoing.reduce((sum, channel) => sum + (redeemedById?.[channelId(channel)] ?? BigInt(0)), BigInt(0)),
         )
       : null,
+    rpcBroken,
     outgoing: outgoing.map((channel) => toChannel(channel, channel.destination)),
     incoming: incoming.map((channel) => toChannel(channel, channel.source)),
   };

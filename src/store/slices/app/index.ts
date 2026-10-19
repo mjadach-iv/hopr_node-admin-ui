@@ -33,6 +33,10 @@ const appSlice = createSlice({
         saveStateToLocalStorage('app/configuration/aliases', action.payload);
       }
     },
+    setRpcSettings: (state, action: PayloadAction<typeof initialState.configuration.rpc>) => {
+      state.configuration.rpc = action.payload;
+      saveStateToLocalStorage('app/configuration/rpc', action.payload);
+    },
     addNotification: (
       state,
       action: PayloadAction<{

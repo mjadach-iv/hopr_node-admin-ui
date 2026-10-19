@@ -9,6 +9,7 @@ import { useAppSelector } from '../../store';
 import { selectSafeFunds, sumSafeNodes } from '../../store/selectors/blokli';
 import { shrinkNumber } from '../../utils/amount';
 import { StatusPill } from '../StatusPill';
+import { RpcError } from '../RpcError';
 
 // HOPR Components
 import FAQ from '../Faq';
@@ -16,7 +17,16 @@ import nodeInfoData from '../Faq/node-faq';
 
 type Level = '' | 'warn' | 'low';
 type Group = 'node' | 'safe';
-type WalletItem = { key: string; label: string; long: string; value?: string | null; unit: string; level?: Level };
+type WalletItem = {
+  key: string;
+  label: string;
+  long: string;
+  value?: string | null;
+  unit: string;
+  level?: Level;
+  // every RPC failed, the value is unknown
+  broken?: boolean;
+};
 
 /** The node's balances and status, shared by the header, its popover and the mobile menu. */
 export const useWallet = () => {
@@ -27,6 +37,7 @@ export const useWallet = () => {
   const redeemed = sumSafeNodes(safeNodes, 'redeemed');
   const spent = sumSafeNodes(safeNodes, 'spent');
   const net = redeemed !== null && spent !== null ? redeemed - spent : null;
+  const rpcBroken = !!safeNodes?.some((node) => node.rpcBroken);
 
   let xDaiLevel: Level = '';
   if (balances.native.value && BigInt(balances.native.value) < BigInt('1000000000000000')) xDaiLevel = 'low';
@@ -59,6 +70,7 @@ export const useWallet = () => {
         long: 'Safe net (earned - spent)',
         value: net === null ? null : formatEther(net),
         unit: 'wxHOPR',
+        broken: net === null && rpcBroken,
       },
       { key: 'total', label: 'Total', long: 'Total staked', value: safeFunds.total?.formatted, unit: 'wxHOPR' },
     ] as WalletItem[],
@@ -228,6 +240,9 @@ const Breakdown = styled.div`
     b {
       color: var(--text);
       font-weight: 600;
+      &.broken {
+        color: var(--red);
+      }
     }
     .unit {
       color: var(--muted);
@@ -280,11 +295,19 @@ const BreakdownRows = ({ items }: { items: WalletItem[] }) => (
         key={item.key}
       >
         {item.long}
-        <span>
-          <b>{item.value ? shrinkNumber(item.value) : '-'}</b>
-          <span className="unit">{item.unit}</span>
-          {item.value && item.value !== shrinkNumber(item.value) && <span className="full">{item.value}</span>}
-        </span>
+        {item.broken ? (
+          <span>
+            <b className="broken">
+              <RpcError />
+            </b>
+          </span>
+        ) : (
+          <span>
+            <b>{item.value ? shrinkNumber(item.value) : '-'}</b>
+            <span className="unit">{item.unit}</span>
+            {item.value && item.value !== shrinkNumber(item.value) && <span className="full">{item.value}</span>}
+          </span>
+        )}
       </div>
     ))}
   </>
@@ -319,13 +342,19 @@ const ChipStats = ({ items }: { items: WalletItem[] }) => (
     {items.map((item) => (
       <span
         key={item.key}
-        className={`stat ${item.key} ${item.level ?? ''}`}
+        className={`stat ${item.key} ${item.broken ? 'low' : item.level ?? ''}`}
       >
         <span className="label">{item.label}</span>
-        <span>
-          <span className="value">{item.value ? shrinkNumber(item.value) : '-'}</span>
-          <span className="unit">{item.unit}</span>
-        </span>
+        {item.broken ? (
+          <span className="value">
+            <RpcError />
+          </span>
+        ) : (
+          <span>
+            <span className="value">{item.value ? shrinkNumber(item.value) : '-'}</span>
+            <span className="unit">{item.unit}</span>
+          </span>
+        )}
       </span>
     ))}
   </>

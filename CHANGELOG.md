@@ -1,5 +1,19 @@
 # Changelog
 
+## 5.0.0-alpha.8
+
+Changes since 5.0.0-alpha.7.
+
+### Added
+
+- CONFIGURATION: a Gnosis RPC list under the Blokli URL. The RPCs are tried from the top, the next one taking over when one fails. Reorder them by drag and drop, remove them with the trash icon, add your own, then Save. Reset to default restores rpc.gnosischain.com, rpc.gnosis.gateway.fm and gnosis-rpc.publicnode.com.
+- When every RPC fails, Spent and Net show "RPC error" instead of "-", in the header, on node and safe info, in the safe nodes table and on closed channels. A click opens the configuration page.
+
+### Changed
+
+- Spent falls back to the next RPC on any error. When none can read the whole chain in one request, the channel events are read in 10k block windows, which RPCs with a block range cap accept.
+- CONFIGURATION: the Blokli URL's "Reset to node's" button is renamed Reset to default.
+
 ## 5.0.0-alpha.7
 
 Changes since 5.0.0-alpha.6.

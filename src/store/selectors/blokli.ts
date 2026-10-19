@@ -9,6 +9,9 @@ import type { SafeNodeType, TokenValueType } from '../../blokli/types';
 export const selectBlokliUrl = (state: RootState): string | null =>
   state.blokli.url ?? state.node.info.data?.providerUrl ?? null;
 
+// Gnosis RPCs in the order they are tried
+export const selectRpcUrls = (state: RootState): string[] => state.app.configuration.rpc.urls;
+
 /**
  * Sum of one figure over every safe node, in wei. Null when any node's figure is
  * missing, so a partial sum never passes for the whole safe.

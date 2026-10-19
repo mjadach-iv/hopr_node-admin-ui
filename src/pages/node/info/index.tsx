@@ -1,5 +1,6 @@
 import { useEffect, type CSSProperties } from 'react';
 import { formatEther } from 'viem';
+import { RpcError } from '../../../components/RpcError';
 import { useAppDispatch, useAppSelector } from '../../../store';
 
 // Mui
@@ -75,6 +76,7 @@ function InfoPage() {
   const safeNode = safeNodes?.find((node) => node.nodeAddress.toLowerCase() === addresses?.native?.toLowerCase());
   const nodeChannelsOut = safeNode?.channels;
   const nodeSpent = safeNode?.spent;
+  const rpcBroken = !nodeSpent && !!safeNode?.rpcBroken;
   const dashboardFetching = useAppSelector((store) => store.networkDashboard.nodes.isFetching);
   useEffect(() => {
     fetchInfoData();
@@ -276,12 +278,16 @@ function InfoPage() {
         <Kpi
           label="Net"
           value={
-            net !== null && net < BigInt(0)
-              ? `-${short(formatEther(-net))}`
-              : short(net === null ? null : formatEther(net))
+            rpcBroken ? (
+              <RpcError />
+            ) : net !== null && net < BigInt(0) ? (
+              `-${short(formatEther(-net))}`
+            ) : (
+              short(net === null ? null : formatEther(net))
+            )
           }
-          unit="wxHOPR"
-          className={net === null ? '' : net < BigInt(0) ? 'tone-red' : 'tone-green'}
+          unit={rpcBroken ? undefined : 'wxHOPR'}
+          className={rpcBroken ? 'tone-red' : net === null ? '' : net < BigInt(0) ? 'tone-red' : 'tone-green'}
           sub="earned - spent"
           tip={`${net === null ? '-' : formatEther(net)} wxHOPR this node earned beyond what it spent`}
         />
@@ -294,8 +300,9 @@ function InfoPage() {
         />
         <Kpi
           label="Spent"
-          value={short(nodeSpent?.formatted)}
-          unit="wxHOPR"
+          value={rpcBroken ? <RpcError /> : short(nodeSpent?.formatted)}
+          unit={rpcBroken ? undefined : 'wxHOPR'}
+          className={rpcBroken ? 'tone-red' : ''}
           sub="redeemed by counterparties"
           tip={`${
             nodeSpent?.formatted ?? '-'
