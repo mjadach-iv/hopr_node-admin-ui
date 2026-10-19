@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.0-alpha.9
+
+Changes since 5.0.0-alpha.8.
+
+### Fixed
+
+- The TypeScript check failed on BigInt literals in viem's ox dependency, breaking `pnpm build` and filling the dev server with errors.
+
 ## 5.0.0-alpha.8
 
 Changes since 5.0.0-alpha.7.

@@ -1,5 +1,4 @@
 import { createPublicClient, fallback, http, toEventSelector, type Hex } from 'viem';
-import { gnosis } from 'viem/chains';
 
 const TICKET_REDEEMED = toEventSelector('TicketRedeemed(bytes32,bytes32)');
 const BALANCE_MASK = (BigInt(1) << BigInt(96)) - BigInt(1);
@@ -64,7 +63,6 @@ export const getRedeemedPerChannel = async ({
   if (rpcUrls.length === 0) throw new Error('No Gnosis RPC configured');
 
   const client = createPublicClient({
-    chain: gnosis,
     transport: fallback(
       rpcUrls.map((url) => http(url, { timeout, retryCount: 1 })),
       { retryCount: 0 },
