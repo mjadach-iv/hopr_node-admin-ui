@@ -14,7 +14,7 @@ export const selectRpcUrls = (state: RootState): string[] => state.app.configura
  */
 export const sumSafeNodes = (
   safeNodes: SafeNodeType[] | null | undefined,
-  key: 'xDai' | 'redeemed' | 'spent',
+  key: 'xDai' | 'channels' | 'redeemed' | 'spent',
 ): bigint | null =>
   safeNodes?.length && safeNodes.every((node) => node[key])
     ? safeNodes.reduce((sum, node) => sum + BigInt(node[key]!.value), BigInt(0))

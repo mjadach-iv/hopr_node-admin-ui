@@ -7,7 +7,8 @@ const blokliSlice = createSlice({
   name: 'blokli',
   initialState,
   reducers: {
-    resetState: () => initialState,
+    // the url is global and only recorded when it changes, so a login must not forget it
+    resetState: (state) => ({ ...initialState, urlInUse: state.urlInUse }),
     setNodeAddress(state, action: PayloadAction<string | null>) {
       const nodeAddress = action.payload;
       if (!nodeAddress || !isAddress(nodeAddress)) return;

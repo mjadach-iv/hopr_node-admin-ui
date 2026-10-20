@@ -7,6 +7,8 @@ import {
   type BlokliChannelType,
   type ChannelStatsType,
   type NodeChannelsType,
+  type NodesSafesType,
+  type SafesNodesType,
   type SafeChannelStatsType,
   type SafeNodeType,
   type TicketRedemptionType,
@@ -333,19 +335,31 @@ const buildRedemptionsQuery = (indexes: number[]) => {
   }`;
 };
 
-/**
- * All nodes registered to the safe with their xDai balance, OPEN outgoing channel
- * stats and lifetime redeemed amount. Blokli has no single query for it, so this
- * assembles: safe() for the node list, one channels(safeAddress) request grouped
- * by source keyid client side, and complexity-chunked aliased batches for the
- * accounts, native balances and redemptions. Only the safe() lookup is a hard
- * failure - any other failing request or per node field just nulls the affected
- * cells, rendered as '-'.
- */
 type SafeChannelType = { concreteChannelId: string; source: number; balance: TokenValueString; status: string };
 
 const safeChannelId = (channel: SafeChannelType) => `0x${channel.concreteChannelId.toLowerCase().replace(/^0x/, '')}`;
 
+const getSafeChannels = (payload: BlokliPayloadType, safeAddress: string) =>
+  queryBlokli<{ channels: { __typename?: string } | null; chainInfo: { __typename?: string } | null }>(
+    payload.blokliUrl,
+    SAFE_CHANNELS_QUERY,
+    { safeAddress },
+    payload.timeout,
+  )
+    .then((data) => ({
+      channels: tryUnwrapUnion<{ channels: SafeChannelType[] }>(data.channels, 'ChannelsList')?.channels ?? null,
+      contractAddresses: tryUnwrapUnion<{ contractAddresses: string }>(data.chainInfo, 'ChainInfo')?.contractAddresses,
+    }))
+    .catch((e) => {
+      console.warn('Blokli safe channels request failed', e);
+      return { channels: null, contractAddresses: undefined };
+    });
+
+/**
+ * All nodes registered to the safe with their xDai balance, OPEN outgoing channel
+ * stats and lifetime redeemed amount. Only the safe() lookup is a hard failure,
+ * see getNodesFigures for the rest.
+ */
 export const getSafeNodes = async (
   payload: BlokliPayloadType & RpcPayloadType & { safeAddress: string },
 ): Promise<SafeNodeType[]> => {
@@ -362,38 +376,50 @@ export const getSafeNodes = async (
 
   // checksummed so the addresses match the alias and channel maps of the node slice
   const nodeAddresses = [...safe.registeredNodes].map((address) => getAddress(address)).sort();
-  if (nodeAddresses.length === 0) return [];
+  return getNodesFigures({
+    ...payload,
+    nodeAddresses,
+    safeByNode: Object.fromEntries(nodeAddresses.map((nodeAddress) => [nodeAddress, payload.safeAddress])),
+  });
+};
 
-  const [accountsData, nativeData, redemptionData, channelsList] = await Promise.all([
+/**
+ * The xDai balance, OPEN outgoing channel stats, lifetime redeemed and spent of
+ * each node. Blokli has no single query for it, so this assembles: complexity-chunked
+ * aliased batches for the accounts, native balances and redemptions, one
+ * channels(safeAddress) request per safe grouped by source keyid client side, and
+ * one RPC scan for what the counterparties redeemed. Any failing request or per node
+ * field just nulls the affected cells, rendered as '-'. A node without a safe in
+ * safeByNode (keyed by checksummed address) gets no channel figures.
+ */
+export const getNodesFigures = async (
+  payload: BlokliPayloadType & RpcPayloadType & { nodeAddresses: string[]; safeByNode: Record<string, string | null> },
+): Promise<SafeNodeType[]> => {
+  const nodeAddresses = Array.from(new Set(payload.nodeAddresses.map((address) => getAddress(address))));
+  if (nodeAddresses.length === 0) return [];
+  const safeOf = (nodeAddress: string) => payload.safeByNode[nodeAddress] ?? null;
+  const safes = Array.from(new Set(nodeAddresses.map(safeOf).filter((safe): safe is string => !!safe)));
+
+  const [accountsData, nativeData, redemptionData, safeChannels] = await Promise.all([
     runChunked(payload, nodeAddresses, ACCOUNTS_PER_REQUEST, buildAccountsQuery),
     runChunked(payload, nodeAddresses, NATIVE_BALANCES_PER_REQUEST, buildNativeBalancesQuery),
     runChunked(payload, nodeAddresses, REDEMPTIONS_PER_REQUEST, buildRedemptionsQuery),
-    queryBlokli<{ channels: { __typename?: string } | null; chainInfo: { __typename?: string } | null }>(
-      payload.blokliUrl,
-      SAFE_CHANNELS_QUERY,
-      { safeAddress: payload.safeAddress },
-      payload.timeout,
-    )
-      .then((data) => ({
-        channels: tryUnwrapUnion<{ channels: SafeChannelType[] }>(data.channels, 'ChannelsList')?.channels ?? null,
-        contractAddresses: tryUnwrapUnion<{ contractAddresses: string }>(data.chainInfo, 'ChainInfo')
-          ?.contractAddresses,
-      }))
-      .catch((e) => {
-        console.warn('Blokli safe channels request failed', e);
-        return { channels: null, contractAddresses: undefined };
-      }),
+    Promise.all(safes.map((safe) => getSafeChannels(payload, safe))),
   ]);
+  const channelsBySafe: Record<string, SafeChannelType[] | null> = Object.fromEntries(
+    safes.map((safe, i) => [safe, safeChannels[i].channels]),
+  );
+  const contractAddresses = safeChannels.find((result) => result.contractAddresses)?.contractAddresses;
 
-  // every channel the safe funded, closed ones too, so a node's spent covers its whole history
+  // every channel the safes funded, closed ones too, so a node's spent covers its whole history
   let redeemedById: Record<string, bigint> | null = null;
   let rpcBroken = false;
-  if (channelsList.channels && channelsList.contractAddresses) {
+  if (safeChannels.some((result) => result.channels) && contractAddresses) {
     try {
       redeemedById = await getRedeemedPerChannel({
         rpcUrls: payload.rpcUrls,
-        channelsContract: (JSON.parse(channelsList.contractAddresses) as { channels: string }).channels,
-        channelIds: channelsList.channels.map(safeChannelId),
+        channelsContract: (JSON.parse(contractAddresses) as { channels: string }).channels,
+        channelIds: safeChannels.flatMap((result) => result.channels ?? []).map(safeChannelId),
       });
     } catch (e) {
       rpcBroken = true;
@@ -415,6 +441,9 @@ export const getSafeNodes = async (
       'RedeemedStats',
     );
 
+    const safe = safeOf(nodeAddress);
+    const safeChannelsList = safe ? channelsBySafe[safe] : null;
+
     // a resolved keyid with no matching channels is real data (0 channels), and so
     // is a node blokli answered for without an account: it never announced, so it
     // cannot have opened a channel. A failed accounts or channels request is unknown ('-')
@@ -424,8 +453,8 @@ export const getSafeNodes = async (
     if (notOnChain) {
       channels = { count: 0, value: '0', formatted: '0' };
       spent = { value: '0', formatted: '0' };
-    } else if (channelsList.channels && keyid !== null) {
-      const outgoing = channelsList.channels.filter((channel) => channel.source === keyid);
+    } else if (safeChannelsList && keyid !== null) {
+      const outgoing = safeChannelsList.filter((channel) => channel.source === keyid);
       const open = outgoing.filter((channel) => channel.status === 'OPEN');
       const value = open.reduce((sum, channel) => sum + BigInt(parseTokenValue(channel.balance).value), BigInt(0));
       channels = {
@@ -448,9 +477,141 @@ export const getSafeNodes = async (
       channels,
       redeemed: redeemedStats ? parseTokenValue(redeemedStats.redeemedAmount) : null,
       spent,
-      rpcBroken: rpcBroken && !notOnChain,
+      // without its safe's channels the RPC was never asked about this node
+      rpcBroken: rpcBroken && !notOnChain && !!safeChannelsList,
     };
   });
+};
+
+const NODE_SAFES_PER_REQUEST = 40;
+
+const buildNodeSafesQuery = (indexes: number[]) => {
+  const variables = indexes.map((i) => `$a${i}: String!`).join(', ');
+  const fields = indexes
+    .map(
+      (i) => `
+    s${i}: safeBy(selector: REGISTERED_NODE, address: $a${i}) {
+      __typename
+      ... on SafesList {
+        safes {
+          address
+        }
+      }
+      ... on InvalidAddressError {
+        code
+        message
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }`,
+    )
+    .join('\n');
+  return `query AdminNodeSafes(${variables}) {${fields}
+  }`;
+};
+
+const CHAIN_NETWORK_QUERY = `
+  query AdminChainNetwork {
+    chainInfo {
+      __typename
+      ... on ChainInfo {
+        network
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }
+  }
+`;
+
+/**
+ * The safe each node is registered to, and the network blokli indexes. A null
+ * entry means blokli knows no safe for the node, a missing one that the lookup
+ * failed. Only the chainInfo request is a hard failure, so an unreachable blokli
+ * keeps the figures already shown.
+ */
+export const getNodesSafes = async (
+  payload: BlokliPayloadType & { nodeAddresses: string[] },
+): Promise<NodesSafesType> => {
+  const nodeAddresses = Array.from(new Set(payload.nodeAddresses.map((address) => getAddress(address))));
+  const [network, safesData] = await Promise.all([
+    queryBlokli<{ chainInfo: { __typename?: string } | null }>(
+      payload.blokliUrl,
+      CHAIN_NETWORK_QUERY,
+      {},
+      payload.timeout,
+    ).then((data) => unwrapUnion<{ network: string }>(data.chainInfo, 'ChainInfo').network),
+    runChunked(payload, nodeAddresses, NODE_SAFES_PER_REQUEST, buildNodeSafesQuery),
+  ]);
+
+  const safeByNode: NodesSafesType['safeByNode'] = {};
+  nodeAddresses.forEach((nodeAddress, i) => {
+    if (!(`s${i}` in safesData)) return;
+    const result = safesData[`s${i}`];
+    if (result === null) {
+      safeByNode[nodeAddress] = null;
+      return;
+    }
+    const list = tryUnwrapUnion<{ safes: { address: string }[] }>(result, 'SafesList');
+    if (!list) return;
+    const safe = list.safes[0];
+    safeByNode[nodeAddress] = safe ? getAddress(safe.address) : null;
+  });
+
+  return { network, safeByNode };
+};
+
+const buildSafesNodesQuery = (indexes: number[]) => {
+  const variables = indexes.map((i) => `$a${i}: String!`).join(', ');
+  const fields = indexes
+    .map(
+      (i) => `
+    s${i}: safe(address: $a${i}) {
+      __typename
+      ... on Safe {
+        registeredNodes
+      }
+      ... on InvalidAddressError {
+        code
+        message
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }`,
+    )
+    .join('\n');
+  return `query AdminSafesNodes(${variables}) {${fields}
+  }`;
+};
+
+/**
+ * Every node registered to each safe, checksummed and sorted. An empty list means
+ * blokli does not know the safe, a missing entry that the lookup failed.
+ */
+export const getSafesNodes = async (
+  payload: BlokliPayloadType & { safeAddresses: string[] },
+): Promise<SafesNodesType> => {
+  const safeAddresses = Array.from(new Set(payload.safeAddresses.map((address) => getAddress(address))));
+  const safesData = await runChunked(payload, safeAddresses, NODE_SAFES_PER_REQUEST, buildSafesNodesQuery);
+
+  const nodesBySafe: SafesNodesType = {};
+  safeAddresses.forEach((safeAddress, i) => {
+    if (!(`s${i}` in safesData)) return;
+    const result = safesData[`s${i}`];
+    if (result === null) {
+      nodesBySafe[safeAddress] = [];
+      return;
+    }
+    const safe = tryUnwrapUnion<{ registeredNodes: string[] }>(result, 'Safe');
+    if (!safe) return;
+    nodesBySafe[safeAddress] = safe.registeredNodes.map((address) => getAddress(address)).sort();
+  });
+  return nodesBySafe;
 };
 
 const NODE_ACCOUNT_QUERY = `

@@ -29,6 +29,7 @@ const LayoutEnhanced = () => {
   const numberOfPeers = useAppSelector((store) => store.node.peersConnected.data?.length);
   const fetchingPeers = useAppSelector((store) => store.node.peersConnected.isFetching);
   const numberOfAliases = useAppSelector((store) => store.app.aliases && Object.keys(store.app.aliases).length);
+  const numberOfWatchlist = useAppSelector((store) => store.app.watchlist.length);
   const numberOfMessagesReceived = useAppSelector((store) => store.node.messages.data.length);
   const numberOfChannelsIn = useAppSelector((store) => store.node.channels.data?.incoming.length);
   const numberOfChannelsOut = useAppSelector((store) => store.node.channels.data?.outgoing.length);
@@ -41,6 +42,7 @@ const LayoutEnhanced = () => {
   const numberForDrawer = {
     numberOfPeers,
     numberOfAliases,
+    numberOfWatchlist,
     numberOfMessagesReceived,
     numberOfChannelsIn,
     numberOfChannelsOut,

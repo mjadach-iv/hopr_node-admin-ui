@@ -4,7 +4,17 @@ import { GetBalancesResponseType, GetChannelsResponseType, GetInfoResponseType }
 import { saveStateToLocalStorage } from '../../../utils/localStorage';
 import { isAddress, getAddress } from 'viem';
 import { buildAliasLinks, saveAliases } from '../../../utils/aliases';
+import { saveWatchlist } from '../../../utils/watchlist';
 import { ChannelsOutgoingType, ChannelsIncomingType } from '../../../store/slices/node/initialState';
+
+// invalid addresses are ignored, kept ones stay in order and new ones go last
+const updateWatchlist = (watchlist: string[], changes: Record<string, boolean>) => {
+  const valid = Object.entries(changes).filter(([address]) => address && isAddress(address));
+  const watched = new Map<string, boolean>(valid.map(([address, value]) => [getAddress(address), value]));
+  const kept = watchlist.filter((address) => watched.get(address) !== false);
+  const added = [...watched].flatMap(([address, value]) => (value && !kept.includes(address) ? [address] : []));
+  return [...kept, ...added];
+};
 
 const appSlice = createSlice({
   name: 'app',
@@ -51,6 +61,16 @@ const appSlice = createSlice({
       delete state.aliases[getAddress(peerAddress)];
       saveAliases(state.aliases);
       state.aliasLinks = buildAliasLinks(state.aliases);
+    },
+    setWatched: (state, action: PayloadAction<{ address: string; watched: boolean }>) => {
+      const { address, watched } = action.payload;
+      state.watchlist = updateWatchlist(state.watchlist, { [address]: watched });
+      saveWatchlist(state.watchlist);
+    },
+    // watched by address, one save for the whole batch
+    setWatchedMany: (state, action: PayloadAction<Record<string, boolean>>) => {
+      state.watchlist = updateWatchlist(state.watchlist, action.payload);
+      saveWatchlist(state.watchlist);
     },
     addNotification: (
       state,

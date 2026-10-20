@@ -46,6 +46,15 @@ export type SafeNodeType = {
   rpcBroken: boolean;
 };
 
+export type NodesSafesType = {
+  network: string | null;
+  // checksummed safe address by checksummed node address: null when blokli knows no safe, missing when the lookup failed
+  safeByNode: Record<string, string | null>;
+};
+
+// checksummed, sorted node addresses by checksummed safe address: empty when blokli does not know the safe, missing when the lookup failed
+export type SafesNodesType = Record<string, string[]>;
+
 export type BlokliChannelStatus = 'OPEN' | 'PENDINGTOCLOSE' | 'CLOSED';
 
 /**

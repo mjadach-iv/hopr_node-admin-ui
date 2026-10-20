@@ -1,10 +1,29 @@
+import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
+import { useAppDispatch, useAppSelector } from '../../store';
+import { selectBlokliUrl } from '../../store/selectors/blokli';
+import { watchlistActionsAsync } from '../../store/slices/watchlist';
+import { formatEther } from 'viem';
+import type { SafeChannelStatsType, SafeNodeType } from '../../blokli';
+import { shrinkNumber } from '../../utils/amount';
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
+import { NodesTable } from '../../components/NodesTable';
+import { BreakdownTooltip } from '../../components/InfoBar';
+import { AddressLinks, SafeWalletLink } from '../node/info/ui';
+import { SafeNodesModal } from '../../components/Modal/watchlist/SafeNodesModal';
+import { AddToWatchlistModal } from '../../components/Modal/watchlist/AddToWatchlistModal';
 
-const ComingSoon = styled.div`
+// Mui
+import Button from '@mui/material/Button';
+import DnsIcon from '@mui/icons-material/Dns';
+
+const NO_SAFE = 'none';
+const UNKNOWN_SAFE = 'unknown';
+
+const Empty = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,7 +47,213 @@ const ComingSoon = styled.div`
   }
 `;
 
+// styled like the table header, it heads the nodes of one safe. The links and the
+// count wrap under the address when the column is too narrow for one line
+const GroupHeader = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+  white-space: nowrap;
+  .safe {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  @container (max-width: 600px) {
+    .address {
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+  }
+  .label {
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .address {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text);
+  }
+  .links {
+    display: inline-flex;
+    align-items: center;
+    svg {
+      width: 15px;
+      height: 15px;
+      color: var(--muted);
+    }
+  }
+  .count {
+    color: var(--muted);
+    font-size: 12px;
+  }
+`;
+
+// 'watched/all nodes' of the safe, opens the picker of its nodes
+const NodesButton = styled(Button)`
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-transform: none;
+  white-space: nowrap;
+  min-width: 0;
+  padding: 0 6px;
+  .MuiButton-startIcon {
+    margin-right: 4px;
+    svg {
+      font-size: 16px;
+    }
+  }
+  &:hover {
+    color: var(--primary);
+  }
+`;
+
+// 'in safe / total' wxHOPR, the total counting every node of the safe like Total staked on SAFE INFO
+const SafeBalance = ({ funds }: { funds?: SafeChannelStatsType }) => {
+  const inSafe = funds?.safeBalance;
+  if (!funds || !inSafe) return <>-</>;
+  const total = formatEther(BigInt(inSafe.value) + BigInt(funds.value) + BigInt(funds.closing?.value ?? 0));
+  return (
+    <BreakdownTooltip
+      title="Safe"
+      items={[
+        { key: 'safe', label: 'Balance', long: 'Balance', value: inSafe.formatted, unit: 'wxHOPR' },
+        { key: 'total', label: 'Total balance', long: 'Total balance', value: total, unit: 'wxHOPR' },
+      ]}
+    >
+      <span>
+        {`${shrinkNumber(inSafe.formatted)} / ${shrinkNumber(total)}`}
+        <span className="unit">wxHOPR</span>
+      </span>
+    </BreakdownTooltip>
+  );
+};
+
+const noFigures = (nodeAddress: string): SafeNodeType => ({
+  nodeAddress,
+  xDai: null,
+  channels: null,
+  redeemed: null,
+  spent: null,
+  rpcBroken: false,
+});
+
+/**
+ * Nodes picked on SAFE → NODES, grouped by the safe they are registered to. Every
+ * figure comes from blokli, the Gnosis RPCs and the network dashboard, so the page
+ * works without a connected node.
+ */
 function WatchlistPage() {
+  const dispatch = useAppDispatch();
+  const watchlist = useAppSelector((store) => store.app.watchlist);
+  const blokliUrl = useAppSelector(selectBlokliUrl);
+  const rpcUrls = useAppSelector((store) => store.app.configuration.rpc.urls);
+  const connected = useAppSelector((store) => store.auth.status.connected);
+  const data = useAppSelector((store) => store.watchlist.data);
+  const isFetching = useAppSelector((store) => store.watchlist.isFetching);
+  const [safeInModal, set_safeInModal] = useState<string | null>(null);
+  // a safe entered in the add dialog, its nodes are not in the watchlist data yet
+  const [addedSafe, set_addedSafe] = useState<{ safeAddress: string; nodes: string[] } | null>(null);
+  const added = addedSafe && addedSafe.safeAddress === safeInModal ? addedSafe : null;
+  const watchlistKey = watchlist.join(',');
+  const rpcUrlsKey = rpcUrls.join(',');
+
+  const fetchWatchlist = () => {
+    if (!blokliUrl || watchlist.length === 0) return;
+    dispatch(watchlistActionsAsync.getWatchlistThunk({ blokliUrl, rpcUrls, nodeAddresses: watchlist }));
+  };
+
+  // logging in or out aborts every running request, the watchlist one included
+  useEffect(() => {
+    fetchWatchlist();
+    const watchlistInterval = setInterval(fetchWatchlist, 60_000);
+    return () => {
+      clearInterval(watchlistInterval);
+    };
+  }, [blokliUrl, rpcUrlsKey, watchlistKey, connected]);
+
+  const loading = data === null && isFetching;
+  const nodes = loading ? [] : watchlist.map((address) => data?.figuresByNode[address] ?? noFigures(address));
+
+  // a node just picked in the dialog is known from its safe's node list until the next fetch
+  const safeByListedNode = new Map(
+    Object.entries(data?.nodesBySafe ?? {}).flatMap(([safe, nodes]) => nodes.map((node) => [node, safe] as const)),
+  );
+  const safeOf = (address: string) => {
+    const safe = data?.safeByNode[address];
+    return safe === undefined ? safeByListedNode.get(address) : safe;
+  };
+
+  const groupOf = (address: string) => {
+    const safe = safeOf(address);
+    return safe ? safe : safe === null ? NO_SAFE : UNKNOWN_SAFE;
+  };
+
+  const watchedNodesOf = (safeAddress: string) => watchlist.filter((address) => safeOf(address) === safeAddress);
+
+  const renderGroupHeader = (groupId: string, rowCount: number) => {
+    if (groupId === NO_SAFE || groupId === UNKNOWN_SAFE) {
+      return {
+        label: (
+          <GroupHeader>
+            <span className="label">
+              {groupId === NO_SAFE
+                ? 'Not registered to a safe'
+                : isFetching
+                ? 'Looking up the safe'
+                : 'Safe unknown, blokli did not answer'}
+            </span>
+            <span className="count">{`${rowCount} ${rowCount === 1 ? 'node' : 'nodes'}`}</span>
+          </GroupHeader>
+        ),
+      };
+    }
+    const watchedNodes = watchedNodesOf(groupId);
+    const safeNodes = data?.nodesBySafe[groupId];
+    const watched = watchedNodes.length;
+    const all = safeNodes?.length;
+    return {
+      label: (
+        <GroupHeader>
+          <span className="safe">
+            <span className="links">
+              <SafeWalletLink safeAddress={groupId} />
+            </span>
+            <span className="address">{groupId}</span>
+          </span>
+          <span className="links">
+            <AddressLinks address={groupId} />
+          </span>
+        </GroupHeader>
+      ),
+      balance: <SafeBalance funds={data?.safeFunds[groupId]} />,
+      actions: (
+        <NodesButton
+          size="small"
+          startIcon={<DnsIcon />}
+          onClick={() => set_safeInModal(groupId)}
+          title="Pick the nodes of this safe to watch"
+        >
+          {all === undefined ? `${watched} ${watched === 1 ? 'node' : 'nodes'}` : `${watched}/${all} nodes`}
+        </NodesButton>
+      ),
+      // the whole safe, watched or not, unknown while blokli did not list its nodes
+      sumOver: safeNodes
+        ? Array.from(new Set([...safeNodes, ...watchedNodes])).map(
+            (address) => data?.figuresByNode[address] ?? noFigures(address),
+          )
+        : null,
+    };
+  };
+
   return (
     <Section
       className="Section--watchlist"
@@ -36,11 +261,48 @@ function WatchlistPage() {
       fullHeightMin
       yellow
     >
-      <SubpageTitle title="WATCHLIST" />
-      <ComingSoon>
-        <h3>Coming soon</h3>
-        <p>Keep an eye on the nodes you care about, without connecting to them.</p>
-      </ComingSoon>
+      <SubpageTitle
+        title={`WATCHLIST (${watchlist.length})`}
+        refreshFunction={watchlist.length ? fetchWatchlist : undefined}
+        reloading={isFetching}
+        actions={
+          <AddToWatchlistModal
+            onSafe={(safeAddress, nodes) => {
+              set_addedSafe({ safeAddress, nodes });
+              set_safeInModal(safeAddress);
+            }}
+          />
+        }
+      />
+      {watchlist.length === 0 ? (
+        <Empty>
+          <h3>Nothing watched yet</h3>
+          <p>
+            Add a node or a safe with +, or tick the box next to a node on SAFE → NODES, with or without a node
+            connected.
+          </p>
+        </Empty>
+      ) : (
+        <NodesTable
+          id="watchlist-table"
+          nodes={nodes}
+          stats={data?.stats}
+          loading={loading}
+          removable
+          groupOf={groupOf}
+          renderGroupHeader={renderGroupHeader}
+        />
+      )}
+      <SafeNodesModal
+        safeAddress={safeInModal}
+        nodes={safeInModal ? added?.nodes ?? data?.nodesBySafe[safeInModal] : undefined}
+        watchedNodes={safeInModal ? watchedNodesOf(safeInModal) : []}
+        preselect={added?.nodes}
+        onClose={() => {
+          set_safeInModal(null);
+          set_addedSafe(null);
+        }}
+      />
     </Section>
   );
 }

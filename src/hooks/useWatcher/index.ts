@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { parseEther } from 'viem';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { appActions } from '../../store/slices/app';
@@ -6,6 +6,7 @@ import { observeNodeBalances } from './balances';
 import { observeNodeInfo } from './info';
 import { sendNotification } from '../../hooks/useWatcher/notifications';
 import { nodeActions, nodeActionsAsync } from '../../store/slices/node';
+import { fetchNodeData } from '../../store/slices/node/fetchNodeData';
 import { blokliActions } from '../../store/slices/blokli';
 import { fetchBlokliData } from '../../store/slices/blokli/fetchBlokliData';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
@@ -31,6 +32,9 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
 
   // inputs of the blokli queries
   const blokliUrl = useAppSelector(selectBlokliUrl);
+  const prevBlokliUrl = useRef(blokliUrl);
+  // the formatted endpoint the node thunks check their results against
+  const nodeApiEndpoint = useAppSelector((store) => store.node.apiEndpoint);
   const hoprNodeSafe = useAppSelector((store) => store.node.info.data?.hoprNodeSafe);
   const rpcUrlsKey = useAppSelector((store) => store.app.configuration.rpc.urls.join(','));
   // joined so the dashboard effect only reruns when the safe's node list really changes
@@ -308,9 +312,14 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
   }, [peerAddress]);
 
   // Effective blokli url changed: drop figures fetched with the previous url,
-  // record the new one, and let the fetch effect below repopulate them.
+  // record the new one, and let the fetch effect below repopulate them. The node
+  // data reloads too, as after a fresh login.
   useEffect(() => {
     dispatch(blokliActions.resetData(blokliUrl));
+    if (prevBlokliUrl.current === blokliUrl) return;
+    prevBlokliUrl.current = blokliUrl;
+    if (!connected || !nodeApiEndpoint) return;
+    fetchNodeData({ apiEndpoint: nodeApiEndpoint, apiToken, dispatch });
   }, [blokliUrl]);
 
   // Blokli data. The url, the node address and the safe all arrive asynchronously

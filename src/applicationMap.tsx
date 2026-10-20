@@ -65,6 +65,7 @@ export const applicationMapNode: ApplicationMapType = [
         path: 'watchlist',
         icon: <WatchlistIcon />,
         element: <WatchlistPage />,
+        numberKey: 'numberOfWatchlist',
       },
       {
         name: 'ALIASES',

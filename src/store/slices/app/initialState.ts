@@ -2,6 +2,7 @@ import type { GetBalancesResponseType, GetInfoResponseType } from '@hoprnet/hopr
 import { loadStateFromLocalStorage } from '../../../utils/localStorage';
 import { ChannelsOutgoingType, ChannelsIncomingType } from '../node/initialState';
 import { AliasLinks, AliasMap, buildAliasLinks, loadAliases } from '../../../utils/aliases';
+import { loadWatchlist } from '../../../utils/watchlist';
 import { DEFAULT_BLOKLI_URL, GNOSIS_RPC_URLS } from '../../../../config';
 
 type InitialState = {
@@ -33,6 +34,8 @@ type InitialState = {
   // nicknames for peer addresses, shared by every node
   aliases: AliasMap;
   aliasLinks: AliasLinks;
+  // checksummed node addresses followed on NODE ADMIN → WATCHLIST
+  watchlist: string[];
   previousStates: {
     prevApiEndpoint: string | null;
     prevOutgoingChannels: ChannelsOutgoingType | null;
@@ -77,6 +80,7 @@ export const initialState: InitialState = {
   },
   aliases,
   aliasLinks: buildAliasLinks(aliases),
+  watchlist: loadWatchlist(),
   // previous states used to compare for notifications
   previousStates: {
     prevApiEndpoint: null,

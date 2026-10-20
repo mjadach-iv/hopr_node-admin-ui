@@ -56,7 +56,8 @@ const CARDS = `
       color: var(--muted);
     }
     &.grow,
-    &.actions {
+    &.actions,
+    &.watch {
       &::before {
         display: none;
       }
@@ -69,16 +70,26 @@ const CARDS = `
       flex-wrap: wrap;
     }
   }
+  /* a group header is laid out like a row, without its empty cells */
+  tbody tr[data-index].group {
+    background: var(--surface-2);
+  }
+  tbody tr[data-index].group > td.empty {
+    display: none;
+  }
 `;
 
 // narrowest the address column may get before the table turns into cards
 const GROW_MIN_WIDTH = 220;
+// horizontal padding of a cell, around a group header's label
+const CELL_PADDING = 24;
 
 /**
  * True when the table has less room than its columns need. The need is measured
  * while the table is shown as a table: every column at its content width plus
- * the address column at GROW_MIN_WIDTH. While cards are shown the last
- * measurement is kept, so the layout does not flip back and forth.
+ * the address column at GROW_MIN_WIDTH, or wider when a group header's label
+ * needs it. While cards are shown the last measurement is kept, so the layout
+ * does not flip back and forth.
  */
 const useCardLayout = (rowCount: number) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -94,7 +105,18 @@ const useCardLayout = (rowCount: number) => {
       if (!cardsRef.current && table) {
         // the header cells render as <td> (plain <thead>, not MUI TableHead)
         const grow = table.querySelector<HTMLElement>('thead .grow');
-        requiredRef.current = table.scrollWidth - (grow ? grow.offsetWidth - GROW_MIN_WIDTH : 0);
+        // a group header's label may wrap, but not below its widest unbreakable part
+        const labelWidths = Array.from(table.querySelectorAll<HTMLElement>('tbody tr.group > td.grow > *')).map(
+          (label) => {
+            const width = label.style.width;
+            label.style.width = 'min-content';
+            const minWidth = label.offsetWidth;
+            label.style.width = width;
+            return minWidth + CELL_PADDING;
+          },
+        );
+        const growMinWidth = Math.max(GROW_MIN_WIDTH, ...labelWidths);
+        requiredRef.current = table.scrollWidth - (grow ? grow.offsetWidth - growMinWidth : 0);
       }
       const next = container.clientWidth < requiredRef.current;
       if (next !== cardsRef.current) {
@@ -126,6 +148,9 @@ const STable = styled(Table)`
   tbody tr:hover {
     background-color: var(--surface-hover);
   }
+  tbody tr.group {
+    cursor: default;
+  }
   /* row actions stay quiet until the row is hovered */
   td.actions .MuiIconButton-root {
     padding: 4px;
@@ -139,6 +164,9 @@ const STable = styled(Table)`
   tbody tr:hover td.actions .MuiIconButton-root:not(.Mui-disabled) svg {
     color: var(--primary);
     fill: var(--primary);
+  }
+  td.actions .MuiIconButton-root.Mui-disabled svg {
+    opacity: 0.35;
   }
   /* copy / explorer links next to addresses only on hover */
   .PeerInfo-links {
@@ -178,6 +206,17 @@ const STable = styled(Table)`
         justify-content: flex-end;
         align-items: center;
       }
+      /* the watch box ends the first line, laid over the right edge of the actions */
+      &.actions:not(:last-child) {
+        padding-right: 30px;
+      }
+      &.watch {
+        grid-row: 1;
+        grid-column: -2 / -1;
+        justify-self: end;
+        align-self: center;
+        z-index: 1;
+      }
     }
   }
   /* phones: two values per line, actions under the values. The selectors
@@ -198,6 +237,19 @@ const STable = styled(Table)`
       }
       &.actions {
         justify-content: flex-start;
+        padding-top: 8px;
+        border-top: 1px dashed var(--border);
+      }
+      /* the actions and the watch box share the last line */
+      &.actions:not(:last-child) {
+        grid-column: 1 / 2;
+        padding-right: 0;
+      }
+      &.watch {
+        grid-row: auto;
+        grid-column: 2;
+        justify-self: stretch;
+        align-items: flex-end;
         padding-top: 8px;
         border-top: 1px dashed var(--border);
       }
@@ -262,6 +314,16 @@ const STableCell = styled(TableCell)`
     overflow-wrap: anywhere;
     text-overflow: unset;
     white-space: unset;
+  }
+  &.watch {
+    padding-left: 0;
+    padding-right: 8px;
+  }
+  &.TableCellGroup {
+    height: 34px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    background: var(--surface-2);
   }
   &.TableCellHeader {
     height: 36px;
@@ -372,9 +434,26 @@ interface Props {
   loading?: boolean;
   onRowClick?: Function;
   orderByDefault?: string;
+  // row field holding a group id: every group gets a header row before its rows
+  groupBy?: string;
+  // the header row's cells by column key, from the group's rows left by the search
+  groupHeader?: (groupId: string, rows: Props['data']) => GroupHeaderCells;
 }
 
+type GroupHeaderCells = { [key: string]: string | number | null | undefined | JSX.Element };
+
 type RowData = Props['data'][0];
+
+type GroupRow = {
+  id: string;
+  groupId: string;
+  rows: RowData[];
+  __groupRow: true;
+};
+
+type TableItem = RowData | GroupRow;
+
+const isGroupRow = (item: TableItem): item is GroupRow => (item as GroupRow).__groupRow === true;
 
 type TableContext = {
   tableId?: string;
@@ -412,7 +491,7 @@ const isSortable = (headElem: Props['header'][0]) =>
 
 const sortField = (headElem: Props['header'][0]) => headElem.sortKey ?? headElem.key;
 
-const virtuosoComponents: TableComponents<RowData, TableContext> = {
+const virtuosoComponents: TableComponents<TableItem, TableContext> = {
   Table: ({ context, ...tableProps }) => (
     <STable
       {...tableProps}
@@ -436,16 +515,22 @@ const virtuosoComponents: TableComponents<RowData, TableContext> = {
       />
     );
   }),
-  TableRow: ({ item, context, ...rowProps }) => (
-    <TableRow
-      {...rowProps}
-      id={context?.tableId ? `${context.tableId}_row_${item.id}` : undefined}
-      onClick={() => {
-        context?.onRowClick && context.onRowClick(item);
-      }}
-      className={`${context?.onRowClick ? 'onRowClick' : ''}`}
-    />
-  ),
+  TableRow: ({ item, context, ...rowProps }) =>
+    isGroupRow(item) ? (
+      <TableRow
+        {...rowProps}
+        className="group"
+      />
+    ) : (
+      <TableRow
+        {...rowProps}
+        id={context?.tableId ? `${context.tableId}_row_${item.id}` : undefined}
+        onClick={() => {
+          context?.onRowClick && context.onRowClick(item);
+        }}
+        className={`${context?.onRowClick ? 'onRowClick' : ''}`}
+      />
+    ),
   TableBody: React.forwardRef<HTMLTableSectionElement>(function VirtuosoTableBody(props, ref) {
     return (
       <TableBody
@@ -515,6 +600,25 @@ export default function CustomPaginationActionsTable(props: Props) {
     [filteredData, order, orderBy],
   );
 
+  // groups follow the sort: a group comes where its first row would, and one emptied by the search drops out
+  const items = React.useMemo<TableItem[]>(() => {
+    const groupBy = props.groupBy;
+    if (!groupBy) return sortedRows;
+    const rowsByGroup = new Map<string, RowData[]>();
+    for (const row of sortedRows) {
+      const groupId = String(row[groupBy] ?? '');
+      const groupRows = rowsByGroup.get(groupId);
+      if (groupRows) groupRows.push(row);
+      else rowsByGroup.set(groupId, [row]);
+    }
+    return Array.from(rowsByGroup.entries()).flatMap(([groupId, groupRows]): TableItem[] => [
+      { id: `group:${groupId}`, groupId, rows: groupRows, __groupRow: true },
+      ...groupRows,
+    ]);
+  }, [sortedRows, props.groupBy]);
+
+  const firstColumn = props.header.find((headElem) => !headElem.hidden)?.key ?? 'id';
+
   const handleSort = (field: string) => {
     if (field === orderBy) {
       setOrder(order === 'asc' ? 'desc' : 'asc');
@@ -524,7 +628,7 @@ export default function CustomPaginationActionsTable(props: Props) {
     setOrder('asc');
   };
 
-  const { containerRef, cards } = useCardLayout(sortedRows.length);
+  const { containerRef, cards } = useCardLayout(items.length);
 
   return (
     <STableContainer
@@ -548,7 +652,7 @@ export default function CustomPaginationActionsTable(props: Props) {
       )}
       <TableVirtuoso
         useWindowScroll
-        data={rowsMounted ? sortedRows : []}
+        data={rowsMounted ? items : []}
         overscan={{ main: 400, reverse: 400 }}
         increaseViewportBy={{ top: 200, bottom: 200 }}
         computeItemKey={(_index, row) => `${props.id}_row_${row.id}`}
@@ -590,12 +694,19 @@ export default function CustomPaginationActionsTable(props: Props) {
             )}
           </TableRow>
         )}
-        itemContent={(_index, row) => (
-          <RowCells
-            row={row}
-            header={props.header}
-          />
-        )}
+        itemContent={(_index, item) =>
+          isGroupRow(item) ? (
+            <GroupCells
+              cells={props.groupHeader ? props.groupHeader(item.groupId, item.rows) : { [firstColumn]: item.groupId }}
+              header={props.header}
+            />
+          ) : (
+            <RowCells
+              row={item}
+              header={props.header}
+            />
+          )
+        }
       />
       {(sortedRows.length === 0 || rowsPending) && (
         <EmptyState>
@@ -620,6 +731,26 @@ const cellWidth = (headElem: Props['header'][0]) => headElem.width ?? (headElem.
 
 const cellClasses = (headElem: Props['header'][0]) =>
   [headElem.grow ? 'grow' : '', headElem.align ? `align-${headElem.align}` : ''].join(' ');
+
+const GroupCells = ({ cells, header }: { cells: GroupHeaderCells; header: Props['header'] }) => (
+  <>
+    {header.map((headElem) => {
+      if (headElem.hidden) return null;
+      const content = cells[headElem.key];
+      const empty = content === undefined || content === null || content === '';
+      return (
+        <STableCell
+          key={headElem.key}
+          className={`TableCell TableCellGroup ${headElem.key} ${cellClasses(headElem)} ${empty ? 'empty' : ''}`}
+          width={cellWidth(headElem)}
+          data-label={typeof headElem.name === 'string' ? headElem.name : ''}
+        >
+          {content}
+        </STableCell>
+      );
+    })}
+  </>
+);
 
 const RowCells = ({ row, header }: { row: RowData; header: Props['header'] }) => {
   const [tooltip, set_tooltip] = useState<string>();

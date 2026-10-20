@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 import styled from '@emotion/styled';
 import { useLocation } from 'react-router-dom';
 import { formatEther } from 'viem';
@@ -14,10 +14,11 @@ import { RpcError } from '../RpcError';
 // HOPR Components
 import FAQ from '../Faq';
 import nodeInfoData from '../Faq/node-faq';
+import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 
 type Level = '' | 'warn' | 'low';
 type Group = 'node' | 'safe';
-type WalletItem = {
+export type WalletItem = {
   key: string;
   label: string;
   long: string;
@@ -336,6 +337,40 @@ export const WalletBreakdown = ({ style, group }: { style?: React.CSSProperties;
     </Breakdown>
   );
 };
+
+/** Balances laid out like the header breakdown, in a tooltip over a figure elsewhere. */
+export const BreakdownTooltip = ({
+  title,
+  items,
+  children,
+}: {
+  title: string;
+  items: WalletItem[];
+  children: ReactElement;
+}) => (
+  <Tooltip
+    title={
+      <Breakdown>
+        <h4>{title}</h4>
+        <BreakdownRows items={items} />
+      </Breakdown>
+    }
+    slotProps={{
+      tooltip: {
+        sx: {
+          p: 0,
+          maxWidth: 'none',
+          font: 'inherit',
+          bgcolor: 'background.paper',
+          border: '1px solid var(--border-strong)',
+          borderRadius: '10px',
+        },
+      },
+    }}
+  >
+    {children}
+  </Tooltip>
+);
 
 const ChipStats = ({ items }: { items: WalletItem[] }) => (
   <>
