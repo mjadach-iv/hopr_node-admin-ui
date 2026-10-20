@@ -6,10 +6,10 @@ Changes since 5.0.0-alpha.13.
 
 ### Added
 
-- NODE ADMIN → WATCHLIST: the nodes you pick, in the same table as SAFE → NODES, grouped under a header row per safe. The header row shows the full safe address with its Safe{Wallet}, copy and explorer links, the safe's wxHOPR as "in safe / total" in the Balance column, explained in its tooltip, and the sums of In channels, Net, Earned and Spent over every node of the safe, watched or not. The figures come from blokli, the Gnosis RPCs and the network dashboard, so the page works without connecting to a node and refreshes every minute. Nodes blokli knows no safe for are grouped as "Not registered to a safe".
+- NODE ADMIN → WATCHLIST: the nodes you pick, in the same table as SAFE → NODES, grouped under a header row per safe. The header row shows the full safe address with its Safe{Wallet}, copy and explorer links, the safe's wxHOPR as "in safe / total" in the Balance column, with a tooltip laid out like the safe menu in the header (Balance, Total balance, full precision), and the sums of In channels, Net, Earned and Spent over every node of the safe, watched or not. The figures come from blokli, the Gnosis RPCs and the network dashboard, so the page works without connecting to a node and refreshes every minute. Nodes blokli knows no safe for are grouped as "Not registered to a safe".
 - WATCHLIST rows have two actions: Create alias, and a trash icon that removes the node from the watchlist.
 - SAFE → NODES: a checkbox at the end of every row adds the node to the watchlist or removes it. The list is kept in the browser, and the WATCHLIST menu entry shows how many nodes it holds.
-- WATCHLIST: the node count in every safe header reads "watched/all nodes" behind a nodes icon and opens a dialog listing every node registered to the safe, from blokli, with a checkbox per node to add it to or remove it from the watchlist in one go.
+- WATCHLIST: at the far right of every safe header row, a "watched/all nodes" button behind a nodes icon opens a dialog listing every node registered to the safe, from blokli, with a checkbox per node to add it to or remove it from the watchlist in one go.
 - WATCHLIST: a + button next to refresh adds a node or a safe by its address. A node is watched right away, a safe opens the dialog of its nodes with all of them ticked.
 
 ### Changed
