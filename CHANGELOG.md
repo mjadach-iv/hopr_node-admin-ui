@@ -25,6 +25,7 @@ Changes since 5.0.0-alpha.13.
 ### Fixed
 
 - After logging in from the connect dialog, the blokli figures load again: the nodes on SAFE → NODES, In safe channels, Safe net and Total staked in the safe menu, SAFE INFO, the Tickets card and the blokli cells of the channel tables. They showed '-' until the page was reloaded.
+- The app no longer fails to start where the browser blocks local storage, e.g. inside the Safe{Wallet} iframe with third-party storage blocked; settings then simply are not saved.
 
 ## 5.0.0-alpha.13
 
