@@ -5,8 +5,22 @@
       "destination": "https://europe-west3-docker.pkg.dev/v2/hoprassociation/docker-images/hoprd/tags/list"
     },
     {
+      "source": "/safe-app/:file",
+      "destination": "/safe-app-static/:file"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/safe-app/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, content-type, Authorization" }
+      ]
     }
   ]
 }

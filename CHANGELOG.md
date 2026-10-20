@@ -11,6 +11,9 @@ Changes since 5.0.0-alpha.13.
 - SAFE → NODES: a checkbox at the end of every row adds the node to the watchlist or removes it. The list is kept in the browser, and the WATCHLIST menu entry shows how many nodes it holds.
 - WATCHLIST: at the far right of every safe header row, a "watched/all nodes" button behind a nodes icon opens a dialog listing every node registered to the safe, from blokli, with a checkbox per node to add it to or remove it from the watchlist in one go.
 - WATCHLIST: a + button next to refresh adds a node or a safe by its address. A node is watched right away, a safe opens the dialog of its nodes with all of them ticked.
+- SAFE INFO: an allowance below 10k wxHOPR is shown in red with a warning icon, and a "raise" link next to it opens the new allowance Safe App in Safe{Wallet}.
+- Notifications: "Allowance too low" when the Safe's allowance is below 10k wxHOPR, once right after login or when it drops below; clicking it opens the allowance Safe App in Safe{Wallet}. Notifications can now link outside the app, opened in a new tab.
+- `/safe-app`: a page meant to run as a custom Safe App inside Safe{Wallet} to set the allowance. It shows the Safe's current allowance from blokli, takes the new allowance (100k by default, Max for unlimited, 0 revokes it) and hands the wxHOPR `approve` for the channels contract to Safe{Wallet}'s sign dialog. Safe{Wallet} reads `/safe-app/manifest.json` cross-origin, so the host must serve it with CORS headers; `nginx.conf` and `vercel.json` do, the FTP deploy target needs the same.
 
 ### Changed
 

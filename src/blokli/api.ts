@@ -8,6 +8,7 @@ import {
   type ChannelStatsType,
   type NodeChannelsType,
   type NodesSafesType,
+  type SafeAllowanceType,
   type SafesNodesType,
   type SafeChannelStatsType,
   type SafeNodeType,
@@ -91,6 +92,61 @@ export const getChannelStats = async (
     ...toChannelStats(open),
     closing: closing ? toChannelStats(closing) : null,
     safeBalance: safeBalance ? parseTokenValue(safeBalance.balance) : null,
+  };
+};
+
+const SAFE_ALLOWANCE_QUERY = `
+  query AdminSafeAllowance($safeAddress: String!) {
+    chainInfo {
+      __typename
+      ... on ChainInfo {
+        contractAddresses
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }
+    safeHoprAllowance(address: $safeAddress) {
+      __typename
+      ... on SafeHoprAllowance {
+        allowance
+      }
+      ... on InvalidAddressError {
+        code
+        message
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }
+  }
+`;
+
+/**
+ * The token and channels contracts an allowance approve needs, with the safe's
+ * current allowance. Only the contract addresses are a hard failure.
+ */
+export const getSafeAllowance = async (
+  payload: BlokliPayloadType & { safeAddress: string },
+): Promise<SafeAllowanceType> => {
+  type UnionResult = { __typename?: string; code?: string; message?: string } | null;
+  const data = await queryBlokli<{ chainInfo: UnionResult; safeHoprAllowance: UnionResult }>(
+    payload.blokliUrl,
+    SAFE_ALLOWANCE_QUERY,
+    { safeAddress: payload.safeAddress },
+    payload.timeout,
+  );
+
+  const { contractAddresses } = unwrapUnion<{ contractAddresses: string }>(data.chainInfo, 'ChainInfo');
+  const { token, channels } = JSON.parse(contractAddresses) as { token: string; channels: string };
+  const allowance = tryUnwrapUnion<{ allowance: TokenValueString }>(data.safeHoprAllowance, 'SafeHoprAllowance');
+
+  return {
+    token: getAddress(token),
+    channels: getAddress(channels),
+    allowance: allowance ? parseTokenValue(allowance.allowance) : null,
   };
 };
 

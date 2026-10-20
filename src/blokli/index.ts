@@ -19,6 +19,7 @@ export type {
   SafeChannelStatsType,
   NodeChannelsType,
   NodesSafesType,
+  SafeAllowanceType,
   SafeNodeType,
   SafesNodesType,
   TicketRedemptionType,

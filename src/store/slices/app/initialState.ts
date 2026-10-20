@@ -56,10 +56,14 @@ const loadBlokliSettings = (): InitialState['configuration']['blokli'] => {
   return typeof stored?.url === 'string' && stored.url ? { url: stored.url } : { url: DEFAULT_BLOKLI_URL };
 };
 
-// the blokli url used to be saved per node
-Object.keys(localStorage)
-  .filter((key) => key.startsWith('blokli/url/'))
-  .forEach((key) => localStorage.removeItem(key));
+// the blokli url used to be saved per node; storage may be blocked in an iframe
+try {
+  Object.keys(localStorage)
+    .filter((key) => key.startsWith('blokli/url/'))
+    .forEach((key) => localStorage.removeItem(key));
+} catch (e) {
+  console.warn('Could not clean up localStorage', e);
+}
 
 const aliases = loadAliases();
 

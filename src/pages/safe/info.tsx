@@ -10,12 +10,17 @@ import { selectBlokliUrl, selectSafeFunds, sumSafeNodes } from '../../store/sele
 import { utils as dashboardUtils, api as dashboardApi } from '../../networkDashboard';
 import type { NodeStatsType } from '../../networkDashboard';
 import { shortenAddress } from '../../utils/amount';
+import { LOW_ALLOWANCE, safeAppLink } from '../../utils/safeApp';
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
 import { WithUnit } from '../../components/Unit';
+import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 import { AddressLinks, Card, KV, Kpi, KpiGrid, SafeWalletLink, Stat, Stats, short } from '../node/info/ui';
+
+// Mui
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 // same columns as the node page's CardGrid (min 360px, max 3), but filled left to right
 const CardRow = styled.div`
@@ -102,6 +107,9 @@ function SafeInfoPage() {
   const rpcBroken = spent === null && !!safeNodes?.some((node) => node.rpcBroken);
   const nodesXDai = sumSafeNodes(safeNodes, 'xDai');
   const lowXDaiNodes = safeNodes?.filter((node) => node.xDai && BigInt(node.xDai.value) < LOW_XDAI).length;
+  const allowance = balances.safeHoprAllowance;
+  const allowanceText = short(allowance?.formatted).toLowerCase();
+  const lowAllowance = !!allowance?.value && BigInt(allowance.value) < LOW_ALLOWANCE;
 
   const nodeStats = (safeNodes ?? [])
     .map((node) => dashboardNodes?.byAddress[node.nodeAddress])
@@ -153,7 +161,42 @@ function SafeInfoPage() {
           label="Safe"
           value={short(safeFunds.safe?.formatted)}
           unit="wxHOPR"
-          sub={`allowance ${short(balances.safeHoprAllowance?.formatted).toLowerCase()}`}
+          sub={
+            <>
+              allowance{' '}
+              {lowAllowance ? (
+                <Tooltip
+                  title={`${allowance?.formatted} wxHOPR, below 10k the node soon can no longer fund channels`}
+                  notWide
+                >
+                  <span className="alert own-tip">
+                    {allowanceText}
+                    <WarningAmberIcon className="update" />
+                  </span>
+                </Tooltip>
+              ) : (
+                allowanceText
+              )}
+              {safeAddress && (
+                <>
+                  {' · '}
+                  <Tooltip
+                    title="Raise the allowance in Safe{Wallet}"
+                    notWide
+                  >
+                    <a
+                      className={`own-tip ${lowAllowance ? 'alert' : ''}`}
+                      href={safeAppLink(safeAddress)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      raise
+                    </a>
+                  </Tooltip>
+                </>
+              )}
+            </>
+          }
           tip={`${safeFunds.safe?.formatted ?? '-'} wxHOPR stored on your Safe`}
         />
         <Kpi

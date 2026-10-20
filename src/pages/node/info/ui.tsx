@@ -378,6 +378,19 @@ const SKpi = styled.div`
     .outdated {
       color: var(--orange);
     }
+    .alert {
+      color: var(--red);
+      svg.update {
+        color: var(--red);
+      }
+    }
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
     svg.update {
       width: 14px;
       height: 14px;

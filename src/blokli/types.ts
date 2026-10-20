@@ -1,4 +1,4 @@
-import { parseUnits } from 'viem';
+import { parseUnits, type Address } from 'viem';
 
 /**
  * Blokli returns token amounts as a formatted decimal with the symbol appended,
@@ -22,6 +22,13 @@ export type SafeChannelStatsType = ChannelStatsType & {
   // PENDINGTOCLOSE channels keep their funds until the closure is finalized
   closing: ChannelStatsType | null;
   safeBalance: TokenValueType | null;
+};
+
+// what an approve raising the safe's allowance needs: it goes to the token, for the channels contract
+export type SafeAllowanceType = {
+  token: Address;
+  channels: Address;
+  allowance: TokenValueType | null;
 };
 
 export type TicketRedemptionType = {

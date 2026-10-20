@@ -32,7 +32,12 @@ export function saveAliases(aliases: AliasMap) {
 }
 
 export function loadAliases(): AliasMap {
-  migrateAliasesToGlobal();
+  // storage may be blocked in an iframe
+  try {
+    migrateAliasesToGlobal();
+  } catch (e) {
+    console.warn('Could not migrate the aliases', e);
+  }
   return (loadStateFromLocalStorage(ALIASES_KEY) as AliasMap | null) ?? {};
 }
 

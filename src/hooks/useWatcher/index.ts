@@ -16,6 +16,8 @@ import { utils as networkDashboardUtils } from '../../networkDashboard';
 import { checkHowChannelsHaveChanged } from './channels';
 import { isAddress } from 'viem';
 import { useHoprdUpdateNotification } from '../useHoprdUpdate';
+import { LOW_ALLOWANCE, safeAppLink } from '../../utils/safeApp';
+import { shrinkNumber } from '../../utils/amount';
 
 export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: number }) => {
   const dispatch = useAppDispatch();
@@ -53,6 +55,9 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
   const prevIncomingChannels = useAppSelector((store) => store.app.previousStates.prevIncomingChannels);
   const prevNodeBalances = useAppSelector((store) => store.app.previousStates.prevNodeBalances);
   const prevNodeInfo = useAppSelector((store) => store.app.previousStates.prevNodeInfo);
+  const safeHoprAllowance = useAppSelector((store) => store.node.balances.data.safeHoprAllowance);
+  // whether the last allowance seen for this node was low, so it is notified once and not on every refresh
+  const allowanceLowFor = useRef<{ apiEndpoint: string | null; low: boolean } | null>(null);
 
   // The snapshots above only mean anything for the node they were taken from.
   const snapshotMatchesNode = prevApiEndpoint === apiEndpoint;
@@ -164,6 +169,32 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
     prevNodeInfo,
     prevOutgoingChannels,
   ]);
+
+  // low allowance: right when the login fetch brings the balances, then again whenever it drops below
+  useEffect(() => {
+    if (!connected) {
+      allowanceLowFor.current = null;
+      return;
+    }
+    // the notification opens the Safe App for the node's safe, so it waits for node info too
+    if (!activeNodeBalances || !hoprNodeSafe || !safeHoprAllowance.value || !safeHoprAllowance.formatted) return;
+    const low = BigInt(safeHoprAllowance.value) < LOW_ALLOWANCE;
+    const wasLow = allowanceLowFor.current?.apiEndpoint === apiEndpoint && allowanceLowFor.current.low;
+    if (low && !wasLow) {
+      const message = `Allowance too low, ${shrinkNumber(safeHoprAllowance.formatted)} wxHOPR left`;
+      sendNotification({
+        notificationPayload: {
+          source: 'safe',
+          name: message,
+          url: safeAppLink(hoprNodeSafe),
+          timeout: null,
+        },
+        toastPayload: { message },
+        dispatch,
+      });
+    }
+    allowanceLowFor.current = { apiEndpoint, low };
+  }, [connected, apiEndpoint, activeNodeBalances, hoprNodeSafe, safeHoprAllowance.value]);
 
   // packet rates: login sample comes from fetchNodeData, then +2s and every 5s; separate so other deps can't restart it
   useEffect(() => {

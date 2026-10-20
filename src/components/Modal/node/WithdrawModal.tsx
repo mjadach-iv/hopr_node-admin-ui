@@ -43,7 +43,7 @@ const TextFieldWithoutArrows = styled(TextField)`
   }
 `;
 
-const MaxButton = styled(MuiButton)`
+export const MaxButton = styled(MuiButton)`
   background-color: #ffffa0;
   border-radius: 2px;
   border: none;

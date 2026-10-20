@@ -3,14 +3,22 @@ import { environment } from '../config';
 
 import NodeLandingPage from './pages/node/landingPage';
 import TermsOfService from './pages/TermsOfService';
+import SafeAppAllowancePage from './pages/safe-app/allowance';
 
 import LayoutEnhanced from './LayoutEnhanced';
 import { applicationMap } from './applicationMap';
+import { SAFE_APP_PATH } from './utils/safeApp';
 
 const routes = [
   {
     path: '/',
     element: <LayoutEnhanced />,
+    children: [] as RouteObject[],
+  },
+  // outside the layout: shown inside Safe{Wallet}, without node, menu or watcher
+  {
+    path: SAFE_APP_PATH,
+    element: <SafeAppAllowancePage />,
     children: [] as RouteObject[],
   },
   {

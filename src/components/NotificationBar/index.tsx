@@ -164,7 +164,9 @@ export default function NotificationBar() {
               //              style={{ maxWidth: 'calc(100% - 17px)'}}
               onClick={() => {
                 dispatch(appActions.interactedWithNotification(notification.id));
-                if (notification.url) {
+                if (notification.url?.startsWith('https://')) {
+                  window.open(notification.url, '_blank', 'noopener,noreferrer');
+                } else if (notification.url) {
                   navigate(`${notification.url}${searchParams ? searchParams : ''}`);
                 }
               }}
