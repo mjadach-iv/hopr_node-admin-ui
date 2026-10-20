@@ -65,6 +65,9 @@ function SafeInfoPage() {
   const dashboardNodes = useAppSelector((store) => store.networkDashboard.nodes.data);
   const dashboardFetching = useAppSelector((store) => store.networkDashboard.nodes.isFetching);
   const safeAddress = info?.hoprNodeSafe;
+  const moduleAddress: string | undefined = useAppSelector(
+    (store) => store.node.configuration.data?.hopr?.safe_module?.module_address,
+  );
   const safeNodeAddressesKey = (safeNodes ?? []).map((node) => node.nodeAddress).join(',');
 
   useEffect(() => {
@@ -225,6 +228,15 @@ function SafeInfoPage() {
             actions={safeAddress && <AddressLinks address={safeAddress} />}
           >
             {safeAddress ? shortenAddress(safeAddress) : '-'}
+          </KV>
+          <KV
+            label="Module"
+            tip="The node management module of your safe, read from the node configuration"
+            mono
+            title={moduleAddress ?? ''}
+            actions={moduleAddress && <AddressLinks address={moduleAddress} />}
+          >
+            {moduleAddress ? shortenAddress(moduleAddress) : '-'}
           </KV>
           {(safeNodes ?? []).map((node) => (
             <KV

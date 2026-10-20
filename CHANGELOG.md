@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.0-alpha.13
+
+Changes since 5.0.0-alpha.12.
+
+### Added
+
+- SAFE INFO: a Module row with the address of the safe's node management module, read from the node's configuration, with the same explorer links as the safe address.
+
+### Fixed
+
+- NODE ADMIN → CONFIGURATION: the Add button for a new Gnosis RPC stays disabled, and Enter does nothing, until the URL has a real host: a domain with a dot, an IP address or localhost. A single word such as "abc" was accepted as http://abc.
+
 ## 5.0.0-alpha.12
 
 Changes since 5.0.0-alpha.11.

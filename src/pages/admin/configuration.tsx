@@ -100,6 +100,14 @@ const RpcAdd = styled.div`
   }
 `;
 
+// parseAndFormatUrl alone accepts any word as a host, e.g. "abc" -> http://abc
+function parseRpcUrl(url: string) {
+  const formattedUrl = parseAndFormatUrl(url.trim());
+  if (!formattedUrl) return null;
+  const { hostname } = new URL(formattedUrl);
+  return hostname.includes('.') || hostname.startsWith('[') || hostname === 'localhost' ? formattedUrl : null;
+}
+
 function AdminConfigurationPage() {
   const dispatch = useAppDispatch();
   const connected = useAppSelector((store) => store.auth.status.connected);
@@ -128,6 +136,7 @@ function AdminConfigurationPage() {
   const [dragRpcIndex, set_dragRpcIndex] = useState<number | null>(null);
   const [overRpcIndex, set_overRpcIndex] = useState<number | null>(null);
   const [rpcError, set_rpcError] = useState<string | null>(null);
+  const formattedNewRpcUrl = parseRpcUrl(newRpcUrl);
 
   useEffect(() => {
     window.addEventListener('keydown', handleEnter as unknown as EventListener);
@@ -180,7 +189,7 @@ function AdminConfigurationPage() {
   }
 
   function handleAddRpc() {
-    const formattedUrl = parseAndFormatUrl(newRpcUrl.trim());
+    const formattedUrl = formattedNewRpcUrl;
     if (!formattedUrl) {
       set_rpcError('RPC URL was incorrectly formatted');
       return;
@@ -413,11 +422,16 @@ function AdminConfigurationPage() {
                         set_rpcError(null);
                       }}
                       onKeyDown={(event) => {
-                        if (event.key === 'Enter' && newRpcUrl) handleAddRpc();
+                        if (event.key === 'Enter' && formattedNewRpcUrl) handleAddRpc();
                       }}
                       error={!!rpcError}
                     />
-                    <Button onClick={handleAddRpc}>Add</Button>
+                    <Button
+                      onClick={handleAddRpc}
+                      disabled={!formattedNewRpcUrl}
+                    >
+                      Add
+                    </Button>
                   </RpcAdd>
                   <span
                     style={{
