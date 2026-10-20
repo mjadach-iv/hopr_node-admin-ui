@@ -23,6 +23,7 @@ Changes since 5.0.0-alpha.11.
 
 - PEERS, CHANNELS: IN and CHANNELS: OUT show a loader until the first list arrives instead of "No entries", and the Epoch, Tickets and Spent/Earned cells show one while blokli reads the channels, which takes a while with many channels.
 - Opening PEERS, CHANNELS: IN and CHANNELS: OUT with a few hundred rows is about 2-3x faster: tooltips mount on first hover, action dialogs on first open, fewer off-screen rows are rendered and node icons are cached. A loader shows while the rows render.
+- Moving the mouse quickly across a table no longer leaves tooltips open behind it. Only the tooltip of the cell under the pointer shows.
 - The RPC error link opens NODE ADMIN → CONFIGURATION, where the RPC list now is.
 - The Add button next to a new Gnosis RPC is as wide as the Save button instead of half the line.
 - Outlined buttons keep their text readable on hover instead of turning yellow on yellow.
