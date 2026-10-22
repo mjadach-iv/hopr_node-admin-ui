@@ -1,5 +1,14 @@
 # Changelog
 
+## 5.0.0-alpha.15
+
+Changes since 5.0.0-alpha.14.
+
+### Changed
+
+- Channel tables: a channel the node API reports as Open while blokli does not shows a red "Error" status instead of "Open · closable …", with a tooltip naming both statuses and the closure time.
+- The collapsed sidebar is narrower and shows only the icons, centered, with no text cut off at its edge.
+
 ## 5.0.0-alpha.14
 
 Changes since 5.0.0-alpha.13.

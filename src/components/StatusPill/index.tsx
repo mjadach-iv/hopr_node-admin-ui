@@ -42,7 +42,7 @@ const toneOf = (status: string) => {
   const s = status.toLowerCase();
   if (s.startsWith('open') || s === 'green' || s === 'online' || s === 'ready') return 'green';
   if (s.startsWith('pending') || s === 'orange' || s === 'yellow') return 'orange';
-  if (s.startsWith('closed') || s === 'red') return 'red';
+  if (s.startsWith('closed') || s === 'error' || s === 'red') return 'red';
   return 'neutral';
 };
 

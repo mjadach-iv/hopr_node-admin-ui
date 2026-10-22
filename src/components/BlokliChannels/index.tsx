@@ -158,7 +158,17 @@ export const blokliChannelCells = (channel: BlokliChannelType | undefined, rpcBr
   ...redeemedCells(channel, rpcBroken, loading),
 });
 
+const BLOKLI_STATUS_LABEL: Record<BlokliChannelType['status'], string> = {
+  OPEN: 'Open',
+  PENDINGTOCLOSE: 'PendingToClose',
+  CLOSED: 'Closed',
+};
+
+const nodeOpenBlokliNot = (status: string, channel: BlokliChannelType | undefined) =>
+  status === 'Open' && !!channel && channel.status !== 'OPEN';
+
 export const statusWithClosure = (status: string, channel: BlokliChannelType | undefined): string => {
+  if (nodeOpenBlokliNot(status, channel)) return 'Error';
   if (channel?.status !== 'PENDINGTOCLOSE' || !channel.closureTime) return status;
   const closable =
     new Date(channel.closureTime).getTime() < Date.now() ? 'now' : formatTimeToUserTimezone(channel.closureTime);
@@ -187,6 +197,20 @@ export const ChannelStatus = ({ status, channel }: { status: string; channel: Bl
     return () => clearInterval(timer);
   }, [closureMs, closable]);
 
+  if (channel && nodeOpenBlokliNot(status, channel)) {
+    const closable = closureTime ? `, closable ${formatTimeToUserTimezone(closureTime)}` : '';
+    return (
+      <Tooltip
+        title={`The node API says Open, blokli says ${
+          BLOKLI_STATUS_LABEL[channel.status]
+        }${closable}. The node's channel state is out of sync with the chain.`}
+      >
+        <span>
+          <StatusPill status="Error" />
+        </span>
+      </Tooltip>
+    );
+  }
   if (!closureTime || closureMs === null) return <StatusPill status={status} />;
   return (
     <Tooltip title={`closable ${formatTimeToUserTimezone(closureTime)}`}>

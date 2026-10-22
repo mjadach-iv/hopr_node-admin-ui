@@ -20,7 +20,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { navBarHeight } from '../Navbar/navBar';
 
 export const drawerWidth = 200;
-export const minDrawerWidth = 50;
+export const minDrawerWidth = 44;
 
 const StyledDrawer = styled(MuiDrawer)`
   .MuiDrawer-paper {
@@ -49,6 +49,26 @@ const StyledDrawer = styled(MuiDrawer)`
         width: min(300px, 85vw);
       `}
   }
+
+  ${(props) =>
+    !props.open &&
+    props.variant !== 'temporary' &&
+    css`
+      .StyledListItemButton {
+        justify-content: center;
+        padding: 0;
+        .SListItemIcon {
+          min-width: 0;
+        }
+      }
+      .ListItemText {
+        display: none;
+      }
+      .StyledListSubheader {
+        justify-content: center;
+        padding: 0;
+      }
+    `}
 
   &.type-blue {
     .MuiDrawer-paper {
