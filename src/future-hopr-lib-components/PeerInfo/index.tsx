@@ -7,6 +7,7 @@ import styled from '@emotion/styled';
 import SmallActionButton from '../../future-hopr-lib-components/Button/SmallActionButton';
 import { generateBase64Jazz } from '../../utils/functions';
 import { shortenAddress } from '../../utils/amount';
+import { clipboardAvailable } from '../../utils/clipboard';
 import Tooltip from '../Tooltip/tooltip-fixed-width';
 
 //Mui
@@ -64,11 +65,7 @@ const PeersInfo: React.FC<Props> = (props) => {
   const { peerAddress, shortAddress, ...rest } = props;
   const aliases = useAppSelector((store) => store.app.aliases);
 
-  const noCopyPaste = !(
-    window.location.protocol === 'https:' ||
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-  );
+  const noCopyPaste = !clipboardAvailable;
 
   const icon = peerAddress && generateBase64Jazz(peerAddress);
 

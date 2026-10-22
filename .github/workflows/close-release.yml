@@ -2,15 +2,26 @@ name: Close release
 
 # Closes a release on a manual run: reads the version from package.json, pushes the
 # Node Admin image to Docker Hub as `latest` and `<version>` (plus any extra tags you
-# enter), then creates the GitHub release `<version>` on the commit, with that
-# version's CHANGELOG.md section as its notes. The run fails before building if
-# that git tag already exists.
-# Pull requests only build the image to check that it still builds. Nothing is pushed.
+# enter), builds the desktop app for macOS, Windows and Linux, then creates the GitHub
+# release `<version>` on the commit, with that version's CHANGELOG.md section as its
+# notes and the desktop installers and update files (latest*.yml) as its assets. The
+# installed desktop apps update themselves from these releases. The run fails before
+# building if that git tag already exists.
+# Pull requests only build the image and the Linux desktop app to check that they still
+# build. Nothing is pushed or released.
 #
 # Required repository settings (Settings > Secrets and variables > Actions):
 #   - variable DOCKERHUB_USERNAME: Docker Hub account or organisation that owns the image
 #                                   (falls back to the GitHub owner name when unset)
 #   - secret   DOCKERHUB_TOKEN:    Docker Hub access token with Read & Write scope
+#
+# Optional, to sign and notarize the macOS app (without them it is unsigned and cannot
+# install updates itself, it links to the release instead). Set all five or none:
+#   - secret   CSC_LINK:                    Developer ID Application certificate, base64 encoded .p12
+#   - secret   CSC_KEY_PASSWORD:            password of that .p12
+#   - secret   APPLE_ID:                    Apple ID of the developer account
+#   - secret   APPLE_APP_SPECIFIC_PASSWORD: app-specific password of that Apple ID
+#   - secret   APPLE_TEAM_ID:               team ID of the developer account
 
 on:
   pull_request:
@@ -36,10 +47,10 @@ env:
   PUSH: ${{ github.event_name == 'workflow_dispatch' }}
 
 jobs:
-  docker:
+  version:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # create the release and its tag
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -47,7 +58,6 @@ jobs:
 
       - name: Read version
         id: version
-        if: env.PUSH == 'true'
         run: |
           version=$(node -p "require('./package.json').version")
           if ! [[ "$version" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
@@ -70,12 +80,22 @@ jobs:
             exit 1
           fi
 
+  docker:
+    needs: version
+    runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
       - name: Parse requested tags
         id: tags
         if: env.PUSH == 'true'
         env:
           INPUT_TAGS: ${{ inputs.tags }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
           set -f # no filename expansion when splitting the input
           seen=" latest $VERSION "
@@ -123,12 +143,112 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  desktop:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        # electron-builder.yml picks the targets: dmg + zip (arm64, x64), NSIS (x64), AppImage (x64, arm64)
+        os: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["macos-latest", "windows-latest", "ubuntu-latest"]' || '["ubuntu-latest"]') }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Use Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '24.x'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Linux packaging tools
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libopenjp2-tools
+
+      - name: Build the app
+        run: |
+          pnpm build
+          pnpm electron:compile
+
+      - name: Package for macOS
+        if: runner.os == 'macOS'
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          args=()
+          if [ -n "$CSC_LINK" ]; then
+            if [ -z "$APPLE_ID" ] || [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
+              echo "::error::CSC_LINK is set, so APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD and APPLE_TEAM_ID are needed to notarize"
+              exit 1
+            fi
+            # the app installs its own updates only when it is signed, see electron/updater.ts
+            args+=(--config.extraMetadata.desktop.macSigned=true)
+          else
+            echo "::warning::No macOS signing certificate, the macOS app is unsigned"
+            unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+          pnpm exec electron-builder --mac --publish never "${args[@]}"
+
+      - name: Package for Windows
+        if: runner.os == 'Windows'
+        run: pnpm exec electron-builder --win --publish never
+
+      - name: Package for Linux
+        if: runner.os == 'Linux'
+        run: pnpm exec electron-builder --linux --publish never
+
+      - name: Upload installers
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: desktop-${{ runner.os }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
+            release/*.AppImage
+            release/*.blockmap
+            release/latest*.yml
+
+  release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: [version, docker, desktop]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release and its tag
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download installers
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: release-assets
+
       - name: Create release
-        if: env.PUSH == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+          VERSION: ${{ needs.version.outputs.version }}
+          IMAGE_TAGS: ${{ needs.docker.outputs.tags }}
         run: |
           # the "## <version>" section up to the next heading, without surrounding blank lines
           awk -v heading="## $VERSION" '
@@ -141,6 +261,7 @@ jobs:
               for (i = first; i <= last; i++) print lines[i]
             }
           ' CHANGELOG.md > release-notes.md
+          # the desktop apps of stable versions only look at stable releases, so prereleases must stay marked
           prerelease=()
           [[ "$VERSION" == *-* ]] && prerelease=(--prerelease)
           gh release create "$VERSION" \
@@ -148,13 +269,18 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "$VERSION" \
             --notes-file release-notes.md \
-            "${prerelease[@]}"
+            "${prerelease[@]}" \
+            release-assets/*
           {
             echo "### Released $VERSION"
             echo
             echo "Released \`$GITHUB_SHA\` as \`$VERSION\` and pushed:"
             echo
             while read -r tag; do [ -n "$tag" ] && echo "- \`$tag\`"; done <<< "$IMAGE_TAGS"
+            echo
+            echo "Desktop assets:"
+            echo
+            for file in release-assets/*; do echo "- \`$(basename "$file")\`"; done
             echo
             if [ -s release-notes.md ]; then
               echo "Release notes taken from CHANGELOG.md."

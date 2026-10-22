@@ -1,0 +1,44 @@
+# Desktop app packaging, see https://www.electron.build/v26/docs/configuration
+# `pnpm electron:build` builds for the current OS; CI builds every platform in close-release.yml.
+
+appId: org.hoprnet.node-admin
+# no spaces: CI uploads the files to the GitHub release as they are, and latest*.yml must name them exactly
+artifactName: hopr-node-admin-${version}-${os}-${arch}.${ext}
+directories:
+  # the default "build" is Vite's output, which electron-builder would then leave out of the app
+  buildResources: electron/resources
+  output: release
+# package.json and the production node_modules (electron-updater, electron-log) are always included
+files:
+  - dist-electron/**
+  - build/**
+
+# the update feed: GitHub releases, tagged with the plain version (5.0.0-alpha.15, no "v")
+publish:
+  provider: github
+  owner: mjadach-iv
+  repo: hopr_node-admin-ui
+  vPrefixedTagName: false
+
+mac:
+  category: public.app-category.utilities
+  # dmg to install, zip for the updater; both archs in one run share one latest-mac.yml
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+  # signs and notarizes only when CSC_LINK and APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID are set
+  hardenedRuntime: true
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+
+linux:
+  category: Utility
+  executableName: hopr-node-admin
+  target:
+    - target: AppImage
+      arch: [x64, arm64]
