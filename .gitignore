@@ -11,6 +11,10 @@
 # production
 /build
 
+# desktop app: compiled main process and installers
+/dist-electron
+/release
+
 # misc
 .DS_Store
 .env.local

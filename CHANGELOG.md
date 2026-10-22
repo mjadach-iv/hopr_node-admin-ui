@@ -1,5 +1,23 @@
 # Changelog
 
+## 5.0.0-alpha.15
+
+Changes since 5.0.0-alpha.14.
+
+### Added
+
+- A desktop app for macOS (Apple Silicon and Intel), Windows and Linux (x64 and arm64), attached to every GitHub release. It is the same app as the web version and talks to the node directly, so no Docker container or web server is needed.
+- The desktop app updates itself from the GitHub releases: it checks on start and every 6 hours, downloads the new version in the background and shows "Restart to update" in the header once it is ready. "Check for Updates…" is in the app menu on macOS and in Help on Windows and Linux. Until the macOS app is signed, it cannot install updates itself, so on macOS the header shows "Update available" and links to the release.
+- Links to other sites, such as the explorer, Safe{Wallet} and the node's API docs, open in the system browser from the desktop app.
+
+### Changed
+
+- In the desktop app, "raise" next to a low allowance and the "Allowance too low" notification open the Safe in Safe{Wallet}, since Safe{Wallet} cannot load the allowance Safe App from the desktop app.
+
+### Fixed
+
+- The copy buttons next to addresses are enabled wherever the browser allows clipboard access, instead of only on https, localhost and 127.0.0.1.
+
 ## 5.0.0-alpha.14
 
 Changes since 5.0.0-alpha.13.

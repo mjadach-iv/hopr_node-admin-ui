@@ -1,6 +1,8 @@
 # Ignore artifacts:
 node_modules/
 build/
+dist-electron/
+release/
 public/
 *.min.js
 src/index.tsx
