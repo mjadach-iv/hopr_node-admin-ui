@@ -10,7 +10,7 @@ export const RpcError = () => {
   const open = (event: MouseEvent | KeyboardEvent) => {
     event.stopPropagation();
     event.preventDefault();
-    navigate(`/admin/configuration${search}`);
+    navigate(`/admin/settings${search}`);
   };
   return (
     <span

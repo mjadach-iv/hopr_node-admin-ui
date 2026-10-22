@@ -75,8 +75,8 @@ export const applicationMapNode: ApplicationMapType = [
         numberKey: 'numberOfAliases',
       },
       {
-        name: 'CONFIGURATION',
-        path: 'configuration',
+        name: 'SETTINGS',
+        path: 'settings',
         icon: <SettingsIcon />,
         element: <AdminConfigurationPage />,
       },

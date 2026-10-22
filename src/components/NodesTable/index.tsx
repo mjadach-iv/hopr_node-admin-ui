@@ -26,6 +26,7 @@ import { OpenSessionModal } from '../Modal/node/OpenSessionModal';
 // Mui
 import MuiCheckbox from '@mui/material/Checkbox';
 import DeleteIcon from '@mui/icons-material/Delete';
+import WatchedCheckboxIcon from '../../future-hopr-lib-components/Icons/WatchedCheckbox';
 
 // '30.0 Mbps' in the cell, the share of the tested speed on hover
 const Throughput = ({ mbps, maxMbps }: { mbps?: number | null; maxMbps?: number | null }) => (
@@ -36,7 +37,8 @@ const Throughput = ({ mbps, maxMbps }: { mbps?: number | null; maxMbps?: number 
   </Tooltip>
 );
 
-const WatchCheckbox = ({ address, watched }: { address: string; watched: boolean }) => {
+// a checkbox ticked with an eye, unticking stops watching the node
+export const WatchCheckbox = ({ address, watched }: { address: string; watched: boolean }) => {
   const dispatch = useAppDispatch();
   const label = watched ? 'Remove from the watchlist' : 'Add to the watchlist';
   return (
@@ -48,6 +50,7 @@ const WatchCheckbox = ({ address, watched }: { address: string; watched: boolean
         <MuiCheckbox
           size="small"
           checked={watched}
+          checkedIcon={<WatchedCheckboxIcon />}
           onClick={(event) => event.stopPropagation()}
           onChange={(event) => dispatch(appActions.setWatched({ address, watched: event.target.checked }))}
           inputProps={{ 'aria-label': label }}
@@ -184,7 +187,6 @@ export const NodesTable = (props: NodesTableProps) => {
           <CreateAliasModal address={nodeAddress} />
           <IconButton
             iconComponent={<DeleteIcon />}
-            aria-label="remove from the watchlist"
             tooltipText={
               <span>
                 REMOVE

@@ -1,15 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
 import { watchlistActionsAsync } from '../../store/slices/watchlist';
+import { appActions } from '../../store/slices/app';
 import { formatEther } from 'viem';
 import type { SafeChannelStatsType, SafeNodeType } from '../../blokli';
 import { shrinkNumber } from '../../utils/amount';
+import { exportToCsv } from '../../utils/helpers';
+import { parseWatchlistFile } from '../../utils/watchlist';
+import { sendNotification } from '../../hooks/useWatcher/notifications';
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
+import IconButton from '../../future-hopr-lib-components/Button/IconButton';
 import { NodesTable } from '../../components/NodesTable';
 import { BreakdownTooltip } from '../../components/InfoBar';
 import { AddressLinks, SafeWalletLink } from '../node/info/ui';
@@ -19,6 +24,8 @@ import { AddToWatchlistModal } from '../../components/Modal/watchlist/AddToWatch
 // Mui
 import Button from '@mui/material/Button';
 import DnsIcon from '@mui/icons-material/Dns';
+import GetAppIcon from '@mui/icons-material/GetApp';
+import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
 
 const NO_SAFE = 'none';
 const UNKNOWN_SAFE = 'unknown';
@@ -163,6 +170,7 @@ function WatchlistPage() {
   // a safe entered in the add dialog, its nodes are not in the watchlist data yet
   const [addedSafe, set_addedSafe] = useState<{ safeAddress: string; nodes: string[] } | null>(null);
   const added = addedSafe && addedSafe.safeAddress === safeInModal ? addedSafe : null;
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const watchlistKey = watchlist.join(',');
   const rpcUrlsKey = rpcUrls.join(',');
 
@@ -179,6 +187,38 @@ function WatchlistPage() {
       clearInterval(watchlistInterval);
     };
   }, [blokliUrl, rpcUrlsKey, watchlistKey, connected]);
+
+  const handleExport = () => {
+    exportToCsv(
+      watchlist.map((node) => ({ node })),
+      'watchlist.csv',
+    );
+  };
+
+  // imported nodes are added, the ones already watched stay
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imported = typeof reader.result === 'string' ? parseWatchlistFile(reader.result) : [];
+      const added = imported.filter((address) => !watchlist.includes(address));
+      if (added.length)
+        dispatch(appActions.setWatchedMany(Object.fromEntries(added.map((address) => [address, true]))));
+      const msg = imported.length
+        ? `Watchlist import: ${added.length} ${added.length === 1 ? 'node' : 'nodes'} added, ${
+            imported.length - added.length
+          } already watched`
+        : 'Watchlist import: no address found in the file';
+      sendNotification({
+        notificationPayload: { source: 'node', name: msg, url: null, timeout: null },
+        toastPayload: { message: msg, type: imported.length ? 'success' : 'error' },
+        dispatch,
+      });
+    };
+    reader.readAsText(file);
+  };
 
   const loading = data === null && isFetching;
   const nodes = loading ? [] : watchlist.map((address) => data?.figuresByNode[address] ?? noFigures(address));
@@ -266,12 +306,44 @@ function WatchlistPage() {
         refreshFunction={watchlist.length ? fetchWatchlist : undefined}
         reloading={isFetching}
         actions={
-          <AddToWatchlistModal
-            onSafe={(safeAddress, nodes) => {
-              set_addedSafe({ safeAddress, nodes });
-              set_safeInModal(safeAddress);
-            }}
-          />
+          <>
+            <AddToWatchlistModal
+              onSafe={(safeAddress, nodes) => {
+                set_addedSafe({ safeAddress, nodes });
+                set_safeInModal(safeAddress);
+              }}
+            />
+            <IconButton
+              iconComponent={<DriveFolderUploadIcon />}
+              tooltipText={
+                <span>
+                  IMPORT
+                  <br />
+                  nodes from a CSV
+                </span>
+              }
+              onClick={() => fileInputRef.current?.click()}
+            />
+            <IconButton
+              iconComponent={<GetAppIcon />}
+              tooltipText={
+                <span>
+                  EXPORT
+                  <br />
+                  the watchlist as a CSV
+                </span>
+              }
+              disabled={watchlist.length === 0}
+              onClick={handleExport}
+            />
+            <input
+              type="file"
+              accept=".csv,.txt"
+              style={{ display: 'none' }}
+              ref={fileInputRef}
+              onChange={handleImport}
+            />
+          </>
         }
       />
       {watchlist.length === 0 ? (

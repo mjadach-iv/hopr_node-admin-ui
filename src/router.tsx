@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, RouteObject } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouteObject, useLocation } from 'react-router-dom';
 import { environment } from '../config';
 
 import NodeLandingPage from './pages/node/landingPage';
@@ -48,6 +48,22 @@ applicationMap.forEach((groups) => {
       });
     }
   });
+});
+
+// NODE ADMIN → SETTINGS was called CONFIGURATION, old links keep their query
+const ToAdminSettings = () => {
+  const { search } = useLocation();
+  return (
+    <Navigate
+      to={`/admin/settings${search}`}
+      replace
+    />
+  );
+};
+
+routes[0].children.push({
+  path: '/admin/configuration',
+  element: <ToAdminSettings />,
 });
 
 routes[0].children.push({

@@ -1,5 +1,19 @@
 # Changelog
 
+## 5.0.0-alpha.16
+
+Changes since 5.0.0-alpha.15.
+
+### Added
+
+- WATCHLIST: export and import buttons next to +. Export saves the watched nodes as `watchlist.csv` (one `node` column). Import reads a CSV or text file and takes the first address of each line, so a header row or extra columns are fine. It adds the nodes to the watchlist and keeps the ones already watched, and a toast says how many were added.
+- ALIASES: the same watchlist checkbox as on SAFE → NODES at the end of every row, to add the node to the watchlist or remove it.
+
+### Changed
+
+- The watchlist checkbox on SAFE → NODES shows an eye instead of the tick when the node is watched.
+- NODE ADMIN → CONFIGURATION is now called SETTINGS, at `/admin/settings`. The old `/admin/configuration` links redirect there.
+
 ## 5.0.0-alpha.15
 
 Changes since 5.0.0-alpha.14.

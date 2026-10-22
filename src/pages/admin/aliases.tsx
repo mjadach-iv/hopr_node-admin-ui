@@ -10,6 +10,7 @@ import IconButton from '../../future-hopr-lib-components/Button/IconButton';
 import RemoveAliasIcon from '../../future-hopr-lib-components/Icons/RemoveAlias';
 import TablePro from '../../future-hopr-lib-components/Table/table-pro';
 import PeersInfo from '../../future-hopr-lib-components/PeerInfo';
+import { WatchCheckbox } from '../../components/NodesTable';
 
 // Modals
 import { PingModal } from '../../components/Modal/node/PingModal';
@@ -25,6 +26,7 @@ import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
 function AliasesPage() {
   const dispatch = useAppDispatch();
   const aliases = useAppSelector((store) => store.app.aliases);
+  const watchlist = useAppSelector((store) => store.app.watchlist);
   // the aliases are kept in the browser, only the actions that talk to a node need one
   const connected = useAppSelector((store) => store.auth.status.connected);
   const peersObject = useAppSelector((store) => store.node.peersConnected.parsed.obj);
@@ -76,6 +78,12 @@ function AliasesPage() {
       lastUpdate: mypeerAddress === peerAddress ? '-' : lastUpdate,
       lastUpdateValue: mypeerAddress === peerAddress || !lastUpdateNumeric ? null : lastUpdateNumeric,
       peerAddress: peerAddress,
+      watch: (
+        <WatchCheckbox
+          address={peerAddress}
+          watched={watchlist.includes(peerAddress)}
+        />
+      ),
       actions: (
         <>
           {connected && (
@@ -150,6 +158,13 @@ function AliasesPage() {
       key: 'actions',
       name: '',
       search: false,
+    },
+    {
+      key: 'watch',
+      name: '',
+      search: false,
+      sortable: false,
+      align: 'center' as const,
     },
   ];
 

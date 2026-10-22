@@ -232,7 +232,7 @@ function AdminConfigurationPage() {
       fullHeightMin
       yellow
     >
-      <SubpageTitle title="NODE ADMIN CONFIGURATION" />
+      <SubpageTitle title="NODE ADMIN SETTINGS" />
       <Paper
         elevation={0}
         style={{
