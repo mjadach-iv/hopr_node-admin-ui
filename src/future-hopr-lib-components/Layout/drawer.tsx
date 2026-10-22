@@ -20,6 +20,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { navBarHeight } from '../Navbar/navBar';
 
 export const drawerWidth = 200;
+// icons are padded to the center of the collapsed width so they stay put while the drawer opens
 export const minDrawerWidth = 44;
 
 const StyledDrawer = styled(MuiDrawer)`
@@ -49,26 +50,6 @@ const StyledDrawer = styled(MuiDrawer)`
         width: min(300px, 85vw);
       `}
   }
-
-  ${(props) =>
-    !props.open &&
-    props.variant !== 'temporary' &&
-    css`
-      .StyledListItemButton {
-        justify-content: center;
-        padding: 0;
-        .SListItemIcon {
-          min-width: 0;
-        }
-      }
-      .ListItemText {
-        display: none;
-      }
-      .StyledListSubheader {
-        justify-content: center;
-        padding: 0;
-      }
-    `}
 
   &.type-blue {
     .MuiDrawer-paper {
@@ -114,11 +95,13 @@ const StyledListSubheader = styled(ListSubheader)`
   display: flex;
   height: 30px;
   margin-top: 6px;
-  padding-left: 18px;
+  padding-left: ${(minDrawerWidth - 16) / 2}px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
   user-select: none;
   color: var(--muted);
   background: transparent;
@@ -137,7 +120,8 @@ const StyledListItemButton = styled(ListItemButton)`
   width: calc(100% - 12px);
   border-radius: 6px;
   padding-right: 6px;
-  padding-left: 9px;
+  padding-left: ${(minDrawerWidth - 12 - 18) / 2}px;
+  overflow: hidden;
   color: var(--text-2);
   fill: var(--muted);
   .MuiListItemIcon-root {
@@ -181,7 +165,7 @@ const StyledListItemButton = styled(ListItemButton)`
 
 const SListItemIcon = styled(ListItemIcon)`
   &.GroupIcon {
-    color: rgba(0, 0, 0, 0.2);
+    color: var(--hopr-yellow-dark);
   }
 `;
 

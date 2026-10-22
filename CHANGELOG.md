@@ -7,7 +7,7 @@ Changes since 5.0.0-alpha.14.
 ### Changed
 
 - Channel tables: a channel the node API reports as Open while blokli does not shows a red "Error" status instead of "Open · closable …", with a tooltip naming both statuses and the closure time.
-- The collapsed sidebar is narrower and shows only the icons, centered, with no text cut off at its edge.
+- The collapsed sidebar is narrower and shows only the icons, centered, with no text cut off at its edge. The icons stay in place while the sidebar opens and closes, and the group headers and labels no longer wrap onto two lines during the animation. Its section icons are dark yellow.
 
 ## 5.0.0-alpha.14
 
