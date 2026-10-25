@@ -11,6 +11,7 @@ Changes since 5.0.0.
 
 ### Fixed
 
+- macOS lists the desktop app as HOPR Node Admin in System Settings → Privacy & Security, such as under Local Network, instead of as Electron. The app is now signed ad-hoc with its own ID, `org.mjadach-iv.hopr-node-admin`, and the Local Network permission prompt says why the app asks. macOS asks for the Local Network permission once more after the update.
 - CONNECT NODE: the login error and the "Connecting to Node" loader use the dark admin theme. The error showed light text on a white background and the loader covered the page in white.
 - Where the browser does not allow clipboard access, such as over plain http, the copy buttons next to addresses and code are hidden instead of disabled, and double-clicking a table cell no longer shows "Copied" without copying.
 

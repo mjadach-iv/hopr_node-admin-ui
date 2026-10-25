@@ -1,7 +1,7 @@
 # Desktop app packaging, see https://www.electron.build/v26/docs/configuration
 # `pnpm electron:build` builds for the current OS; CI builds every platform in close-release.yml.
 
-appId: org.hoprnet.node-admin
+appId: org.mjadach-iv.hopr-node-admin
 # no spaces: CI uploads the files to the GitHub release as they are, and latest*.yml must name them exactly
 artifactName: hopr-node-admin-${version}-${os}-${arch}.${ext}
 directories:
@@ -29,8 +29,11 @@ mac:
       arch: [universal]
     - target: zip
       arch: [universal]
-  # signs and notarizes only when CSC_LINK and APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID are set
+  # signs and notarizes only when CSC_LINK and APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID are set;
+  # without them close-release.yml signs ad-hoc, so macOS names the app by appId and not "Electron"
   hardenedRuntime: true
+  extendInfo:
+    NSLocalNetworkUsageDescription: HOPR Node Admin connects to the HOPR nodes you add, which may be on your local network.
 
 win:
   target:

@@ -198,9 +198,12 @@ jobs:
             # the app installs its own updates only when it is signed, see electron/updater.ts
             args+=(--config.extraMetadata.desktop.macSigned=true)
           else
-            echo "::warning::No macOS signing certificate, the macOS app is unsigned"
+            echo "::warning::No macOS signing certificate, the macOS app is signed ad-hoc"
             unset CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID
             export CSC_IDENTITY_AUTO_DISCOVERY=false
+            # without its own signature the app keeps Electron's, and macOS lists it as "Electron"
+            # in Privacy & Security, e.g. under Local Network
+            args+=(--config.mac.identity=-)
           fi
           pnpm exec electron-builder --mac --publish never "${args[@]}"
 
