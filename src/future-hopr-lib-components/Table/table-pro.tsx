@@ -6,6 +6,7 @@ import { TableVirtuoso, TableComponents } from 'react-virtuoso';
 // HOPR
 import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 import { navBarHeight } from '../Navbar/navBar';
+import { clipboardAvailable } from '../../utils/clipboard';
 
 // Mui
 import Table from '@mui/material/Table';
@@ -757,7 +758,7 @@ const RowCells = ({ row, header }: { row: RowData; header: Props['header'] }) =>
 
   const onDoubleClick = (event: React.MouseEvent<HTMLTableCellElement, MouseEvent>, value: string) => {
     // if row is clicked twice
-    if (event.detail === 2) {
+    if (event.detail === 2 && clipboardAvailable) {
       navigator.clipboard.writeText(value);
       set_tooltip('Copied');
       setTimeout(() => {

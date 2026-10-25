@@ -65,8 +65,6 @@ const PeersInfo: React.FC<Props> = (props) => {
   const { peerAddress, shortAddress, ...rest } = props;
   const aliases = useAppSelector((store) => store.app.aliases);
 
-  const noCopyPaste = !clipboardAvailable;
-
   const icon = peerAddress && generateBase64Jazz(peerAddress);
 
   return (
@@ -83,13 +81,14 @@ const PeersInfo: React.FC<Props> = (props) => {
         </span>
       </Tooltip>
       <span className="PeerInfo-links">
-        <SmallActionButton
-          onClick={() => navigator.clipboard.writeText(peerAddress as string)}
-          disabled={noCopyPaste}
-          tooltip={noCopyPaste ? 'Clipboard not supported on HTTP' : 'Copy Node Address'}
-        >
-          <CopyIcon />
-        </SmallActionButton>
+        {clipboardAvailable && (
+          <SmallActionButton
+            onClick={() => navigator.clipboard.writeText(peerAddress as string)}
+            tooltip={'Copy Node Address'}
+          >
+            <CopyIcon />
+          </SmallActionButton>
+        )}
         <SmallActionButton tooltip={'Open in gnosisscan.io'}>
           <Link
             to={`https://gnosisscan.io/address/${peerAddress}`}

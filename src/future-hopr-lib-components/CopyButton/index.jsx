@@ -4,6 +4,8 @@ import styled from '@emotion/styled';
 import IconButton from '@mui/material/IconButton';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
+import { clipboardAvailable } from '../../utils/clipboard';
+
 const SIconButton = styled(IconButton)`
   margin-left: 8px;
 `;
@@ -13,6 +15,7 @@ function copy(copyText) {
 }
 
 function CopyButton(props) {
+  if (!clipboardAvailable) return null;
   return (
     <SIconButton
       color="primary"

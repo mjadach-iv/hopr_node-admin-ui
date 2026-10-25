@@ -15,17 +15,16 @@ export const short = (value?: string | null) => {
   return shrinkNumber(value);
 };
 
-const noCopyPaste = !clipboardAvailable;
-
 export const AddressLinks = ({ address }: { address: string }) => (
   <>
-    <SmallActionButton
-      onClick={() => navigator.clipboard.writeText(address)}
-      disabled={noCopyPaste}
-      tooltip={noCopyPaste ? 'Clipboard not supported on HTTP' : 'Copy'}
-    >
-      <CopyIcon />
-    </SmallActionButton>
+    {clipboardAvailable && (
+      <SmallActionButton
+        onClick={() => navigator.clipboard.writeText(address)}
+        tooltip={'Copy'}
+      >
+        <CopyIcon />
+      </SmallActionButton>
+    )}
     <SmallActionButton tooltip={'Open in gnosisscan.io'}>
       <Link
         to={`https://gnosisscan.io/address/${address}`}
