@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import Tooltip from '../../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 import SmallActionButton from '../../../future-hopr-lib-components/Button/SmallActionButton';
 import { shrinkNumber } from '../../../utils/amount';
+import { clipboardAvailable } from '../../../utils/clipboard';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import LaunchIcon from '@mui/icons-material/Launch';
 
@@ -14,11 +15,7 @@ export const short = (value?: string | null) => {
   return shrinkNumber(value);
 };
 
-const noCopyPaste = !(
-  window.location.protocol === 'https:' ||
-  window.location.hostname === 'localhost' ||
-  window.location.hostname === '127.0.0.1'
-);
+const noCopyPaste = !clipboardAvailable;
 
 export const AddressLinks = ({ address }: { address: string }) => (
   <>
