@@ -16,16 +16,10 @@ const { sdkApiError } = utils;
 const { getInfo, getAddresses, getBalances, isNodeStarted } = api;
 
 export const loginThunk = createAsyncThunk<
-  GetInfoResponseType | { force: boolean } | undefined,
-  { apiToken: string; apiEndpoint: string; force?: boolean },
+  GetInfoResponseType | undefined,
+  { apiToken: string; apiEndpoint: string },
   { state: RootState; rejectValue: { data: string; type: 'API_ERROR' | 'CUSTOM_ERROR' | 'FETCH_ERROR' } }
 >('auth/login', async (payload, { rejectWithValue, dispatch }) => {
-  if (payload.force) {
-    return {
-      force: true,
-    };
-  }
-
   const { apiEndpoint, apiToken } = payload;
 
   let info, addresses, balances, nodeStarted;
@@ -111,7 +105,7 @@ export const createAsyncReducer = (builder: ActionReducerMapBuilder<typeof initi
 
       // Keep the saved node's network name up to date. Runs for both login paths
       // (connect modal and login by url), so it also picks up a network rename.
-      const network = 'hoprNetworkName' in action.payload ? action.payload.hoprNetworkName : null;
+      const network = action.payload.hoprNetworkName;
       // login by url passes the raw endpoint while the node list holds the formatted one
       const apiEndpoint = parseAndFormatUrl(action.meta.arg.apiEndpoint) ?? action.meta.arg.apiEndpoint;
       const existingItem = state.nodes.findIndex((item) => item.apiEndpoint === apiEndpoint);

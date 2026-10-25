@@ -7,9 +7,11 @@ Changes since 5.0.0.
 ### Changed
 
 - The macOS desktop app is one universal app for Apple Silicon and Intel, `hopr-node-admin-<version>-mac-universal.dmg`, instead of one download per architecture. Installed apps of either architecture update to it.
+- CONNECT NODE: when the node cannot be reached or fails to log in, the error is shown without the "Login anyways" button, which opened the app without any node data.
 
 ### Fixed
 
+- CONNECT NODE: the login error and the "Connecting to Node" loader use the dark admin theme. The error showed light text on a white background and the loader covered the page in white.
 - Where the browser does not allow clipboard access, such as over plain http, the copy buttons next to addresses and code are hidden instead of disabled, and double-clicking a table cell no longer shows "Copied" without copying.
 
 ## 5.0.0

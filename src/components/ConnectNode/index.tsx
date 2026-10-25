@@ -101,11 +101,16 @@ const Overlay = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  color: #000050;
-  gap: 32px;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  gap: 24px;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.78);
+  /* --bg, dimmed */
+  background: rgba(4, 5, 42, 0.82);
+  backdrop-filter: blur(3px);
   z-index: 10000;
 `;
 
