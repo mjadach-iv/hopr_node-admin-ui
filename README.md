@@ -46,7 +46,7 @@ Logs are written to `~/Library/Logs/HOPR Node Admin/main.log` on macOS, `%APPDAT
 
 Requirements:
 
-- Node.js 22.13 or newer (CI uses Node 24)
+- Node.js 24 (`.nvmrc`; `nvm use` or `fnm use` picks it up). The Docker image, CI and the desktop app (Electron 44) use Node 24 too.
 - pnpm, enabled through Corepack. The exact version is pinned in the `packageManager` field of `package.json`.
 
 ```sh

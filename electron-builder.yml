@@ -13,7 +13,8 @@ files:
   - dist-electron/**
   - build/**
 
-# the update feed: GitHub releases, tagged with the plain version (5.0.0-alpha.15, no "v")
+# GitHub releases, tagged with the plain version (5.0.0-alpha.15, no "v"). It makes electron-builder
+# write latest*.yml; the app picks the release from the GitHub API itself (electron/updater.ts)
 publish:
   provider: github
   owner: mjadach-iv

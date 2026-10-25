@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, net, type IpcMainInvokeEvent } from 'electron';
 import log from 'electron-log/main';
 import { autoUpdater } from 'electron-updater';
 import fs from 'node:fs';
@@ -7,11 +7,17 @@ import { openExternal, RELEASES_URL } from './links';
 import { isAppUrl } from './protocol';
 import type { UpdateState } from './shared';
 
-// Updates come from the GitHub releases of the repository (publish in electron-builder.yml). A
-// prerelease version such as 5.0.0-alpha.15 also takes prereleases, a stable one only stable releases.
+// Updates come from the GitHub releases of the repository. A prerelease version such as
+// 5.0.0-alpha.15 also takes prereleases, a stable one only stable releases.
+// electron-updater's GitHub provider finds the newest version in releases.atom, which also lists tags
+// without a release, so the release is picked from the releases API and its download folder is
+// handed to the generic provider, which reads latest*.yml from there.
 
+const RELEASES_API_URL = 'https://api.github.com/repos/mjadach-iv/hopr_node-admin-ui/releases?per_page=100';
+const UPDATE_FILE = /^latest.*\.yml$/;
 const FIRST_CHECK_DELAY = 10_000;
 const CHECK_INTERVAL = 6 * 60 * 60 * 1000;
+const FETCH_TIMEOUT = 10_000;
 
 let state: UpdateState = { status: 'idle' };
 
@@ -50,8 +56,47 @@ const install = () => {
 // a check while one runs or a download is done would only repeat work
 const canCheck = () => app.isPackaged && !['checking', 'downloading', 'ready'].includes(state.status);
 
+const fail = (error: unknown) => {
+  log.error('update failed', error);
+  // electron-updater appends request headers and a stack to the message, the first line says what failed
+  const [summary] = (error instanceof Error ? error.message : String(error)).split('\n');
+  setState({ status: 'error', message: summary });
+};
+
+type Release = { tag_name: string; draft: boolean; prerelease: boolean; assets: { name: string }[] };
+
+// The API lists releases newest first. Releases without update files (made before the desktop app) are skipped.
+const findLatestRelease = async (): Promise<string | null> => {
+  const response = await net.fetch(RELEASES_API_URL, {
+    headers: { Accept: 'application/vnd.github+json' },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT),
+  });
+  if (!response.ok) throw new Error(`Could not load the GitHub releases: HTTP ${response.status}`);
+  const releases = (await response.json()) as Release[];
+  const release = releases.find(
+    (release) =>
+      !release.draft &&
+      (autoUpdater.allowPrerelease || !release.prerelease) &&
+      release.assets.some((asset) => UPDATE_FILE.test(asset.name)),
+  );
+  return release?.tag_name ?? null;
+};
+
 const check = async () => {
   if (!canCheck()) return;
+  setState({ status: 'checking' });
+  let tag: string | null;
+  try {
+    tag = await findLatestRelease();
+  } catch (error) {
+    fail(error);
+    return;
+  }
+  if (!tag) {
+    setState({ status: 'idle' });
+    return;
+  }
+  autoUpdater.setFeedURL({ provider: 'generic', url: `${RELEASES_URL}/download/${encodeURIComponent(tag)}` });
   try {
     await autoUpdater.checkForUpdates();
   } catch {
@@ -75,12 +120,7 @@ export const setupUpdater = () => {
     if (state.status === 'downloading') setState({ ...state, percent: Math.floor(percent) });
   });
   autoUpdater.on('update-downloaded', ({ version }) => setState({ status: 'ready', version }));
-  autoUpdater.on('error', (error) => {
-    log.error('update failed', error);
-    // electron-updater appends request headers and a stack to the message, the first line says what failed
-    const [summary] = (error?.message ?? String(error)).split('\n');
-    setState({ status: 'error', message: summary });
-  });
+  autoUpdater.on('error', fail);
 
   ipcMain.on('desktop:info', (event) => {
     event.returnValue = { version: app.getVersion(), platform: process.platform };
@@ -110,13 +150,7 @@ export const checkForUpdatesFromMenu = async () => {
     return;
   }
 
-  if (canCheck()) {
-    try {
-      await autoUpdater.checkForUpdates();
-    } catch {
-      // the state is 'error' now
-    }
-  }
+  await check();
 
   const current = app.getVersion();
   switch (state.status) {

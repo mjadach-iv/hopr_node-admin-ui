@@ -1,6 +1,6 @@
 {
   "name": "node-admin-ui",
-  "version": "5.0.0-alpha.16",
+  "version": "5.0.0",
   "productName": "HOPR Node Admin",
   "private": true,
   "description": "Admin UI for HOPR nodes, as a web app and a desktop app",
@@ -38,7 +38,7 @@
     ]
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=24.0.0"
   },
   "browserslist": {
     "production": [

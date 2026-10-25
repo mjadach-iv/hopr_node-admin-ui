@@ -15,7 +15,7 @@ import packageJson from '../../../package.json';
 
 const DOCKER_IMAGE = '0xmj/hopr-node-admin-ui';
 const CONTAINER_NAME = 'hopr-node-admin-ui';
-const GITHUB_TAGS_URL = 'https://api.github.com/repos/mjadach-iv/hopr_node-admin-ui/tags?per_page=100';
+const GITHUB_RELEASES_URL = 'https://api.github.com/repos/mjadach-iv/hopr_node-admin-ui/releases?per_page=100';
 const CHECK_INTERVAL = 6 * 60 * 60 * 1000;
 const FETCH_TIMEOUT = 10_000;
 
@@ -27,12 +27,13 @@ const getContainerVersion = async (): Promise<string | null> => {
   return parseVersion(version) ? version : null;
 };
 
-// Close release tags the commit only after the image is pushed, so every tag has an image
+// Close release creates the release only after the image is pushed, so every release has an image.
+// A bare tag may have none, so tags without a release are not offered.
 const getReleasedVersions = async (): Promise<string[]> => {
-  const response = await fetch(GITHUB_TAGS_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
+  const response = await fetch(GITHUB_RELEASES_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT) });
   if (!response.ok) return [];
-  const tags = (await response.json()) as { name: string }[];
-  return Array.isArray(tags) ? tags.map((tag) => tag.name) : [];
+  const releases = (await response.json()) as { tag_name: string; draft: boolean }[];
+  return Array.isArray(releases) ? releases.filter((release) => !release.draft).map((release) => release.tag_name) : [];
 };
 
 /**

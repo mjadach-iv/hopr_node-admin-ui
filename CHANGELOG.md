@@ -1,14 +1,30 @@
 # Changelog
 
-## 5.0.0-alpha.16
+## 5.0.0
 
-Changes since 5.0.0-alpha.15.
+Changes since 5.0.0-alpha.16.
 
 ### Added
 
 - A desktop app for macOS (Apple Silicon and Intel), Windows and Linux (x64 and arm64), attached to every GitHub release. It is the same app as the web version and talks to the node directly, so no Docker container or web server is needed.
 - The desktop app updates itself from the GitHub releases: it checks on start and every 6 hours, downloads the new version in the background and shows "Restart to update" in the header once it is ready. "Check for Updates…" is in the app menu on macOS and in Help on Windows and Linux. Until the macOS app is signed, it cannot install updates itself, so on macOS the header shows "Update available" and links to the release.
 - Links to other sites, such as the explorer, Safe{Wallet} and the node's API docs, open in the system browser from the desktop app.
+
+### Changed
+
+- In the desktop app, "raise" next to a low allowance and the "Allowance too low" notification open the Safe in Safe{Wallet}, since Safe{Wallet} cannot load the allowance Safe App from the desktop app.
+- The "Update available" notice of the Docker version only offers versions published as a GitHub release, not every git tag.
+
+### Fixed
+
+- The copy buttons next to addresses are enabled wherever the browser allows clipboard access, instead of only on https, localhost and 127.0.0.1.
+
+## 5.0.0-alpha.16
+
+Changes since 5.0.0-alpha.15.
+
+### Added
+
 - WATCHLIST: export and import buttons next to +. Export saves the watched nodes as `watchlist.csv` (one `node` column). Import reads a CSV or text file and takes the first address of each line, so a header row or extra columns are fine. It adds the nodes to the watchlist and keeps the ones already watched, and a toast says how many were added.
 - ALIASES: the same watchlist checkbox as on SAFE → NODES at the end of every row, to add the node to the watchlist or remove it.
 
@@ -16,11 +32,6 @@ Changes since 5.0.0-alpha.15.
 
 - The watchlist checkbox on SAFE → NODES shows an eye instead of the tick when the node is watched.
 - NODE ADMIN → CONFIGURATION is now called SETTINGS, at `/admin/settings`. The old `/admin/configuration` links redirect there.
-- In the desktop app, "raise" next to a low allowance and the "Allowance too low" notification open the Safe in Safe{Wallet}, since Safe{Wallet} cannot load the allowance Safe App from the desktop app.
-
-### Fixed
-
-- The copy buttons next to addresses are enabled wherever the browser allows clipboard access, instead of only on https, localhost and 127.0.0.1.
 
 ## 5.0.0-alpha.15
 
