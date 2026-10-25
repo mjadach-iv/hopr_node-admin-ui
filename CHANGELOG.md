@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.1
+
+Changes since 5.0.0.
+
+### Changed
+
+- The macOS desktop app is one universal app for Apple Silicon and Intel, `hopr-node-admin-<version>-mac-universal.dmg`, instead of one download per architecture. Installed apps of either architecture update to it.
+
+### Fixed
+
+- Where the browser does not allow clipboard access, such as over plain http, the copy buttons next to addresses and code are hidden instead of disabled, and double-clicking a table cell no longer shows "Copied" without copying.
+
 ## 5.0.0
 
 Changes since 5.0.0-alpha.16.
