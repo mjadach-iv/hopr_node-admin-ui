@@ -22,13 +22,12 @@ The node's API must be reachable from your browser, since the UI calls it direct
 
 Every [GitHub release](https://github.com/mjadach-iv/hopr_node-admin-ui/releases) has the desktop app attached:
 
-| Platform               | File                                              |
-| ---------------------- | ------------------------------------------------- |
-| macOS, Apple Silicon   | `hopr-node-admin-<version>-mac-arm64.dmg`         |
-| macOS, Intel           | `hopr-node-admin-<version>-mac-x64.dmg`           |
-| Windows x64            | `hopr-node-admin-<version>-win-x64.exe`           |
-| Linux x64 (AppImage)   | `hopr-node-admin-<version>-linux-x86_64.AppImage` |
-| Linux arm64 (AppImage) | `hopr-node-admin-<version>-linux-arm64.AppImage`  |
+| Platform                        | File                                              |
+| ------------------------------- | ------------------------------------------------- |
+| macOS (Apple Silicon and Intel) | `hopr-node-admin-<version>-mac-universal.dmg`     |
+| Windows x64                     | `hopr-node-admin-<version>-win-x64.exe`           |
+| Linux x64 (AppImage)            | `hopr-node-admin-<version>-linux-x86_64.AppImage` |
+| Linux arm64 (AppImage)          | `hopr-node-admin-<version>-linux-arm64.AppImage`  |
 
 It is the same app as the web version and calls the node's API directly, so the node must be reachable from your machine.
 

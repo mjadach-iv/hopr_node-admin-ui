@@ -148,7 +148,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # electron-builder.yml picks the targets: dmg + zip (arm64, x64), NSIS (x64), AppImage (x64, arm64)
+        # electron-builder.yml picks the targets: dmg + zip (universal), NSIS (x64), AppImage (x64, arm64)
         os: ${{ fromJSON(github.event_name == 'workflow_dispatch' && '["macos-latest", "windows-latest", "ubuntu-latest"]' || '["ubuntu-latest"]') }}
     runs-on: ${{ matrix.os }}
     defaults:

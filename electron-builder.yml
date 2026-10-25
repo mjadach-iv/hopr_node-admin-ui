@@ -23,12 +23,12 @@ publish:
 
 mac:
   category: public.app-category.utilities
-  # dmg to install, zip for the updater; both archs in one run share one latest-mac.yml
+  # dmg to install, zip for the updater; universal runs natively on Apple Silicon and Intel
   target:
     - target: dmg
-      arch: [arm64, x64]
+      arch: [universal]
     - target: zip
-      arch: [arm64, x64]
+      arch: [universal]
   # signs and notarizes only when CSC_LINK and APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID are set
   hardenedRuntime: true
 
