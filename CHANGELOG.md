@@ -13,6 +13,8 @@ Changes since 5.0.1.
 
 - The Windows desktop app has no menu bar. With it go the menu's Check for Updates…, Releases, Report an Issue and About items and its keyboard shortcuts for reload, developer tools, zoom and full screen. The app still checks for updates on start and every 6 hours, and copy and paste work as before.
 - The Net figure is green, or red when it is below zero, in the Net column of the node tables and in the Safe figures in the header, as it already was on the Node and Safe info pages.
+- The header shows all the node and safe figures that fit in it, instead of dropping Safe channels and Net below a 1280px wide window and Safe below 760px. When the room runs out it drops Safe channels first, then Net, then Safe; all of them stay in the popover a click on the figures opens.
+- The header no longer shows the "?" button with the help for the page.
 
 ### Fixed
 

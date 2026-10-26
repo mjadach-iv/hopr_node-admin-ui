@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactElement } from 'react';
 import styled from '@emotion/styled';
 import { useLocation } from 'react-router-dom';
 import { formatEther } from 'viem';
@@ -82,11 +82,37 @@ export const useWallet = () => {
 };
 
 const Bar = styled.div`
+  position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
   min-width: 0;
 `;
+
+// the bar once for every entry of HIDE_ORDER, laid out but unseen, to measure what fits
+const Measures = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  .level {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: max-content;
+  }
+`;
+
+// the safe figures the header drops, in this order, while the bar does not fit; Total always shows
+const HIDE_ORDER = ['channels', 'net', 'safe'];
+const LEVELS = HIDE_ORDER.map((_key, index) => HIDE_ORDER.slice(0, index)).concat([HIDE_ORDER]);
+
+// the page FAQ behind '?' is hidden for now, true brings the button back
+const SHOW_FAQ = false;
 
 const Chip = styled.button`
   display: flex;
@@ -178,22 +204,9 @@ const Chip = styled.button`
     height: 18px;
     color: var(--muted);
   }
-  /* fewer figures as the bar gets narrower, the rest is one click away */
-  @media (max-width: 1280px) {
-    .stat.channels,
-    .stat.net {
-      display: none;
-    }
-  }
+  /* the figures that do not fit are left out (see HIDE_ORDER), they are one click away */
   @media (max-width: 760px) {
     padding-left: 12px;
-    .stat.safe {
-      display: none;
-    }
-    .stat.total {
-      padding-left: 0;
-      border-left: 0;
-    }
     .dot {
       margin-right: 10px;
     }
@@ -426,16 +439,37 @@ export default function InfoBar() {
     set_group(group);
   };
   const [faqAnchor, set_faqAnchor] = useState<HTMLElement | null>(null);
+  const faq = SHOW_FAQ ? nodeInfoData[currentRoute] : undefined;
+
+  // the most figures that fit the room the header leaves, from the widths of the unseen copies
+  const barRef = useRef<HTMLDivElement>(null);
+  const measuresRef = useRef<HTMLDivElement>(null);
+  const [level, set_level] = useState(0);
+  useLayoutEffect(() => {
+    const room = barRef.current?.parentElement;
+    const levels = Array.from(measuresRef.current?.children ?? []) as HTMLElement[];
+    if (!room || levels.length === 0) return;
+    const measure = () => {
+      const style = getComputedStyle(room);
+      const width = room.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const fits = levels.findIndex((element) => element.offsetWidth <= width);
+      set_level(fits === -1 ? levels.length - 1 : fits);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(room);
+    levels.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, [nodeConnected, !!faq]);
 
   if (!nodeConnected) return null;
 
-  const faq = nodeInfoData[currentRoute];
-
-  return (
-    <Bar className="InfoBar">
+  const content = (hidden: string[], measuring?: boolean) => (
+    <>
       <Chip
         onClick={(e) => openBreakdown(e.currentTarget, 'node')}
         aria-label="Node"
+        tabIndex={measuring ? -1 : undefined}
       >
         <span className={`dot ${wallet.status ?? ''}`} />
         <ChipStats items={wallet.node} />
@@ -444,10 +478,42 @@ export default function InfoBar() {
       <Chip
         onClick={(e) => openBreakdown(e.currentTarget, 'safe')}
         aria-label="Safe"
+        tabIndex={measuring ? -1 : undefined}
       >
-        <ChipStats items={wallet.safe} />
+        <ChipStats items={wallet.safe.filter((item) => !hidden.includes(item.key))} />
         <ExpandMoreIcon />
       </Chip>
+      {faq && (
+        <HelpButton
+          aria-label="Help for this page"
+          onClick={(e) => set_faqAnchor(e.currentTarget)}
+          tabIndex={measuring ? -1 : undefined}
+        >
+          <HelpOutlineIcon />
+        </HelpButton>
+      )}
+    </>
+  );
+
+  return (
+    <Bar
+      className="InfoBar"
+      ref={barRef}
+    >
+      {content(LEVELS[level])}
+      <Measures
+        ref={measuresRef}
+        aria-hidden
+      >
+        {LEVELS.map((hidden) => (
+          <div
+            className="level"
+            key={hidden.join()}
+          >
+            {content(hidden, true)}
+          </div>
+        ))}
+      </Measures>
       <Popover
         open={!!anchor}
         anchorEl={anchor}
@@ -461,12 +527,6 @@ export default function InfoBar() {
       </Popover>
       {faq && (
         <>
-          <HelpButton
-            aria-label="Help for this page"
-            onClick={(e) => set_faqAnchor(e.currentTarget)}
-          >
-            <HelpOutlineIcon />
-          </HelpButton>
           <Popover
             open={!!faqAnchor}
             anchorEl={faqAnchor}
