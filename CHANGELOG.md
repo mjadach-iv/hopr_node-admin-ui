@@ -4,6 +4,11 @@
 
 Changes since 5.0.1.
 
+### Added
+
+- A column selector in the node tables on SAFE → NODES and on the watchlist, next to the search. Each table remembers its columns in the browser. Earned and Spent are hidden by default.
+- A checkbox in the header of the watch column on SAFE → NODES adds all nodes of the safe to the watchlist, or removes them when all are watched already.
+
 ### Changed
 
 - The Windows desktop app has no menu bar. With it go the menu's Check for Updates…, Releases, Report an Issue and About items and its keyboard shortcuts for reload, developer tools, zoom and full screen. The app still checks for updates on start and every 6 hours, and copy and paste work as before.

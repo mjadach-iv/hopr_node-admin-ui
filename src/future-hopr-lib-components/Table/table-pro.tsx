@@ -7,6 +7,7 @@ import { TableVirtuoso, TableComponents } from 'react-virtuoso';
 import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 import { navBarHeight } from '../Navbar/navBar';
 import { clipboardAvailable } from '../../utils/clipboard';
+import { loadStateFromLocalStorage, saveStateToLocalStorage } from '../../utils/localStorage';
 
 // Mui
 import Table from '@mui/material/Table';
@@ -18,7 +19,12 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import Paper from '@mui/material/Paper';
 import CircularProgress from '@mui/material/CircularProgress';
 import InputBase from '@mui/material/InputBase';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import IconButton from '@mui/material/IconButton';
 import SearchIcon from '@mui/icons-material/Search';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 
 // the parts of the card layout shared by the wrapped and the phone variant
 const CARDS = `
@@ -92,15 +98,23 @@ const CELL_PADDING = 24;
  * needs it. While cards are shown the last measurement is kept, so the layout
  * does not flip back and forth.
  */
-const useCardLayout = (rowCount: number) => {
+const useCardLayout = (rowCount: number, columns: string) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const requiredRef = useRef(0);
   const cardsRef = useRef(false);
+  const columnsRef = useRef(columns);
   const [cards, set_cards] = useState(false);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    // other columns need another width: back to a table to measure it, which the observer does once it is shown
+    const remeasure = columns !== columnsRef.current && cardsRef.current;
+    columnsRef.current = columns;
+    if (remeasure) {
+      cardsRef.current = false;
+      set_cards(false);
+    }
     const measure = () => {
       const table = container.querySelector('table');
       if (!cardsRef.current && table) {
@@ -125,7 +139,7 @@ const useCardLayout = (rowCount: number) => {
         set_cards(next);
       }
     };
-    measure();
+    if (!remeasure) measure();
     const observer = new ResizeObserver(measure);
     observer.observe(container);
     const table = container.querySelector('table');
@@ -134,7 +148,7 @@ const useCardLayout = (rowCount: number) => {
     const grow = container.querySelector('thead .grow');
     if (grow) observer.observe(grow);
     return () => observer.disconnect();
-  }, [rowCount]);
+  }, [rowCount, columns]);
 
   return { containerRef, cards };
 };
@@ -366,6 +380,18 @@ const OverTable = styled.div`
     color: var(--muted);
     white-space: nowrap;
   }
+  .columns {
+    margin-left: auto;
+    padding: 5px;
+    color: var(--muted);
+    &:hover {
+      color: var(--text);
+    }
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
 `;
 
 const SearchBox = styled.label`
@@ -430,8 +456,14 @@ interface Props {
     // row field holding the raw value to sort by, for columns rendered as JSX
     sortKey?: string;
     sortable?: boolean;
+    // hidden until shown in the column selector
+    defaultHidden?: boolean;
+    // shown in the header cell instead of the name, e.g. a select-all checkbox
+    headerContent?: JSX.Element;
   }[];
   search?: boolean;
+  // lets the user hide columns, remembered per table id
+  columnSelector?: boolean;
   loading?: boolean;
   onRowClick?: Function;
   orderByDefault?: string;
@@ -492,6 +524,71 @@ const isSortable = (headElem: Props['header'][0]) =>
 
 const sortField = (headElem: Props['header'][0]) => headElem.sortKey ?? headElem.key;
 
+// the address column, the actions and other unnamed columns always show
+const isSelectable = (headElem: Props['header'][0]) => !headElem.hidden && !headElem.grow && headElem.name !== '';
+
+type ColumnChoices = { [key: string]: boolean };
+
+const columnsStorageKey = (tableId: string) => `app/columns/${tableId}`;
+
+// column key to shown, only for the columns the user toggled
+const loadColumnChoices = (tableId?: string): ColumnChoices => {
+  const stored = tableId ? loadStateFromLocalStorage(columnsStorageKey(tableId)) : null;
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return {};
+  return Object.fromEntries(Object.entries(stored).filter(([, shown]) => typeof shown === 'boolean'));
+};
+
+const ColumnSelector = ({
+  header,
+  isShown,
+  onToggle,
+}: {
+  header: Props['header'];
+  isShown: (headElem: Props['header'][0]) => boolean;
+  onToggle: (headElem: Props['header'][0]) => void;
+}) => {
+  const [anchor, set_anchor] = useState<HTMLElement | null>(null);
+  return (
+    <>
+      <Tooltip
+        title="Columns"
+        notWide
+      >
+        <IconButton
+          className="columns"
+          aria-label="Choose columns"
+          onClick={(event) => set_anchor(event.currentTarget)}
+        >
+          <ViewColumnIcon />
+        </IconButton>
+      </Tooltip>
+      <Menu
+        open={!!anchor}
+        anchorEl={anchor}
+        onClose={() => set_anchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        disableScrollLock
+      >
+        {header.filter(isSelectable).map((headElem) => (
+          <MenuItem
+            key={headElem.key}
+            dense
+            onClick={() => onToggle(headElem)}
+          >
+            <Checkbox
+              size="small"
+              checked={isShown(headElem)}
+              sx={{ p: '2px', mr: 1, color: 'var(--muted)', '&.Mui-checked': { color: 'var(--primary)' } }}
+            />
+            {headElem.name}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
+  );
+};
+
 const virtuosoComponents: TableComponents<TableItem, TableContext> = {
   Table: ({ context, ...tableProps }) => (
     <STable
@@ -543,6 +640,20 @@ const virtuosoComponents: TableComponents<TableItem, TableContext> = {
 };
 
 export default function CustomPaginationActionsTable(props: Props) {
+  const [columnChoices, set_columnChoices] = useState(() => loadColumnChoices(props.id));
+  const isShown = (headElem: Props['header'][0]) =>
+    !props.columnSelector || !isSelectable(headElem) || (columnChoices[headElem.key] ?? !headElem.defaultHidden);
+  const toggleColumn = (headElem: Props['header'][0]) => {
+    const next = { ...columnChoices, [headElem.key]: !isShown(headElem) };
+    set_columnChoices(next);
+    if (props.id) saveStateToLocalStorage(columnsStorageKey(props.id), next);
+  };
+  const header = props.header.map((headElem) => (isShown(headElem) ? headElem : { ...headElem, hidden: true }));
+  const columns = header
+    .filter((headElem) => !headElem.hidden)
+    .map((headElem) => headElem.key)
+    .join();
+
   const [order, setOrder] = React.useState<Order>('asc');
   const [orderBy, setOrderBy] = React.useState<string>(props.orderByDefault || props.header[0].key || 'id');
   const [searchPhrase, set_searchPhrase] = React.useState('');
@@ -618,7 +729,7 @@ export default function CustomPaginationActionsTable(props: Props) {
     ]);
   }, [sortedRows, props.groupBy]);
 
-  const firstColumn = props.header.find((headElem) => !headElem.hidden)?.key ?? 'id';
+  const firstColumn = header.find((headElem) => !headElem.hidden)?.key ?? 'id';
 
   const handleSort = (field: string) => {
     if (field === orderBy) {
@@ -629,26 +740,37 @@ export default function CustomPaginationActionsTable(props: Props) {
     setOrder('asc');
   };
 
-  const { containerRef, cards } = useCardLayout(items.length);
+  const { containerRef, cards } = useCardLayout(items.length, columns);
 
   return (
     <STableContainer
       component={Paper}
       ref={containerRef}
     >
-      {props.search && (
+      {(props.search || props.columnSelector) && (
         <OverTable className={`OverTable`}>
-          <SearchBox>
-            <SearchIcon />
-            <InputBase
-              placeholder="Search"
-              value={searchPhrase}
-              onChange={handleSearchChange}
+          {props.search && (
+            <>
+              <SearchBox>
+                <SearchIcon />
+                <InputBase
+                  placeholder="Search"
+                  value={searchPhrase}
+                  onChange={handleSearchChange}
+                />
+              </SearchBox>
+              <span className="count">
+                {searchPhrase ? `${sortedRows.length} of ${props.data.length}` : `${props.data.length} rows`}
+              </span>
+            </>
+          )}
+          {props.columnSelector && (
+            <ColumnSelector
+              header={props.header}
+              isShown={isShown}
+              onToggle={toggleColumn}
             />
-          </SearchBox>
-          <span className="count">
-            {searchPhrase ? `${sortedRows.length} of ${props.data.length}` : `${props.data.length} rows`}
-          </span>
+          )}
         </OverTable>
       )}
       <TableVirtuoso
@@ -659,14 +781,14 @@ export default function CustomPaginationActionsTable(props: Props) {
         computeItemKey={(_index, row) => `${props.id}_row_${row.id}`}
         context={{
           tableId: props.id,
-          header: props.header,
+          header,
           onRowClick: props.onRowClick,
           cards,
         }}
         components={virtuosoComponents}
         fixedHeaderContent={() => (
           <TableRow>
-            {props.header.map(
+            {header.map(
               (headElem, idx) =>
                 !headElem.hidden && (
                   <STableCell
@@ -674,22 +796,24 @@ export default function CustomPaginationActionsTable(props: Props) {
                     className={`TableCell TableCellHeader ${headElem.key} ${cellClasses(headElem)}`}
                     width={cellWidth(headElem)}
                   >
-                    <Tooltip
-                      title={headElem.tooltipHeader}
-                      notWide
-                    >
-                      {isSortable(headElem) ? (
-                        <TableSortLabel
-                          active={orderBy === sortField(headElem)}
-                          direction={orderBy === sortField(headElem) ? order : 'asc'}
-                          onClick={() => handleSort(sortField(headElem))}
-                        >
-                          {headElem.name}
-                        </TableSortLabel>
-                      ) : (
-                        <span>{headElem.name}</span>
-                      )}
-                    </Tooltip>
+                    {headElem.headerContent ?? (
+                      <Tooltip
+                        title={headElem.tooltipHeader}
+                        notWide
+                      >
+                        {isSortable(headElem) ? (
+                          <TableSortLabel
+                            active={orderBy === sortField(headElem)}
+                            direction={orderBy === sortField(headElem) ? order : 'asc'}
+                            onClick={() => handleSort(sortField(headElem))}
+                          >
+                            {headElem.name}
+                          </TableSortLabel>
+                        ) : (
+                          <span>{headElem.name}</span>
+                        )}
+                      </Tooltip>
+                    )}
                   </STableCell>
                 ),
             )}
@@ -699,12 +823,12 @@ export default function CustomPaginationActionsTable(props: Props) {
           isGroupRow(item) ? (
             <GroupCells
               cells={props.groupHeader ? props.groupHeader(item.groupId, item.rows) : { [firstColumn]: item.groupId }}
-              header={props.header}
+              header={header}
             />
           ) : (
             <RowCells
               row={item}
-              header={props.header}
+              header={header}
             />
           )
         }

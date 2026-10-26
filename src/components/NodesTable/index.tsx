@@ -61,6 +61,37 @@ export const WatchCheckbox = ({ address, watched }: { address: string; watched: 
   );
 };
 
+// in the watch column header: ticked when every node is watched, a click watches all or, when all are, none
+const WatchAllCheckbox = ({ addresses, watched }: { addresses: string[]; watched: Set<string> }) => {
+  const dispatch = useAppDispatch();
+  const watchedCount = addresses.filter((address) => watched.has(address)).length;
+  const all = addresses.length > 0 && watchedCount === addresses.length;
+  const label = all ? 'Remove all from the watchlist' : 'Add all to the watchlist';
+  return (
+    <Tooltip
+      title={label}
+      notWide
+    >
+      <span>
+        <MuiCheckbox
+          size="small"
+          checked={all}
+          indeterminate={watchedCount > 0 && !all}
+          disabled={addresses.length === 0}
+          checkedIcon={<WatchedCheckboxIcon />}
+          onChange={() => dispatch(appActions.setWatchedMany(Object.fromEntries(addresses.map((a) => [a, !all]))))}
+          inputProps={{ 'aria-label': label }}
+          sx={{
+            p: '2px',
+            color: 'var(--muted)',
+            '&.Mui-checked, &.MuiCheckbox-indeterminate': { color: 'var(--primary)' },
+          }}
+        />
+      </span>
+    </Tooltip>
+  );
+};
+
 const toFormatted = (value: bigint | null) => (value === null ? null : formatEther(value));
 
 type NodesTableProps = {
@@ -318,12 +349,14 @@ export const NodesTable = (props: NodesTableProps) => {
       name: 'Earned',
       sortKey: 'redeemedValue',
       align: 'right' as const,
+      defaultHidden: true,
     },
     {
       key: 'spent',
       name: 'Spent',
       sortKey: 'spentValue',
       align: 'right' as const,
+      defaultHidden: true,
       tooltipHeader: 'Redeemed by the counterparties from every channel the node opened, closed ones included',
     },
     {
@@ -365,6 +398,12 @@ export const NodesTable = (props: NodesTableProps) => {
       sortable: false,
       align: 'center' as const,
       hidden: props.removable,
+      headerContent: (
+        <WatchAllCheckbox
+          addresses={props.nodes.map((node) => node.nodeAddress)}
+          watched={watched}
+        />
+      ),
     },
   ];
 
@@ -373,6 +412,7 @@ export const NodesTable = (props: NodesTableProps) => {
       data={parsedTableData}
       id={props.id}
       search={true}
+      columnSelector
       header={header}
       loading={props.loading}
       orderByDefault="peerAddress"
