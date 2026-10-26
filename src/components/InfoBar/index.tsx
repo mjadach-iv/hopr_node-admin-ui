@@ -27,6 +27,8 @@ export type WalletItem = {
   level?: Level;
   // every RPC failed, the value is unknown
   broken?: boolean;
+  // colors the figure, as for the net
+  tone?: 'green' | 'red';
 };
 
 /** The node's balances and status, shared by the header, its popover and the mobile menu. */
@@ -72,6 +74,7 @@ export const useWallet = () => {
         value: net === null ? null : formatEther(net),
         unit: 'wxHOPR',
         broken: net === null && rpcBroken,
+        tone: net === null ? undefined : net < BigInt(0) ? 'red' : 'green',
       },
       { key: 'total', label: 'Total', long: 'Total staked', value: safeFunds.total?.formatted, unit: 'wxHOPR' },
     ] as WalletItem[],
@@ -156,6 +159,12 @@ const Chip = styled.button`
   }
   .stat.total .value {
     color: var(--primary);
+  }
+  .tone-green .value {
+    color: var(--green);
+  }
+  .tone-red .value {
+    color: var(--red);
   }
   .warn .value {
     color: var(--orange);
@@ -260,6 +269,12 @@ const Breakdown = styled.div`
     &.total b {
       color: var(--primary);
     }
+    &.tone-green b {
+      color: var(--green);
+    }
+    &.tone-red b {
+      color: var(--red);
+    }
   }
 `;
 
@@ -292,7 +307,7 @@ const BreakdownRows = ({ items }: { items: WalletItem[] }) => (
   <>
     {items.map((item) => (
       <div
-        className={`row ${item.key}`}
+        className={`row ${item.key} ${item.tone ? `tone-${item.tone}` : ''}`}
         key={item.key}
       >
         {item.long}
@@ -377,7 +392,7 @@ const ChipStats = ({ items }: { items: WalletItem[] }) => (
     {items.map((item) => (
       <span
         key={item.key}
-        className={`stat ${item.key} ${item.broken ? 'low' : item.level ?? ''}`}
+        className={`stat ${item.key} ${item.broken ? 'low' : item.level ?? ''} ${item.tone ? `tone-${item.tone}` : ''}`}
       >
         <span className="label">{item.label}</span>
         {item.broken ? (

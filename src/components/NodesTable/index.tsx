@@ -139,6 +139,7 @@ export const NodesTable = (props: NodesTableProps) => {
           value={net}
           unit="wxHOPR"
           broken={node.rpcBroken}
+          signed
         />
       ),
       netValue: net,
@@ -245,6 +246,7 @@ export const NodesTable = (props: NodesTableProps) => {
           value={toFormatted(net)}
           unit="wxHOPR"
           broken={rpcBroken}
+          signed
         />
       ),
       redeemed: (
