@@ -12,6 +12,8 @@ directories:
 files:
   - dist-electron/**
   - build/**
+# gives the macOS executables Mach-O UUIDs of their own, or Local Network access may stay blocked
+afterPack: electron/afterPack.cjs
 
 # GitHub releases, tagged with the plain version (5.0.0-alpha.15, no "v"). It makes electron-builder
 # write latest*.yml; the app picks the release from the GitHub API itself (electron/updater.ts)

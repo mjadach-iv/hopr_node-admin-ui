@@ -14,6 +14,10 @@ Changes since 5.0.1.
 - The Windows desktop app has no menu bar. With it go the menu's Check for Updates…, Releases, Report an Issue and About items and its keyboard shortcuts for reload, developer tools, zoom and full screen. The app still checks for updates on start and every 6 hours, and copy and paste work as before.
 - The Net figure is green, or red when it is below zero, in the Net column of the node tables and in the Safe figures in the header, as it already was on the Node and Safe info pages.
 
+### Fixed
+
+- The macOS desktop app could not reach nodes on the local network, even with its Local Network permission turned on. macOS tells apps apart for that permission by an ID inside their executables, which the app shared with every other app built on the same Electron version, so macOS could apply another app's setting to it. The app's executables now have IDs of their own. macOS asks for the Local Network permission once more after the update.
+
 ## 5.0.1
 
 Changes since 5.0.0.
