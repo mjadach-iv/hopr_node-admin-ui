@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.0.2
+
+Changes since 5.0.1.
+
+### Changed
+
+- The Windows desktop app has no menu bar. With it go the menu's Check for Updates…, Releases, Report an Issue and About items and its keyboard shortcuts for reload, developer tools, zoom and full screen. The app still checks for updates on start and every 6 hours, and copy and paste work as before.
+
 ## 5.0.1
 
 Changes since 5.0.0.

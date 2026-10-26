@@ -19,6 +19,12 @@ const showAbout = () =>
   });
 
 export const buildMenu = () => {
+  // no menu bar on Windows; clipboard shortcuts are handled by Chromium there without an Edit menu
+  if (process.platform === 'win32') {
+    Menu.setApplicationMenu(null);
+    return;
+  }
+
   const template: MenuItemConstructorOptions[] = [
     ...(isMac
       ? [
