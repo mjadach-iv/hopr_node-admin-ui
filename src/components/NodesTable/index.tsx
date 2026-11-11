@@ -1,10 +1,11 @@
-import type { JSX } from 'react';
+import type { JSX, ReactNode } from 'react';
 import { formatEther } from 'viem';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { appActions } from '../../store/slices/app';
 import { sumSafeNodes } from '../../store/selectors/blokli';
 import type { SafeNodeType } from '../../blokli';
 import { utils as dashboardUtils, type NodesStatsType } from '../../networkDashboard';
+import { nodeSortFields } from '../../utils/aliases';
 
 // HOPR Components
 import TablePro from '../../future-hopr-lib-components/Table/table-pro';
@@ -109,6 +110,8 @@ type NodesTableProps = {
     groupId: string,
     rowCount: number,
   ) => { label: JSX.Element; balance?: JSX.Element; actions?: JSX.Element; sumOver?: SafeNodeType[] | null };
+  // in the middle of the line with the search
+  toolbarCenter?: ReactNode;
 };
 
 /**
@@ -152,6 +155,7 @@ export const NodesTable = (props: NodesTableProps) => {
         />
       ),
       peerAddress: nodeAddress,
+      ...nodeSortFields(nodeAddress, aliases?.[nodeAddress]),
       xDai: (
         <TokenAmount
           value={node.xDai?.formatted}
@@ -308,7 +312,8 @@ export const NodesTable = (props: NodesTableProps) => {
       key: 'node',
       name: 'Node',
       grow: true,
-      sortKey: 'peerAddress',
+      sortKey: 'nodeSort',
+      sortRank: 'nodeRank',
     },
     {
       key: 'peerAddress',
@@ -413,9 +418,10 @@ export const NodesTable = (props: NodesTableProps) => {
       id={props.id}
       search={true}
       columnSelector
+      toolbarCenter={props.toolbarCenter}
       header={header}
       loading={props.loading}
-      orderByDefault="peerAddress"
+      orderByDefault="nodeSort"
       groupBy={props.groupOf ? 'group' : undefined}
       groupHeader={props.groupOf ? groupHeader : undefined}
     />

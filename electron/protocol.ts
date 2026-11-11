@@ -35,18 +35,21 @@ const HOPRD_TAGS_PATH = '/hoprd-tags';
 const HOPRD_TAGS_URL = 'https://europe-west3-docker.pkg.dev/v2/hoprassociation/docker-images/hoprd/tags/list';
 
 // node APIs, blokli, RPCs and the network dashboard are user configurable, so connect-src stays open
-const CONTENT_SECURITY_POLICY = [
-  "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https: http:",
-  "font-src 'self' data:",
-  "connect-src 'self' * data: blob:",
-  "worker-src 'self' blob:",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "frame-ancestors 'none'",
-].join('; ');
+export const contentSecurityPolicy = (frameAncestors: string) =>
+  [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https: http:",
+    "font-src 'self' data:",
+    "connect-src 'self' * data: blob:",
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    `frame-ancestors ${frameAncestors}`,
+  ].join('; ');
+
+const CONTENT_SECURITY_POLICY = contentSecurityPolicy("'none'");
 
 /** Must run before the app is ready. */
 export const registerAppScheme = () => {

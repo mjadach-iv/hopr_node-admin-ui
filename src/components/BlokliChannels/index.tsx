@@ -9,6 +9,7 @@ import { formatTimeToUserTimezone } from '../../utils/date';
 import { HOPR_TOKEN_USED } from '../../../config';
 import { RpcError } from '../RpcError';
 import { loadStateFromLocalStorage, saveStateToLocalStorage } from '../../utils/localStorage';
+import { nodeSortFields } from '../../utils/aliases';
 
 // HOPR Components
 import { SubpageTitle } from '../SubpageTitle';
@@ -255,6 +256,7 @@ export const ClosedChannelsTable = ({
         '-'
       ),
       peerAddress: address ? (aliases?.[address] ? `${aliases[address]} (${address})` : address) : '',
+      ...nodeSortFields(address ?? '', address ? aliases?.[address] : null),
       channelId: channel.channelId,
       epoch: channel.epoch.toString(),
       ...redeemedCells(channel, rpcBroken),
@@ -280,7 +282,8 @@ export const ClosedChannelsTable = ({
       key: 'node',
       name: 'Node',
       grow: true,
-      sortKey: 'peerAddress',
+      sortKey: 'nodeSort',
+      sortRank: 'nodeRank',
     },
     {
       key: 'peerAddress',

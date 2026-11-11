@@ -17,7 +17,18 @@ import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
 import { WithUnit } from '../../components/Unit';
 import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
-import { AddressLinks, Card, KV, Kpi, KpiGrid, SafeWalletLink, Stat, Stats, short } from '../node/info/ui';
+import {
+  AddressLinks,
+  Card,
+  KV,
+  Kpi,
+  KpiGrid,
+  SafeWalletAction,
+  SafeWalletLink,
+  Stat,
+  Stats,
+  short,
+} from '../node/info/ui';
 
 // Mui
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -186,7 +197,7 @@ function SafeInfoPage() {
                   >
                     <a
                       className={`own-tip ${lowAllowance ? 'alert' : ''}`}
-                      href={safeAppLink(safeAddress)}
+                      href={safeAppLink(safeAddress, 'allowance')}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -360,6 +371,24 @@ function SafeInfoPage() {
               </KV>
             </>
           )}
+        </Card>
+
+        <Card title="Actions">
+          <SafeWalletAction
+            label="Set allowance"
+            tip="Set how much wxHOPR the channels contract may take from your Safe to fund channels, in Safe{Wallet}"
+            href={safeAddress && safeAppLink(safeAddress, 'allowance')}
+          />
+          <SafeWalletAction
+            label="Add node"
+            tip="Add a node to the node management module of your Safe, in Safe{Wallet}"
+            href={safeAddress && safeAppLink(safeAddress, 'addNode')}
+          />
+          <SafeWalletAction
+            label="Remove node"
+            tip="Deregister a node from your Safe and remove it from the Safe's node management module, in Safe{Wallet}"
+            href={safeAddress && safeAppLink(safeAddress, 'removeNode')}
+          />
         </Card>
       </CardRow>
     </Section>

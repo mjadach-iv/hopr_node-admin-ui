@@ -1,36 +1,22 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import SafeAppsSDK, { type SafeInfo } from '@safe-global/safe-apps-sdk';
-import { encodeFunctionData, erc20Abi, getAddress, isAddress, maxUint256, parseEther } from 'viem';
+import { encodeFunctionData, erc20Abi, maxUint256, parseEther } from 'viem';
 import { useAppSelector } from '../../store';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
 import { api as blokliApi, type SafeAllowanceType } from '../../blokli';
-import { safeAppLink } from '../../utils/safeApp';
 import { short } from '../node/info/ui';
+import { isReady, Page, SafeAppGate, sdk, useSafeInfo } from './shared';
 
 // HOPR Components
 import Button from '../../future-hopr-lib-components/Button';
 import { MaxButton } from '../../components/Modal/node/WithdrawModal';
 
 // Mui
-import CircularProgress from '@mui/material/CircularProgress';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
 
-const GNOSIS_CHAIN_ID = 100;
 const DEFAULT_ALLOWANCE = '100000';
 const UNLIMITED = 'Unlimited';
-
-// origins are matched in full, scheme included
-const sdk = new SafeAppsSDK({ allowedDomains: [/^https:\/\/app\.safe\.global$/] });
-
-// outside Safe{Wallet} getInfo never answers
-const getSafeInfo = async (timeoutMs = 1500): Promise<SafeInfo | null> => {
-  if (window.parent === window) return null;
-  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
-  return Promise.race([sdk.safe.getInfo(), timeout]);
-};
 
 // 1000000.5 -> 1 000 000.5, the field only shows the spaces
 const groupDigits = (amount: string) => {
@@ -49,58 +35,6 @@ const parseAmount = (amount: string) => {
     return null;
   }
 };
-
-const Page = styled.div`
-  min-height: 100vh;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 32px 16px;
-  text-align: center;
-  h1 {
-    margin: 0;
-    color: var(--text);
-    font-size: clamp(28px, 6vw, 48px);
-    font-weight: 650;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .safe {
-    font-family: var(--font-mono);
-    font-size: 12.5px;
-    color: var(--muted);
-    overflow-wrap: anywhere;
-  }
-  .hint {
-    margin: 0;
-    max-width: 520px;
-    color: var(--muted);
-    font-size: 14px;
-  }
-  .error {
-    color: var(--red);
-  }
-  .sent {
-    color: var(--green);
-  }
-  .hash {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    overflow-wrap: anywhere;
-  }
-  .retry {
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--primary);
-    font: inherit;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-`;
 
 const AmountField = styled(TextField)`
   width: min(100%, 520px);
@@ -123,9 +57,7 @@ const AmountField = styled(TextField)`
  */
 function SafeAppAllowancePage() {
   const blokliUrl = useAppSelector(selectBlokliUrl);
-  const [searchParams] = useSearchParams();
-  // undefined while detecting, null outside Safe{Wallet}
-  const [safe, set_safe] = useState<SafeInfo | null | undefined>(undefined);
+  const safe = useSafeInfo();
   const [contracts, set_contracts] = useState<SafeAllowanceType | null>(null);
   const contractsRequest = useRef<Promise<SafeAllowanceType | null> | null>(null);
   const [blokliFailed, set_blokliFailed] = useState(false);
@@ -140,10 +72,6 @@ function SafeAppAllowancePage() {
   const parsedAmount = parseAmount(amount);
   // 0 revokes the allowance
   const validAmount = parsedAmount !== null && parsedAmount >= BigInt(0) && parsedAmount <= maxUint256;
-
-  useEffect(() => {
-    getSafeInfo().then(set_safe);
-  }, []);
 
   useLayoutEffect(() => {
     const input = amountInput.current;
@@ -204,35 +132,13 @@ function SafeAppAllowancePage() {
     }
   };
 
-  if (safe === undefined) {
+  if (!isReady(safe)) {
     return (
-      <Page>
-        <CircularProgress />
-      </Page>
-    );
-  }
-
-  if (safe === null) {
-    const safeParam = searchParams.get('safe');
-    return (
-      <Page>
-        <h1>Set the allowance</h1>
-        <p className="hint">
-          This page runs inside Safe{'{Wallet}'}, where the owners of the Safe sign the transaction.
-        </p>
-        {safeParam && isAddress(safeParam) && (
-          <Button href={safeAppLink(getAddress(safeParam))}>Open in Safe{'{Wallet}'}</Button>
-        )}
-      </Page>
-    );
-  }
-
-  if (safe.chainId !== GNOSIS_CHAIN_ID) {
-    return (
-      <Page>
-        <h1>Set the allowance</h1>
-        <p className="hint">HOPR runs on Gnosis Chain, switch Safe{'{Wallet}'} to it.</p>
-      </Page>
+      <SafeAppGate
+        safe={safe}
+        title="Set the allowance"
+        app="allowance"
+      />
     );
   }
 

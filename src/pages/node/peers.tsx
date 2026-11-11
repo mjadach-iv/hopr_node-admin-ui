@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { actionsAsync } from '../../store/slices/node/actionsAsync';
 import { exportToCsv } from '../../utils/helpers';
+import { nodeSortFields } from '../../utils/aliases';
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
@@ -77,7 +78,8 @@ function PeersPage() {
       key: 'node',
       name: 'Node',
       grow: true,
-      sortKey: 'peerAddress',
+      sortKey: 'nodeSort',
+      sortRank: 'nodeRank',
     },
     {
       key: 'address',
@@ -138,6 +140,7 @@ function PeersPage() {
       ),
       address: getAliasByAddress(peer.address),
       peerAddress: peer.address,
+      ...nodeSortFields(peer.address, aliases?.[peer.address]),
       score: typeof peer.score === 'number' ? <ProgressBar value={peer.score} /> : '-',
       scoreValue: peer.score,
       lastUpdateValue: peer.lastUpdate,

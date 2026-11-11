@@ -13,6 +13,8 @@ export type UpdateState =
 export type DesktopInfo = {
   version: string;
   platform: string;
+  /** Where the app serves the Safe App over http (electron/safeAppServer.ts), null when it does not. */
+  safeAppOrigin: string | null;
 };
 
 export type DesktopApi = DesktopInfo & {

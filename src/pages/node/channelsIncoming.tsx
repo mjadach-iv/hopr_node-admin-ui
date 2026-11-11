@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { actionsAsync } from '../../store/slices/node/actionsAsync';
 import { useNavigate } from 'react-router-dom';
 import { exportToCsv } from '../../utils/helpers';
+import { nodeSortFields } from '../../utils/aliases';
 import { HOPR_TOKEN_USED } from '../../../config';
 import { sendNotification } from '../../hooks/useWatcher/notifications';
 import { formatEther } from 'viem';
@@ -107,7 +108,8 @@ function ChannelsPage() {
       key: 'node',
       name: 'Node',
       grow: true,
-      sortKey: 'peerAddress',
+      sortKey: 'nodeSort',
+      sortRank: 'nodeRank',
     },
     {
       key: 'peerAddress',
@@ -252,6 +254,7 @@ function ChannelsPage() {
           />
         ),
         peerAddress: getAliasByPeerAddress(peerAddress as string),
+        ...nodeSortFields(peerAddress as string, aliases?.[peerAddress as string]),
         statusText: statusWithClosure(channelsIncomingObject[id].status as string, blokliChannel),
         status: (
           <ChannelStatus

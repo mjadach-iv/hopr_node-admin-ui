@@ -1,0 +1,5 @@
+{
+  "name": "HOPR add node",
+  "description": "Add a HOPR node to the node management module of your HOPR Safe",
+  "iconPath": "icon.svg"
+}

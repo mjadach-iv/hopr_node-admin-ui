@@ -64,12 +64,14 @@ function InfoPage() {
   const redeemAllTicketsFetching = useAppSelector((store) => store.node.redeemAllTickets.isFetching);
   // blokli: safe wide channel stake and this node's on chain ticket redemptions
   const blokliUrl = useAppSelector(selectBlokliUrl);
+  // the blokli the node itself syncs from, not the one the admin reads from
+  const nodeBlokliUrl = info?.providerUrl;
   // origin only, the url may carry an api key in its path
-  const blokliOrigin = (() => {
+  const nodeBlokliOrigin = (() => {
     try {
-      return blokliUrl ? new URL(blokliUrl).origin : null;
+      return nodeBlokliUrl ? new URL(nodeBlokliUrl).origin : null;
     } catch {
-      return blokliUrl;
+      return nodeBlokliUrl;
     }
   })();
   const channelStatsFetching = useAppSelector((store) => store.blokli.channelStats.isFetching);
@@ -419,16 +421,16 @@ function InfoPage() {
           </KV>
           <KV
             label="Blokli provider"
-            tip="The blokli indexer on-chain data is read from. Opens its GraphQL IDE"
+            tip="The blokli indexer your node syncs on-chain data from. Opens its GraphQL IDE"
             mono
           >
-            {blokliUrl ? (
+            {nodeBlokliUrl ? (
               <a
-                href={blokliGraphqlUrl(blokliUrl)}
+                href={blokliGraphqlUrl(nodeBlokliUrl)}
                 target="_blank"
                 rel="noreferrer"
               >
-                {blokliOrigin}
+                {nodeBlokliOrigin}
               </a>
             ) : (
               '-'

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, type JSX, type ReactNode } from 'react';
 import styled from '@emotion/styled';
 import _debounce from 'lodash/debounce';
 import { TableVirtuoso, TableComponents } from 'react-virtuoso';
@@ -370,18 +370,47 @@ const STableCell = styled(TableCell)`
   }
 `;
 
+// search and count on the left, the column selector on the right, toolbarCenter between them
 const OverTable = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border);
+  .side {
+    grid-row: 1;
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    &.end {
+      grid-column: 3;
+      justify-content: flex-end;
+    }
+  }
+  .center {
+    grid-row: 1;
+    grid-column: 2;
+  }
+  // too narrow for one line: the center goes under the search
+  @container (max-width: 760px) {
+    grid-template-columns: 1fr auto;
+    .side.end {
+      grid-column: 2;
+    }
+    .center {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      justify-self: center;
+    }
+  }
   .count {
     color: var(--muted);
     white-space: nowrap;
   }
   .columns {
-    margin-left: auto;
     padding: 5px;
     color: var(--muted);
     &:hover {
@@ -455,6 +484,8 @@ interface Props {
     grow?: boolean;
     // row field holding the raw value to sort by, for columns rendered as JSX
     sortKey?: string;
+    // row field holding a number the rows are ranked by first, lowest first in both directions
+    sortRank?: string;
     sortable?: boolean;
     // hidden until shown in the column selector
     defaultHidden?: boolean;
@@ -464,6 +495,8 @@ interface Props {
   search?: boolean;
   // lets the user hide columns, remembered per table id
   columnSelector?: boolean;
+  // in the middle of the line with the search, e.g. totals of the table
+  toolbarCenter?: ReactNode;
   loading?: boolean;
   onRowClick?: Function;
   orderByDefault?: string;
@@ -508,7 +541,11 @@ const sortValue = (value: unknown): number | string | null => {
   return NUMERIC.test(trimmed) ? Number(trimmed) : trimmed.toLowerCase();
 };
 
-const compareRows = (a: RowData, b: RowData, orderBy: string, order: Order) => {
+const compareRows = (a: RowData, b: RowData, orderBy: string, order: Order, rankBy?: string) => {
+  if (rankBy) {
+    const rank = (Number(a[rankBy]) || 0) - (Number(b[rankBy]) || 0);
+    if (rank !== 0) return rank;
+  }
   const left = sortValue(a[orderBy]);
   const right = sortValue(b[orderBy]);
   if (left === null || right === null) return left === right ? 0 : left === null ? 1 : -1;
@@ -707,9 +744,10 @@ export default function CustomPaginationActionsTable(props: Props) {
     return;
   }
 
+  const rankBy = props.header.find((headElem) => sortField(headElem) === orderBy)?.sortRank;
   const sortedRows = React.useMemo(
-    () => [...filteredData].sort((a, b) => compareRows(a, b, orderBy, order)),
-    [filteredData, order, orderBy],
+    () => [...filteredData].sort((a, b) => compareRows(a, b, orderBy, order, rankBy)),
+    [filteredData, order, orderBy, rankBy],
   );
 
   // groups follow the sort: a group comes where its first row would, and one emptied by the search drops out
@@ -749,28 +787,33 @@ export default function CustomPaginationActionsTable(props: Props) {
     >
       {(props.search || props.columnSelector) && (
         <OverTable className={`OverTable`}>
-          {props.search && (
-            <>
-              <SearchBox>
-                <SearchIcon />
-                <InputBase
-                  placeholder="Search"
-                  value={searchPhrase}
-                  onChange={handleSearchChange}
-                />
-              </SearchBox>
-              <span className="count">
-                {searchPhrase ? `${sortedRows.length} of ${props.data.length}` : `${props.data.length} rows`}
-              </span>
-            </>
-          )}
-          {props.columnSelector && (
-            <ColumnSelector
-              header={props.header}
-              isShown={isShown}
-              onToggle={toggleColumn}
-            />
-          )}
+          <div className="side">
+            {props.search && (
+              <>
+                <SearchBox>
+                  <SearchIcon />
+                  <InputBase
+                    placeholder="Search"
+                    value={searchPhrase}
+                    onChange={handleSearchChange}
+                  />
+                </SearchBox>
+                <span className="count">
+                  {searchPhrase ? `${sortedRows.length} of ${props.data.length}` : `${props.data.length} rows`}
+                </span>
+              </>
+            )}
+          </div>
+          {props.toolbarCenter && <div className="center">{props.toolbarCenter}</div>}
+          <div className="side end">
+            {props.columnSelector && (
+              <ColumnSelector
+                header={props.header}
+                isShown={isShown}
+                onToggle={toggleColumn}
+              />
+            )}
+          </div>
         </OverTable>
       )}
       <TableVirtuoso

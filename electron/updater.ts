@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { openExternal, RELEASES_URL } from './links';
 import { isAppUrl } from './protocol';
-import type { UpdateState } from './shared';
+import { safeAppOrigin } from './safeAppServer';
+import type { DesktopInfo, UpdateState } from './shared';
 
 // Updates come from the GitHub releases of the repository. A prerelease version such as
 // 5.0.0-alpha.15 also takes prereleases, a stable one only stable releases.
@@ -123,7 +124,11 @@ export const setupUpdater = () => {
   autoUpdater.on('error', fail);
 
   ipcMain.on('desktop:info', (event) => {
-    event.returnValue = { version: app.getVersion(), platform: process.platform };
+    event.returnValue = {
+      version: app.getVersion(),
+      platform: process.platform,
+      safeAppOrigin: safeAppOrigin(),
+    } satisfies DesktopInfo;
   });
   ipcMain.handle('updates:state', (event) => (trusted(event) ? state : { status: 'idle' }));
   ipcMain.handle('updates:check', (event) => (trusted(event) ? check() : undefined));

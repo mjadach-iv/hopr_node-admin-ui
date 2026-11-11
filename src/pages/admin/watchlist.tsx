@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { selectBlokliUrl } from '../../store/selectors/blokli';
+import { selectBlokliUrl, sumSafeNodes } from '../../store/selectors/blokli';
 import { watchlistActionsAsync } from '../../store/slices/watchlist';
 import { appActions } from '../../store/slices/app';
 import { formatEther } from 'viem';
@@ -16,7 +16,7 @@ import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
 import IconButton from '../../future-hopr-lib-components/Button/IconButton';
 import { NodesTable } from '../../components/NodesTable';
-import { BreakdownTooltip } from '../../components/InfoBar';
+import { BreakdownTooltip, FiguresChip, type WalletItem } from '../../components/InfoBar';
 import { AddressLinks, SafeWalletLink } from '../node/info/ui';
 import { SafeNodesModal } from '../../components/Modal/watchlist/SafeNodesModal';
 import { AddToWatchlistModal } from '../../components/Modal/watchlist/AddToWatchlistModal';
@@ -123,11 +123,16 @@ const NodesButton = styled(Button)`
   }
 `;
 
-// 'in safe / total' wxHOPR, the total counting every node of the safe like Total staked on SAFE INFO
+// the safe's wxHOPR and every node's channels, closing ones included, like Total staked on SAFE INFO
+const safeTotal = (funds?: SafeChannelStatsType) =>
+  funds?.safeBalance ? BigInt(funds.safeBalance.value) + BigInt(funds.value) + BigInt(funds.closing?.value ?? 0) : null;
+
+// 'in safe / total' wxHOPR
 const SafeBalance = ({ funds }: { funds?: SafeChannelStatsType }) => {
   const inSafe = funds?.safeBalance;
-  if (!funds || !inSafe) return <>-</>;
-  const total = formatEther(BigInt(inSafe.value) + BigInt(funds.value) + BigInt(funds.closing?.value ?? 0));
+  const totalValue = safeTotal(funds);
+  if (!inSafe || totalValue === null) return <>-</>;
+  const total = formatEther(totalValue);
   return (
     <BreakdownTooltip
       title="Safe"
@@ -238,6 +243,40 @@ function WatchlistPage() {
   };
 
   const watchedNodesOf = (safeAddress: string) => watchlist.filter((address) => safeOf(address) === safeAddress);
+
+  // Total and Net of every safe in the list, each safe whole as its group row sums it; '-' until all are known
+  const listedSafes = Array.from(new Set(watchlist.map(safeOf).filter((safe): safe is string => !!safe)));
+  const safeTotals = listedSafes.map((safe) => safeTotal(data?.safeFunds[safe]));
+  const total = safeTotals.every((value): value is bigint => value !== null)
+    ? safeTotals.reduce((sum, value) => sum + value, BigInt(0))
+    : null;
+  const nodesOfSafes = listedSafes.map((safe) => data?.nodesBySafe[safe]);
+  const netNodes = nodesOfSafes.every((nodes): nodes is string[] => !!nodes)
+    ? Array.from(new Set([...nodesOfSafes.flat(), ...listedSafes.flatMap(watchedNodesOf)])).map(
+        (address) => data?.figuresByNode[address] ?? noFigures(address),
+      )
+    : null;
+  const earned = sumSafeNodes(netNodes, 'redeemed');
+  const spent = sumSafeNodes(netNodes, 'spent');
+  const net = earned !== null && spent !== null ? earned - spent : null;
+  const totals: WalletItem[] = [
+    {
+      key: 'net',
+      label: 'Net',
+      long: 'Net (earned - spent)',
+      value: net === null ? null : formatEther(net),
+      unit: 'wxHOPR',
+      broken: spent === null && !!netNodes?.some((node) => node.rpcBroken),
+      tone: net === null ? undefined : net < BigInt(0) ? 'red' : 'green',
+    },
+    {
+      key: 'total',
+      label: 'Total',
+      long: 'Total staked',
+      value: total === null ? null : formatEther(total),
+      unit: 'wxHOPR',
+    },
+  ];
 
   const renderGroupHeader = (groupId: string, rowCount: number) => {
     if (groupId === NO_SAFE || groupId === UNKNOWN_SAFE) {
@@ -363,6 +402,14 @@ function WatchlistPage() {
           removable
           groupOf={groupOf}
           renderGroupHeader={renderGroupHeader}
+          toolbarCenter={
+            listedSafes.length > 0 && (
+              <FiguresChip
+                title={`${listedSafes.length} ${listedSafes.length === 1 ? 'safe' : 'safes'} in the watchlist`}
+                items={totals}
+              />
+            )
+          }
         />
       )}
       <SafeNodesModal

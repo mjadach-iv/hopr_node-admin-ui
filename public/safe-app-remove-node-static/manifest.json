@@ -1,0 +1,5 @@
+{
+  "name": "HOPR remove node",
+  "description": "Remove a HOPR node from your HOPR Safe and its node management module",
+  "iconPath": "icon.svg"
+}

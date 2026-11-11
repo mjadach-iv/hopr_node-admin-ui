@@ -1,5 +1,26 @@
 # Changelog
 
+## 5.0.3
+
+Changes since 5.0.2.
+
+### Added
+
+- A Safe App that adds a node to your Safe, opened in Safe{Wallet} by the new add node button on SAFE → NODES. Enter the node's address and sign: it includes the node in the Safe's node management module, the same transaction as `hopli safe-module add-node`. Started with the Safe and module and with some xDai, the node then registers itself with the Safe. The page finds the module itself and says when the node is in it already. The docker image serves its manifest under `/safe-app-add-node/`.
+- A Safe App that removes a node from your Safe. Choose the node from a dropdown of the Safe's nodes and sign: it deregisters the node from the Safe on the node-safe registry and removes it from the Safe's node management module, as hopli does when it moves a node away. Each step is only sent when it applies, e.g. a node that has not registered yet is only removed from the module. The docker image serves its manifest under `/safe-app-remove-node/`.
+- WATCHLIST: Net and Total of every safe in the list, styled like the figures in the header, in the middle of the line with the search. Each safe counts whole, as its row in the table does, and a figure stays `-` until it is known for every safe. Hovering shows the full values; on narrow screens the figures go under the search.
+- SAFE INFO: an Actions box with Set allowance, Add node and Remove node. Each line, the action's name with the Safe{Wallet} logo, is one button that opens its Safe App in Safe{Wallet}.
+
+### Changed
+
+- SAFE INFO: an unlimited allowance shows as ∞ in the Safe box, so "allowance ∞ · raise" no longer gets cut off on narrower screens.
+
+### Fixed
+
+- Desktop app: "raise" next to the allowance on SAFE INFO, and the low allowance notification, open the allowance page as a Safe App in Safe{Wallet}, as they do in the web version, instead of only the Safe's home page. Safe{Wallet} loads Safe Apps over http(s) only, so while the app runs it serves the page at `http://127.0.0.1:4678/safe-app`, or on a random port when 4678 is taken.
+- Sorting a table by its Node column puts the nodes with an alias first, ordered by alias, and then the rest ordered by address. Sorted Z→A, the nodes with an alias still come first. Aliases were ignored on SAFE → NODES, the watchlist and PEERS, and mixed in with the addresses in the channel tables. SAFE → NODES and the watchlist open in this order.
+- NODE INFO: Blokli provider shows the blokli the node syncs from again, instead of the Blokli URL set in NODE ADMIN → CONFIGURATION.
+
 ## 5.0.2
 
 Changes since 5.0.1.

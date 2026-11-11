@@ -42,6 +42,15 @@ export function loadAliases(): AliasMap {
 }
 
 /**
+ * Row fields a Node column sorts by, as `sortKey: 'nodeSort', sortRank: 'nodeRank'`: nodes with
+ * an alias first in both directions, by alias, then the rest by address.
+ */
+export const nodeSortFields = (address: string, alias?: string | null) => ({
+  nodeRank: alias ? 0 : 1,
+  nodeSort: alias || address,
+});
+
+/**
  * Lookups derived from the alias map, used by the autocomplete in the channel and session modals.
  */
 export function buildAliasLinks(aliases: AliasMap): AliasLinks {

@@ -3,11 +3,16 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { blokliActionsAsync } from '../../store/slices/blokli';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
 import { fetchNetworkDashboardData } from '../../store/slices/networkDashboard/fetchNetworkDashboardData';
+import { safeAppLink } from '../../utils/safeApp';
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
 import { NodesTable } from '../../components/NodesTable';
+import IconButton from '../../future-hopr-lib-components/Button/IconButton';
+
+// Mui
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 /**
  * Nodes registered to the same safe as the connected node.
@@ -59,6 +64,20 @@ function SafeNodesPage() {
         title={safeNodes.data ? `NODES (${safeNodes.data.length})` : 'NODES'}
         refreshFunction={handleRefresh}
         reloading={safeNodes.isFetching || dashboardNodes.isFetching}
+        actions={
+          <IconButton
+            iconComponent={<AddCircleOutlineIcon />}
+            tooltipText={
+              <span>
+                ADD NODE
+                <br />
+                to the safe, in Safe{'{Wallet}'}
+              </span>
+            }
+            disabled={!hoprNodeSafe}
+            onClick={() => hoprNodeSafe && window.open(safeAppLink(hoprNodeSafe, 'addNode'), '_blank', 'noopener')}
+          />
+        }
       />
       <NodesTable
         id="safe-nodes-table"

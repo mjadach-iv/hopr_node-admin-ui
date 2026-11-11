@@ -150,6 +150,34 @@ export const getSafeAllowance = async (
   };
 };
 
+const CONTRACT_ADDRESSES_QUERY = `
+  query AdminContractAddresses {
+    chainInfo {
+      __typename
+      ... on ChainInfo {
+        contractAddresses
+      }
+      ... on QueryFailedError {
+        code
+        message
+      }
+    }
+  }
+`;
+
+/** The node-safe registry, which records the Safe each node belongs to. */
+export const getNodeSafeRegistry = async (payload: BlokliPayloadType) => {
+  const data = await queryBlokli<{ chainInfo: { __typename?: string } | null }>(
+    payload.blokliUrl,
+    CONTRACT_ADDRESSES_QUERY,
+    {},
+    payload.timeout,
+  );
+  const { contractAddresses } = unwrapUnion<{ contractAddresses: string }>(data.chainInfo, 'ChainInfo');
+  const { node_safe_registry } = JSON.parse(contractAddresses) as { node_safe_registry: string };
+  return getAddress(node_safe_registry);
+};
+
 const TICKET_REDEMPTION_QUERY = `
   query AdminTicketRedemptionStats($nodeAddress: String!) {
     ticketRedemptionStats(filter: { nodeAddress: $nodeAddress }) {

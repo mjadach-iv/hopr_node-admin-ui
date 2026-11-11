@@ -78,6 +78,7 @@ It is packaged with [electron-builder](https://www.electron.build/) (`electron-b
 
 The packaged app serves `build/` from the `app://node-admin/` origin (`electron/protocol.ts`), so the web build runs unchanged.
 `/hoprd-tags` is answered there too, as nginx and the Vite dev server do for the web build.
+Safe{Wallet} loads custom Safe Apps over http(s) only, so the packaged app also serves `build/` on `http://127.0.0.1:4678` (`electron/safeAppServer.ts`, a random port when 4678 is taken), and the Safe App pages (`/safe-app` for the allowance, `/safe-app-add-node`, `/safe-app-remove-node`) open in Safe{Wallet} from there.
 Updates are only checked in the packaged app.
 
 ## Build the Docker image

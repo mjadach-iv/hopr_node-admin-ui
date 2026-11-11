@@ -186,7 +186,7 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
         notificationPayload: {
           source: 'safe',
           name: message,
-          url: safeAppLink(hoprNodeSafe),
+          url: safeAppLink(hoprNodeSafe, 'allowance'),
           timeout: null,
         },
         toastPayload: { message },

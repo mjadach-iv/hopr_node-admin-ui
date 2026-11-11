@@ -212,21 +212,29 @@ const Chip = styled.button`
     }
   }
   @media (max-width: 600px) {
+    &:not(.figures) {
+      height: 34px;
+      padding: 0 4px 0 10px;
+      .label {
+        display: none;
+      }
+      .stat {
+        padding: 0 8px 0 0;
+        border-left: 0;
+      }
+      .stat.node:not(.warn):not(.low) {
+        display: none;
+      }
+      .dot {
+        margin-right: 8px;
+      }
+    }
+  }
+  // figures on a page, not a button; they keep their labels, there is room for them
+  &.figures {
     height: 34px;
-    padding: 0 4px 0 10px;
-    .label {
-      display: none;
-    }
-    .stat {
-      padding: 0 8px 0 0;
-      border-left: 0;
-    }
-    .stat.node:not(.warn):not(.low) {
-      display: none;
-    }
-    .dot {
-      margin-right: 8px;
-    }
+    padding: 0 14px;
+    cursor: default;
   }
 `;
 
@@ -421,6 +429,21 @@ const ChipStats = ({ items }: { items: WalletItem[] }) => (
       </span>
     ))}
   </>
+);
+
+/** Figures in a chip like the header's, with their full values in a tooltip; e.g. totals over a table. */
+export const FiguresChip = ({ title, items }: { title: string; items: WalletItem[] }) => (
+  <BreakdownTooltip
+    title={title}
+    items={items}
+  >
+    <Chip
+      as="div"
+      className="figures"
+    >
+      <ChipStats items={items} />
+    </Chip>
+  </BreakdownTooltip>
 );
 
 /**

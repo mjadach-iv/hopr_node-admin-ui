@@ -3,7 +3,8 @@ import log from 'electron-log/main';
 import path from 'node:path';
 import { openExternal } from './links';
 import { buildMenu } from './menu';
-import { handleAppScheme, isAppUrl, registerAppScheme, START_URL } from './protocol';
+import { DEV_URL, handleAppScheme, isAppUrl, registerAppScheme, START_URL } from './protocol';
+import { startSafeAppServer } from './safeAppServer';
 import { setupUpdater, startUpdateChecks } from './updater';
 
 // same as --bg in src/index.css, so the window does not flash white while it loads
@@ -64,9 +65,11 @@ if (!app.requestSingleInstanceLock()) {
 
   app
     .whenReady()
-    .then(() => {
+    .then(async () => {
       log.info(`${app.name} ${app.getVersion()} starting`);
       handleAppScheme();
+      // the Vite dev server already serves the Safe App over http
+      if (!DEV_URL) await startSafeAppServer();
       setupUpdater();
       buildMenu();
       createWindow();

@@ -8,10 +8,10 @@ import { clipboardAvailable } from '../../../utils/clipboard';
 import CopyIcon from '@mui/icons-material/ContentCopy';
 import LaunchIcon from '@mui/icons-material/Launch';
 
-// allowances are usually set to 'unlimited', a 27 digit number says nothing
+// allowances are usually set to unlimited, a 27 digit number says nothing
 export const short = (value?: string | null) => {
   if (!value) return '-';
-  if (Number(value) > 1e12) return 'Unlimited';
+  if (Number(value) > 1e12) return '∞';
   return shrinkNumber(value);
 };
 
@@ -36,19 +36,23 @@ export const AddressLinks = ({ address }: { address: string }) => (
   </>
 );
 
+const SafeWalletLogo = () => (
+  <img
+    src="/assets/safe-global-favicon.png"
+    alt="Safe{Wallet}"
+    width={15}
+    height={15}
+    style={{ display: 'block' }}
+  />
+);
+
 export const SafeWalletLink = ({ safeAddress }: { safeAddress: string }) => (
   <SmallActionButton tooltip={'Open in Safe{Wallet}'}>
     <Link
       to={`https://app.safe.global/home?safe=gno:${safeAddress}`}
       target="_blank"
     >
-      <img
-        src="/assets/safe-global-favicon.png"
-        alt="Safe{Wallet}"
-        width={15}
-        height={15}
-        style={{ display: 'block' }}
-      />
+      <SafeWalletLogo />
     </Link>
   </SmallActionButton>
 );
@@ -209,6 +213,59 @@ export const KV = ({
       {actions}
     </span>
   </SKV>
+);
+
+// a KV line that is a link as a whole, highlighted from one edge of the card to the other
+const SSafeWalletAction = styled.a`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 30px;
+  // the card's side padding
+  margin: 0 -14px;
+  padding: 0 14px;
+  color: var(--text-2);
+  text-decoration: none;
+  cursor: pointer;
+  // the line above stays as wide as a KV's
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 14px;
+    right: 14px;
+    border-top: 1px solid var(--border);
+  }
+  &:hover,
+  &:focus-visible {
+    background: var(--primary-soft);
+    color: var(--text);
+  }
+  &:not([href]) {
+    cursor: default;
+    color: var(--muted);
+  }
+`;
+
+/** A card line opening a Safe{Wallet} page, such as a Safe App: the action's name and the Safe{Wallet} logo. */
+export const SafeWalletAction = ({ label, tip, href }: { label: string; tip: string; href?: string | null }) => (
+  <Tooltip
+    title={tip}
+    notWide
+    placement="left"
+  >
+    <SSafeWalletAction
+      className="SafeWalletAction"
+      href={href || undefined}
+      target="_blank"
+      rel="noreferrer"
+    >
+      <span>{label}</span>
+      {href ? <SafeWalletLogo /> : '-'}
+    </SSafeWalletAction>
+  </Tooltip>
 );
 
 export const Amount = ({ value, unit }: { value: ReactNode; unit: string }) => (
