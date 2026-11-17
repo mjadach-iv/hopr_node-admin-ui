@@ -16,6 +16,7 @@ import { utils as networkDashboardUtils } from '../../networkDashboard';
 import { checkHowChannelsHaveChanged } from './channels';
 import { isAddress } from 'viem';
 import { useHoprdUpdateNotification } from '../useHoprdUpdate';
+import { useVisibleInterval } from '../usePageVisible';
 import { LOW_ALLOWANCE, safeAppLink } from '../../utils/safeApp';
 import { shrinkNumber } from '../../utils/amount';
 
@@ -357,20 +358,19 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
   // after a node switch, so this keys on all 3 rather than firing once, then keeps
   // the figures fresh alongside the balances and channels above. An RPC list change
   // refetches right away so a broken one shows without waiting for the interval.
-  useEffect(() => {
-    const fetch = () =>
+  // The next refresh waits for the previous one to settle, and none run while the
+  // tab is in the background or the desktop window is minimised.
+  useVisibleInterval(
+    () =>
       fetchBlokliData({
         blokliUrl,
         nodeAddress: peerAddress,
         safeAddress: hoprNodeSafe,
         dispatch,
-      });
-    fetch();
-    const watchBlokliInterval = setInterval(fetch, intervalDuration);
-    return () => {
-      clearInterval(watchBlokliInterval);
-    };
-  }, [blokliUrl, peerAddress, hoprNodeSafe, intervalDuration, rpcUrlsKey]);
+      }),
+    intervalDuration,
+    [blokliUrl, peerAddress, hoprNodeSafe, rpcUrlsKey],
+  );
 
   // Network dashboard context: node or network changed, drop the previous figures
   useEffect(() => {

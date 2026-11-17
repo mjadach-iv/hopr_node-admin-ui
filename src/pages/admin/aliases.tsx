@@ -20,8 +20,8 @@ import { FundChannelModal } from '../../components/Modal/node/FundChannelModal';
 import { OpenSessionModal } from '../../components/Modal/node/OpenSessionModal';
 
 //Mui
-import GetAppIcon from '@mui/icons-material/GetApp';
-import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
+import SaveIcon from '@mui/icons-material/Save';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 function AliasesPage() {
   const dispatch = useAppDispatch();
@@ -182,7 +182,7 @@ function AliasesPage() {
             <CreateAliasModal />
             <CSVUploader onParse={handleCSVUpload} />
             <IconButton
-              iconComponent={<GetAppIcon />}
+              iconComponent={<SaveIcon />}
               tooltipText={
                 <span>
                   EXPORT
@@ -296,7 +296,7 @@ function CSVUploader<T extends ParsedData>({ onParse }: CSVUploaderProps<T>) {
   return (
     <div>
       <IconButton
-        iconComponent={<DriveFolderUploadIcon />}
+        iconComponent={<UploadFileIcon />}
         tooltipText={
           <span>
             IMPORT

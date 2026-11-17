@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.0.4
+
+Changes since 5.0.3.
+
+### Changed
+
+- The blokli figures and the watchlist stop refreshing while the app is out of sight: its browser tab is in the background, or the desktop app is minimised or hidden (on macOS also while another window covers it). Back on screen they refresh at once if a minute has passed since the last refresh, otherwise when it has.
+- The blokli figures and the watchlist refresh a minute after the previous refresh finished, instead of every minute on the clock, so a slow blokli or RPC never gets a new refresh while one is still running.
+- ALIASES and WATCHLIST: the export button shows a floppy disk and the import button a file with an up arrow.
+
 ## 5.0.3
 
 Changes since 5.0.2.

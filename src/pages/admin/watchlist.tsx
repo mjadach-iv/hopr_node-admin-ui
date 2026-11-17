@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectBlokliUrl, sumSafeNodes } from '../../store/selectors/blokli';
@@ -10,6 +10,7 @@ import { shrinkNumber } from '../../utils/amount';
 import { exportToCsv } from '../../utils/helpers';
 import { parseWatchlistFile } from '../../utils/watchlist';
 import { sendNotification } from '../../hooks/useWatcher/notifications';
+import { useVisibleInterval } from '../../hooks/usePageVisible';
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
@@ -24,8 +25,8 @@ import { AddToWatchlistModal } from '../../components/Modal/watchlist/AddToWatch
 // Mui
 import Button from '@mui/material/Button';
 import DnsIcon from '@mui/icons-material/Dns';
-import GetAppIcon from '@mui/icons-material/GetApp';
-import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
+import SaveIcon from '@mui/icons-material/Save';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 const NO_SAFE = 'none';
 const UNKNOWN_SAFE = 'unknown';
@@ -181,17 +182,12 @@ function WatchlistPage() {
 
   const fetchWatchlist = () => {
     if (!blokliUrl || watchlist.length === 0) return;
-    dispatch(watchlistActionsAsync.getWatchlistThunk({ blokliUrl, rpcUrls, nodeAddresses: watchlist }));
+    return dispatch(watchlistActionsAsync.getWatchlistThunk({ blokliUrl, rpcUrls, nodeAddresses: watchlist }));
   };
 
   // logging in or out aborts every running request, the watchlist one included
-  useEffect(() => {
-    fetchWatchlist();
-    const watchlistInterval = setInterval(fetchWatchlist, 60_000);
-    return () => {
-      clearInterval(watchlistInterval);
-    };
-  }, [blokliUrl, rpcUrlsKey, watchlistKey, connected]);
+  // a minute after the last refresh settled, paused while the tab is in the background or the window is minimised
+  useVisibleInterval(fetchWatchlist, 60_000, [blokliUrl, rpcUrlsKey, watchlistKey, connected]);
 
   const handleExport = () => {
     exportToCsv(
@@ -353,7 +349,7 @@ function WatchlistPage() {
               }}
             />
             <IconButton
-              iconComponent={<DriveFolderUploadIcon />}
+              iconComponent={<UploadFileIcon />}
               tooltipText={
                 <span>
                   IMPORT
@@ -364,7 +360,7 @@ function WatchlistPage() {
               onClick={() => fileInputRef.current?.click()}
             />
             <IconButton
-              iconComponent={<GetAppIcon />}
+              iconComponent={<SaveIcon />}
               tooltipText={
                 <span>
                   EXPORT
