@@ -13,6 +13,9 @@
 
 # desktop app: compiled main process and installers
 /dist-electron
+# the earnings indexer bundle and its database of `pnpm indexer:dev`
+/dist-indexer
+/.indexer
 /release
 
 # misc

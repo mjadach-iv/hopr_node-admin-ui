@@ -421,6 +421,8 @@ export const NodesTable = (props: NodesTableProps) => {
       toolbarCenter={props.toolbarCenter}
       header={header}
       loading={props.loading}
+      // a list of tens of nodes, its columns stay put while scrolling
+      allRows
       orderByDefault="nodeSort"
       groupBy={props.groupOf ? 'group' : undefined}
       groupHeader={props.groupOf ? groupHeader : undefined}

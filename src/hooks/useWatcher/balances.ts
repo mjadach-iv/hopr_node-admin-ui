@@ -79,6 +79,7 @@ export const observeNodeBalances = ({
   apiEndpoint,
   apiToken,
   active,
+  safeReceived,
   minimumNodeBalances,
   updatePreviousData,
   dispatch,
@@ -87,6 +88,8 @@ export const observeNodeBalances = ({
   apiToken: string | null;
   apiEndpoint: string | null;
   active: boolean;
+  // whether a higher safe balance is notified, see the safeReceived setting
+  safeReceived: boolean;
   minimumNodeBalances: GetBalancesResponseType;
   updatePreviousData: (currentData: GetBalancesResponseType) => void;
   dispatch: ReturnType<typeof useAppDispatch>;
@@ -141,7 +144,7 @@ export const observeNodeBalances = ({
           });
         },
         sendNewHoprSafeBalanceNotification: (hoprSafeBalanceDifference) => {
-          console.log('hoprSafeBalanceDifference', hoprSafeBalanceDifference);
+          if (!safeReceived) return;
           const message = `Safe received ${formatEther(hoprSafeBalanceDifference)} wxHopr`;
           sendNotification({
             notificationPayload: {
@@ -155,6 +158,7 @@ export const observeNodeBalances = ({
           });
         },
         sendNewNativeSafeBalanceNotification: (nativeSafeBalanceDifference) => {
+          if (!safeReceived) return;
           const message = `Safe received ${formatEther(nativeSafeBalanceDifference)} xDai`;
           sendNotification({
             notificationPayload: {

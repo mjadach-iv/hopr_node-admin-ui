@@ -73,7 +73,8 @@ export default function ContainerUpdate() {
 
   const commands = [
     `docker rm -f ${CONTAINER_NAME}`,
-    `docker run -d --name ${CONTAINER_NAME} -p ${hostPort}:4677 ${DOCKER_IMAGE}:${versions.latest}`,
+    // the earnings indexer keeps its database and the RPC, blokli and CT settings in /data
+    `docker run -d --name ${CONTAINER_NAME} -p ${hostPort}:4677 -v hopr-admin-data:/data ${DOCKER_IMAGE}:${versions.latest}`,
   ].join('\n');
 
   return (

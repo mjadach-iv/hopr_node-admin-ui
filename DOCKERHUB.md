@@ -7,10 +7,12 @@ A community web UI for managing a HOPR node: balances, channels, peers, aliases,
 ## Quick start
 
 ```sh
-docker run -d --pull always --name hopr-node-admin-ui -p 4677:4677 0xmj/hopr-node-admin-ui:latest
+docker run -d --pull always --name hopr-node-admin-ui -p 4677:4677 -v hopr-admin-data:/data 0xmj/hopr-node-admin-ui:latest
 ```
 
 Open http://localhost:4677 and connect to your node with its API endpoint and token.
+
+The volume at `/data` holds the earnings indexer's database: the earnings history of the network and the RPC, blokli and CT node settings. Without it they are lost whenever the container is recreated, and the UI warns about it.
 
 The UI runs in your browser and calls the node's API directly. The API must be reachable from the browser, not just from the container.
 
@@ -22,10 +24,10 @@ When a newer image is released, the UI shows **Update available** in the header.
 
 ```sh
 docker rm -f hopr-node-admin-ui
-docker run -d --name hopr-node-admin-ui -p 4677:4677 0xmj/hopr-node-admin-ui:<version>
+docker run -d --name hopr-node-admin-ui -p 4677:4677 -v hopr-admin-data:/data 0xmj/hopr-node-admin-ui:<version>
 ```
 
-Nothing is stored in the container. Saved node connections stay in your browser, so replacing the container loses nothing.
+Saved node connections, aliases and the watchlist stay in your browser. The settings and the indexed earnings stay in the `hopr-admin-data` volume, so replacing the container loses nothing.
 
 ## Tags
 
@@ -44,8 +46,16 @@ curl http://localhost:4677/version.txt
 
 ## Image details
 
-- Static build served by `nginx:stable-alpine` on port `4677`.
-- No volumes and no environment variables needed.
+- Static build served by `nginx:stable-alpine` on port `4677`, with the earnings indexer (Node 24) next to it at `/indexer/api/`.
+- Volume `/data`: the indexer's SQLite database, including the RPC, blokli and CT node settings. Whoever can reach the port can change these settings, as they are shared by every browser using the container.
+- Optional environment variables:
+
+| Variable             | What it does                                                                     |
+| -------------------- | -------------------------------------------------------------------------------- |
+| `INDEXER_RPC_URLS`   | Comma separated Gnosis RPCs used before any are saved in the UI                  |
+| `INDEXER_BLOKLI_URL` | The blokli used before one is saved in the UI                                    |
+| `INDEXER_CT_NODES`   | Comma separated CT node addresses used before any are saved in the UI            |
+| `INDEXER_ENABLED`    | `false` runs the UI without the indexer: no earnings chart, settings are default |
 
 ## Links
 

@@ -12,8 +12,10 @@ No one — neither the authors nor the contributors — is responsible for any l
 Prebuilt images for `linux/amd64` and `linux/arm64` are published to Docker Hub.
 
 ```sh
-docker run -d --name hopr-node-admin-ui -p 4677:4677 0xmj/hopr-node-admin-ui:latest
+docker run -d --name hopr-node-admin-ui -p 4677:4677 -v hopr-admin-data:/data 0xmj/hopr-node-admin-ui:latest
 ```
+
+The `/data` volume keeps the earnings indexer's database, which also holds the RPC, blokli and CT node settings (see [Earnings indexer](#earnings-indexer)).
 
 Then open [http://localhost:4677](http://localhost:4677) and connect to your node with its API endpoint and token.
 The node's API must be reachable from your browser, since the UI calls it directly.
@@ -76,23 +78,76 @@ It is packaged with [electron-builder](https://www.electron.build/) (`electron-b
 | `pnpm electron:pack`  | Builds the app into `release/<platform>-unpacked/` (or `release/mac-*/` on macOS) without installers |
 | `pnpm electron:build` | Builds the installers and update files for the current OS into `release/`                            |
 
+#### Building the desktop app
+
+With the [requirements](#development) installed and `pnpm install` done, build on the operating system you are building for: macOS apps only build on macOS, Windows installers on Windows, AppImages on Linux. CI builds all three (see [Continuous integration](#continuous-integration)).
+
+To try a build, package it without installers:
+
+```sh
+pnpm electron:pack
+```
+
+It runs `pnpm build` (the app, type checks and the earnings indexer in `dist-indexer/`), compiles `electron/` into `dist-electron/` and packages everything into `release/`. On macOS that gives `release/mac-arm64/HOPR Node Admin.app` (`mac-x64` on Intel), for the Mac it was built on. Its name carries no version, only the installers below do; the app shows its version at the bottom right. Earlier builds stay in `release/` until it is deleted. Open it with:
+
+```sh
+open "release/mac-arm64/HOPR Node Admin.app"
+```
+
+Without a Developer ID certificate the macOS app is signed ad hoc (`electron/afterPack.cjs`), which is enough to run it on the Mac that built it. The packaged app uses the same profile as an installed one, with `indexer.sqlite` next to the saved settings: `~/Library/Application Support/HOPR Node Admin/` on macOS, `%APPDATA%\HOPR Node Admin\` on Windows, `~/.config/HOPR Node Admin/` on Linux.
+
+For the installers and update files of a release, as attached to the GitHub releases:
+
+```sh
+pnpm electron:build
+```
+
+| OS      | Output in `release/`                                                              |
+| ------- | --------------------------------------------------------------------------------- |
+| macOS   | `hopr-node-admin-<version>-mac-universal.dmg` and `.zip`, Apple Silicon and Intel |
+| Windows | `hopr-node-admin-<version>-win-x64.exe`                                           |
+| Linux   | `hopr-node-admin-<version>-linux-x86_64.AppImage` and `-arm64.AppImage`           |
+
+Signed and notarized macOS builds need the certificate and Apple ID variables described in [Signing the macOS app](#signing-the-macos-app).
+
+Starting the binary in `Contents/MacOS/` directly from a terminal that sets `ELECTRON_RUN_AS_NODE` (VS Code's does) runs it as plain Node, which fails with `bad option`; prefix it with `env -u ELECTRON_RUN_AS_NODE`. `open` is not affected.
+
 The packaged app serves `build/` from the `app://node-admin/` origin (`electron/protocol.ts`), so the web build runs unchanged.
 `/hoprd-tags` is answered there too, as nginx and the Vite dev server do for the web build.
 Safe{Wallet} loads custom Safe Apps over http(s) only, so the packaged app also serves `build/` on `http://127.0.0.1:4678` (`electron/safeAppServer.ts`, a random port when 4678 is taken), and the Safe App pages (`/safe-app` for the allowance, `/safe-app-add-node`, `/safe-app-remove-node`) open in Safe{Wallet} from there.
 Updates are only checked in the packaged app.
 
+## Earnings indexer
+
+The watchlist's earnings over time come from an indexer in `indexer/`, which runs in the desktop app's main process (`electron/indexer.ts`) and in the Docker image (`indexer/server.ts` behind nginx).
+Both serve the same API at `/indexer/api/`; the desktop app answers it on its `app://` origin without opening a port.
+The web deploys (Vercel, FTP) have no indexer: the chart is hidden and the settings below are the defaults.
+
+- It walks every HoprChannels log of the network through the configured Gnosis RPCs, from the contract's deployment to the finalized block, and stores every ticket redemption with its amount, source and destination. A node added to the watchlist has its history at once.
+- Earnings are split at query time: tickets from the channels of the CT nodes set in NODE ADMIN → CONFIGURATION count as CT, all others as traffic. The default CT nodes (`CT_NODES` in `config.ts`) are the nodes of the piz-palu CT safe. A node's spent is the tickets it paid, from the same rows.
+- Everything is in one SQLite file (`node:sqlite`, no native module): `indexer.sqlite` in the desktop app's user data folder, `/data/indexer.sqlite` in Docker.
+- The RPC, blokli and CT node settings live in that file too, only once saved: until then they follow the env and the defaults of the running version. The browser keeps a copy and restores it into a database that was never edited, e.g. a container recreated without a volume.
+- The file carries its versions (`indexer/db.ts`). A change to the decoding bumps `INDEX_VERSION`: the index is rebuilt from the chain, which takes a minute or two, and the settings and watched nodes stay. A change to the settings or nodes tables adds a migration, which keeps them. A file written by a newer app than the running one, after a downgrade, is deleted and started over.
+
+| Command              | What it does                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| `pnpm indexer:dev`   | Builds the indexer and runs it on `127.0.0.1:4680` with `.indexer/indexer.sqlite`, for `pnpm dev` |
+| `pnpm build:indexer` | Bundles it into `dist-indexer/` (part of `pnpm build`)                                            |
+
+The Vite dev server proxies `/indexer` to port 4680, where `pnpm electron:dev` serves the indexer too.
+
 ## Build the Docker image
 
 ```sh
 docker build -t hopr-node-admin-ui .
-docker run -d --name hopr-node-admin-ui -p 4677:4677 hopr-node-admin-ui
+docker run -d --name hopr-node-admin-ui -p 4677:4677 -v hopr-admin-data:/data hopr-node-admin-ui
 ```
 
 The image is built in three stages:
 
 1. **deps** installs dependencies with pnpm on Node 24.
 2. **build** runs `pnpm build` and writes the app version to `version.txt`.
-3. **runtime** serves the static files with nginx on port 4677, using `nginx.conf`.
+3. **runtime** serves the static files with nginx on port 4677, using `nginx.conf`, and runs the earnings indexer next to it (`docker/entrypoint.sh`).
 
 The first two stages always run on the builder's native platform, because their output is plain static files.
 That makes multi-architecture builds fast, since nothing is emulated:

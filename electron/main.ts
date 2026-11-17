@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 import log from 'electron-log/main';
 import path from 'node:path';
 import { openExternal } from './links';
+import { startIndexer, stopIndexer } from './indexer';
 import { buildMenu } from './menu';
 import { DEV_URL, handleAppScheme, isAppUrl, registerAppScheme, START_URL } from './protocol';
 import { startSafeAppServer } from './safeAppServer';
@@ -59,6 +60,9 @@ if (!app.requestSingleInstanceLock()) {
     if (process.platform !== 'darwin') app.quit();
   });
 
+  // the indexer database is closed cleanly, before an update installs too (updater.ts)
+  app.on('before-quit', stopIndexer);
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -68,6 +72,7 @@ if (!app.requestSingleInstanceLock()) {
     .then(async () => {
       log.info(`${app.name} ${app.getVersion()} starting`);
       handleAppScheme();
+      startIndexer({ dev: !!DEV_URL });
       // the Vite dev server already serves the Safe App over http
       if (!DEV_URL) await startSafeAppServer();
       setupUpdater();

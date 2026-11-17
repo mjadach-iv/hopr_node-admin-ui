@@ -12,6 +12,8 @@ directories:
 files:
   - dist-electron/**
   - build/**
+  # the earnings indexer, bundled with its dependencies (electron/indexer.ts)
+  - dist-indexer/**
 # gives the macOS executables Mach-O UUIDs of their own, or Local Network access may stay blocked
 afterPack: electron/afterPack.cjs
 

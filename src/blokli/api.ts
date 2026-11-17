@@ -155,6 +155,7 @@ const CONTRACT_ADDRESSES_QUERY = `
     chainInfo {
       __typename
       ... on ChainInfo {
+        network
         contractAddresses
       }
       ... on QueryFailedError {
@@ -165,16 +166,26 @@ const CONTRACT_ADDRESSES_QUERY = `
   }
 `;
 
-/** The node-safe registry, which records the Safe each node belongs to. */
-export const getNodeSafeRegistry = async (payload: BlokliPayloadType) => {
+/** Blokli's network and its HOPR contracts by name, e.g. channels, token, node_safe_registry. */
+export const getContractAddresses = async (
+  payload: BlokliPayloadType,
+): Promise<{ network: string; contracts: Record<string, string> }> => {
   const data = await queryBlokli<{ chainInfo: { __typename?: string } | null }>(
     payload.blokliUrl,
     CONTRACT_ADDRESSES_QUERY,
     {},
     payload.timeout,
   );
-  const { contractAddresses } = unwrapUnion<{ contractAddresses: string }>(data.chainInfo, 'ChainInfo');
-  const { node_safe_registry } = JSON.parse(contractAddresses) as { node_safe_registry: string };
+  const { network, contractAddresses } = unwrapUnion<{ network: string; contractAddresses: string }>(
+    data.chainInfo,
+    'ChainInfo',
+  );
+  return { network, contracts: JSON.parse(contractAddresses) as Record<string, string> };
+};
+
+/** The node-safe registry, which records the Safe each node belongs to. */
+export const getNodeSafeRegistry = async (payload: BlokliPayloadType) => {
+  const { node_safe_registry } = (await getContractAddresses(payload)).contracts;
   return getAddress(node_safe_registry);
 };
 

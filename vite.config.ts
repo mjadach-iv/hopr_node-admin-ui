@@ -12,11 +12,16 @@ const hoprdTagsProxy = {
   },
 };
 
+// the earnings indexer of `pnpm indexer:dev` or `pnpm electron:dev` (indexer/server.ts, electron/indexer.ts)
+const indexerProxy = {
+  '/indexer': { target: 'http://127.0.0.1:4680' },
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(() => {
   return {
-    server: { proxy: hoprdTagsProxy },
-    preview: { proxy: hoprdTagsProxy },
+    server: { proxy: { ...hoprdTagsProxy, ...indexerProxy } },
+    preview: { proxy: { ...hoprdTagsProxy, ...indexerProxy } },
     plugins: [
       // import svg
       svgrPlugin(),

@@ -2,6 +2,7 @@ import { app, net, protocol } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { handleIndexerRequest, isIndexerPath } from './indexer';
 
 // The packaged app serves the Vite build from app://node-admin/, a secure standard origin. The web
 // build runs unchanged (BrowserRouter, absolute /assets/... paths), the clipboard API is available
@@ -112,6 +113,7 @@ export const handleAppScheme = () => {
     }
 
     if (pathname === HOPRD_TAGS_PATH) return proxyHoprdTags();
+    if (isIndexerPath(pathname)) return handleIndexerRequest(request, url);
 
     const file = path.join(root, pathname);
     const relative = path.relative(root, file);

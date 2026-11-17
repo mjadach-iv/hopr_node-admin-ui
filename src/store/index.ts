@@ -7,6 +7,7 @@ import appSlice from './slices/app';
 import blokliSlice from './slices/blokli';
 import networkDashboardSlice from './slices/networkDashboard';
 import watchlistSlice from './slices/watchlist';
+import indexerSlice from './slices/indexer';
 import { trackAbortable } from './abortRegistry';
 //import { websocketMiddleware } from './slices/node/websocketMiddleware';
 
@@ -31,6 +32,7 @@ const store = configureStore({
     blokli: blokliSlice,
     networkDashboard: networkDashboardSlice,
     watchlist: watchlistSlice,
+    indexer: indexerSlice,
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(abortTrackingMiddleware),
   devTools: import.meta.env.PROD ? false : { maxAge: 5000 },

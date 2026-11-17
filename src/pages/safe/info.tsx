@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { formatEther } from 'viem';
 import { RpcError } from '../../components/RpcError';
@@ -15,6 +15,7 @@ import { LOW_ALLOWANCE, safeAppLink } from '../../utils/safeApp';
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
+import { EarningsSection } from '../../components/EarningsChart';
 import { WithUnit } from '../../components/Unit';
 import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 import {
@@ -43,6 +44,9 @@ const CardRow = styled.div`
 `;
 
 const { formatAvailability, formatLatency, formatMbps } = dashboardUtils;
+
+// the addresses card keeps a few rows even next to a dashboard card that only says "not tracked"
+const ADDRESSES_MIN_HEIGHT = 180;
 
 // below this a node can only pay for a handful of transactions
 const LOW_XDAI = BigInt('50000000000000000');
@@ -85,6 +89,17 @@ function SafeInfoPage() {
     (store) => store.node.configuration.data?.hopr?.safe_module?.module_address,
   );
   const safeNodeAddressesKey = (safeNodes ?? []).map((node) => node.nodeAddress).join(',');
+  // a safe of many nodes would make the addresses card much taller than the others, it scrolls instead
+  const dashboardCard = useRef<HTMLElement>(null);
+  const [dashboardHeight, set_dashboardHeight] = useState<number>();
+
+  useEffect(() => {
+    const card = dashboardCard.current;
+    if (!card) return;
+    const observer = new ResizeObserver(() => set_dashboardHeight(card.offsetHeight));
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, [apiEndpoint]);
 
   useEffect(() => {
     fetchNetworkDashboardData({
@@ -272,7 +287,10 @@ function SafeInfoPage() {
       </KpiGrid>
 
       <CardRow>
-        <Card title="Addresses">
+        <Card
+          title="Addresses"
+          maxHeight={dashboardHeight && Math.max(dashboardHeight, ADDRESSES_MIN_HEIGHT)}
+        >
           <KV
             label="Safe"
             tip="Your safe's Ethereum address"
@@ -311,6 +329,7 @@ function SafeInfoPage() {
 
         <Card
           title="Network dashboard"
+          ref={dashboardCard}
           extra={
             <a
               href={dashboardApi.NETWORK_DASHBOARD_URL}
@@ -391,6 +410,12 @@ function SafeInfoPage() {
           />
         </Card>
       </CardRow>
+
+      <EarningsSection
+        title="Earnings of the safe"
+        id="safe"
+        nodes={safeNodeAddressesKey ? safeNodeAddressesKey.split(',') : []}
+      />
     </Section>
   );
 }

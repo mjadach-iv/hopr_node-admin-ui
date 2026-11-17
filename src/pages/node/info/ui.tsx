@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type Ref } from 'react';
 import styled from '@emotion/styled';
 import { Link } from 'react-router-dom';
 import Tooltip from '../../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
@@ -99,15 +99,48 @@ const SCard = styled.section`
       }
     }
   }
+  /* no taller than maxHeight, the content scrolls under the header */
+  &.capped {
+    display: flex;
+    flex-direction: column;
+    header {
+      flex: none;
+    }
+    /* reaches into the card's right padding, so the scrollbar runs along the card's edge and not over
+       the icons at the end of the rows */
+    .body {
+      min-height: 0;
+      overflow-y: auto;
+      margin-right: -14px;
+      padding-right: 14px;
+    }
+  }
 `;
 
-export const Card = ({ title, extra, children }: { title: ReactNode; extra?: ReactNode; children: ReactNode }) => (
-  <SCard className="InfoCard">
+export const Card = ({
+  title,
+  extra,
+  children,
+  ref,
+  maxHeight,
+}: {
+  title: ReactNode;
+  extra?: ReactNode;
+  children: ReactNode;
+  ref?: Ref<HTMLElement>;
+  // in px, the content scrolls when the card would be taller
+  maxHeight?: number;
+}) => (
+  <SCard
+    className={`InfoCard${maxHeight ? ' capped' : ''}`}
+    ref={ref}
+    style={maxHeight ? { maxHeight } : undefined}
+  >
     <header>
       <h3>{title}</h3>
       {extra && <span className="extra">{extra}</span>}
     </header>
-    {children}
+    {maxHeight ? <div className="body">{children}</div> : children}
   </SCard>
 );
 

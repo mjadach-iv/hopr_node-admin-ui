@@ -50,6 +50,7 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
   const activeMessage = useAppSelector((store) => store.app.configuration.notifications.message);
   const activeNodeBalances = useAppSelector((store) => store.app.configuration.notifications.nodeBalances);
   const activeNodeInfo = useAppSelector((store) => store.app.configuration.notifications.nodeInfo);
+  const activeSafeReceived = useAppSelector((store) => store.app.configuration.notifications.safeReceived);
   // redux previous states, this can be updated from anywhere in the app
   const prevApiEndpoint = useAppSelector((store) => store.app.previousStates.prevApiEndpoint);
   const prevOutgoingChannels = useAppSelector((store) => store.app.previousStates.prevOutgoingChannels);
@@ -116,6 +117,7 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
         apiEndpoint,
         apiToken,
         active: activeNodeBalances,
+        safeReceived: activeSafeReceived,
         minimumNodeBalances: {
           hopr: '0',
           native: '0.003',
@@ -169,6 +171,7 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
     prevNodeBalances,
     prevNodeInfo,
     prevOutgoingChannels,
+    activeSafeReceived,
   ]);
 
   // low allowance: right when the login fetch brings the balances, then again whenever it drops below
@@ -349,8 +352,10 @@ export const useWatcher = ({ intervalDuration = 60_000 }: { intervalDuration?: n
   useEffect(() => {
     dispatch(blokliActions.resetData(blokliUrl));
     if (prevBlokliUrl.current === blokliUrl) return;
+    // null until the settings are loaded at start, which is no change of url
+    const settingsJustLoaded = prevBlokliUrl.current === null;
     prevBlokliUrl.current = blokliUrl;
-    if (!connected || !nodeApiEndpoint) return;
+    if (settingsJustLoaded || !connected || !nodeApiEndpoint) return;
     fetchNodeData({ apiEndpoint: nodeApiEndpoint, apiToken, dispatch });
   }, [blokliUrl]);
 

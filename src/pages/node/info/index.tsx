@@ -14,6 +14,7 @@ import { fetchNetworkDashboardData } from '../../../store/slices/networkDashboar
 import { selectBlokliUrl } from '../../../store/selectors/blokli';
 import { blokliGraphqlUrl } from '../../../blokli/client';
 import { SubpageTitle } from '../../../components/SubpageTitle';
+import { EarningsSection } from '../../../components/EarningsChart';
 import WithdrawModal from '../../../components/Modal/node/WithdrawModal';
 import { shortenAddress } from '../../../utils/amount';
 import { useHoprdUpdate } from '../../../hooks/useHoprdUpdate';
@@ -454,6 +455,12 @@ function InfoPage() {
           </KV>
         </Card>
       </CardGrid>
+
+      <EarningsSection
+        title="Earnings of the node"
+        id="node"
+        nodes={addresses?.native ? [addresses.native] : []}
+      />
     </Section>
   );
 }

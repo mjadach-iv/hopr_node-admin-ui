@@ -86,6 +86,9 @@ const CARDS = `
   }
 `;
 
+// a viewport this much larger renders every row of an allRows table, 25k rows of 40px
+const ALL_ROWS_PX = 1_000_000;
+
 // narrowest the address column may get before the table turns into cards
 const GROW_MIN_WIDTH = 220;
 // horizontal padding of a cell, around a group header's label
@@ -498,6 +501,9 @@ interface Props {
   // in the middle of the line with the search, e.g. totals of the table
   toolbarCenter?: ReactNode;
   loading?: boolean;
+  // every row rendered, not only the ones near the screen: each column is as wide as its widest cell in
+  // the whole table and keeps that width while scrolling. For tables of tens of rows
+  allRows?: boolean;
   onRowClick?: Function;
   orderByDefault?: string;
   // row field holding a group id: every group gets a header row before its rows
@@ -820,7 +826,7 @@ export default function CustomPaginationActionsTable(props: Props) {
         useWindowScroll
         data={rowsMounted ? items : []}
         overscan={{ main: 400, reverse: 400 }}
-        increaseViewportBy={{ top: 200, bottom: 200 }}
+        increaseViewportBy={props.allRows ? { top: ALL_ROWS_PX, bottom: ALL_ROWS_PX } : { top: 200, bottom: 200 }}
         computeItemKey={(_index, row) => `${props.id}_row_${row.id}`}
         context={{
           tableId: props.id,

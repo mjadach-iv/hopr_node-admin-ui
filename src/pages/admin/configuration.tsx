@@ -16,7 +16,11 @@ import { appActions } from '../../store/slices/app';
 import { parseAndFormatUrl } from '../../utils/parseAndFormatUrl';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { RPC_ERROR, GNOSIS_RPC_URLS, DEFAULT_BLOKLI_URL } from '../../../config';
+import { RPC_ERROR, GNOSIS_RPC_URLS, DEFAULT_BLOKLI_URL, CT_NODES } from '../../../config';
+import { getAddress, isAddress } from 'viem';
+import { indexerActionsAsync } from '../../store/slices/indexer';
+import type { IndexerSettings } from '../../indexer/types';
+import { IndexerNotice, IndexerStatusLine } from '../../components/IndexerNotice';
 
 const NotificationsContainer = styled.div`
   display: flex;
@@ -89,6 +93,12 @@ const RpcList = styled.ol`
   }
 `;
 
+const ReadOnlyHint = styled.span`
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--muted);
+`;
+
 const RpcAdd = styled.div`
   display: flex;
   gap: 1rem;
@@ -118,8 +128,11 @@ function AdminConfigurationPage() {
     localNotificationSettings?.message === prevNotificationSettings.message &&
     localNotificationSettings?.nodeBalances === prevNotificationSettings.nodeBalances &&
     localNotificationSettings?.nodeInfo === prevNotificationSettings.nodeInfo &&
-    localNotificationSettings?.pendingSafeTransaction === prevNotificationSettings.pendingSafeTransaction
+    localNotificationSettings?.pendingSafeTransaction === prevNotificationSettings.pendingSafeTransaction &&
+    localNotificationSettings?.safeReceived === prevNotificationSettings.safeReceived
   );
+  // the RPC, blokli and CT settings are kept by the earnings indexer, a build without one shows the defaults
+  const editable = useAppSelector((store) => store.app.configuration.settingsEditable);
   const blokliUrl = useAppSelector((store) => store.app.configuration.blokli.url);
   const nodeBlokliUrl = useAppSelector((store) => store.node.info.data?.providerUrl);
   const [localBlokliUrl, set_localBlokliUrl] = useState(blokliUrl);
@@ -137,6 +150,12 @@ function AdminConfigurationPage() {
   const [overRpcIndex, set_overRpcIndex] = useState<number | null>(null);
   const [rpcError, set_rpcError] = useState<string | null>(null);
   const formattedNewRpcUrl = parseRpcUrl(newRpcUrl);
+  const ctNodes = useAppSelector((store) => store.app.configuration.ctNodes);
+  const [localCtNodes, set_localCtNodes] = useState(ctNodes);
+  const canSaveCtNodes = localCtNodes.join(',') !== ctNodes.join(',');
+  const [newCtNode, set_newCtNode] = useState('');
+  const [ctError, set_ctError] = useState<string | null>(null);
+  const [saving, set_saving] = useState(false);
 
   useEffect(() => {
     window.addEventListener('keydown', handleEnter as unknown as EventListener);
@@ -160,6 +179,19 @@ function AdminConfigurationPage() {
     set_localRpcUrls(rpcUrls);
   }, [rpcUrls]);
 
+  useEffect(() => {
+    set_localCtNodes(ctNodes);
+  }, [ctNodes]);
+
+  // into the indexer's database; the indexer's reason for refusing shows under the field
+  function saveSettings(settings: Partial<IndexerSettings>, onError: (message: string) => void) {
+    set_saving(true);
+    dispatch(indexerActionsAsync.saveSettingsThunk(settings))
+      .unwrap()
+      .catch((message: string) => onError(`Not saved: ${message}`))
+      .finally(() => set_saving(false));
+  }
+
   function handleSaveSettings() {
     if (localNotificationSettings) {
       dispatch(appActions.setNotificationSettings(localNotificationSettings));
@@ -179,13 +211,13 @@ function AdminConfigurationPage() {
       return;
     }
     set_blokliUrlError(null);
-    dispatch(appActions.setBlokliSettings({ url: formattedUrl }));
+    saveSettings({ blokliUrl: formattedUrl }, set_blokliUrlError);
   }
 
   function handleResetBlokliUrl() {
     set_blokliUrlError(null);
     set_localBlokliUrl(DEFAULT_BLOKLI_URL);
-    dispatch(appActions.setBlokliSettings({ url: DEFAULT_BLOKLI_URL }));
+    saveSettings({ blokliUrl: DEFAULT_BLOKLI_URL }, set_blokliUrlError);
   }
 
   function handleAddRpc() {
@@ -216,14 +248,37 @@ function AdminConfigurationPage() {
   };
 
   function handleSaveRpc() {
-    dispatch(appActions.setRpcSettings({ urls: localRpcUrls }));
+    if (localRpcUrls.length === 0) {
+      set_rpcError('Add at least one RPC');
+      return;
+    }
+    saveSettings({ rpcUrls: localRpcUrls }, set_rpcError);
   }
 
   function handleResetRpc() {
     set_rpcError(null);
     set_localRpcUrls(GNOSIS_RPC_URLS);
-    dispatch(appActions.setRpcSettings({ urls: GNOSIS_RPC_URLS }));
+    saveSettings({ rpcUrls: GNOSIS_RPC_URLS }, set_rpcError);
   }
+
+  function handleAddCtNode() {
+    const address = newCtNode.trim();
+    if (!isAddress(address)) {
+      set_ctError('Not a node address');
+      return;
+    }
+    if (localCtNodes.includes(getAddress(address))) {
+      set_ctError('This node is already in the list');
+      return;
+    }
+    set_ctError(null);
+    set_newCtNode('');
+    set_localCtNodes([...localCtNodes, getAddress(address)]);
+  }
+
+  const readOnlyHint = !editable && (
+    <ReadOnlyHint>Saved by the earnings indexer, which runs in the desktop app and the Docker image.</ReadOnlyHint>
+  );
 
   return (
     <Section
@@ -233,6 +288,7 @@ function AdminConfigurationPage() {
       yellow
     >
       <SubpageTitle title="NODE ADMIN SETTINGS" />
+      <IndexerNotice />
       <Paper
         elevation={0}
         style={{
@@ -285,6 +341,22 @@ function AdminConfigurationPage() {
                     True
                   </div>
                   <div>
+                    Safe received funds: False
+                    <Switch
+                      checked={localNotificationSettings?.safeReceived}
+                      onChange={() => {
+                        if (localNotificationSettings) {
+                          set_localNotificationSettings({
+                            ...localNotificationSettings,
+                            safeReceived: !localNotificationSettings.safeReceived,
+                          });
+                        }
+                      }}
+                      color="primary"
+                    />{' '}
+                    True
+                  </div>
+                  <div>
                     Node Info: False
                     <Switch
                       checked={localNotificationSettings?.nodeInfo}
@@ -320,6 +392,7 @@ function AdminConfigurationPage() {
                 <BlokliContainer>
                   <TextField
                     value={localBlokliUrl}
+                    disabled={!editable}
                     placeholder="https://blokli.example/"
                     onChange={(event) => {
                       set_localBlokliUrl(event.target.value);
@@ -338,25 +411,27 @@ function AdminConfigurationPage() {
                         }
                         set_localBlokliUrl(nodeBlokliUrl);
                         set_blokliUrlError(null);
-                        dispatch(appActions.setBlokliSettings({ url: nodeBlokliUrl }));
+                        saveSettings({ blokliUrl: nodeBlokliUrl }, set_blokliUrlError);
                       }}
-                      disabled={!connected}
+                      disabled={!connected || !editable || saving}
                     >
                       Load url from node
                     </Button>
                     <Button
                       outlined
                       onClick={handleResetBlokliUrl}
+                      disabled={!editable || saving}
                     >
                       Reset to default
                     </Button>
                     <Button
                       onClick={handleSaveBlokliUrl}
-                      disabled={!canSaveBlokliUrl}
+                      disabled={!canSaveBlokliUrl || !editable || saving}
                     >
                       Save
                     </Button>
                   </BlokliButtons>
+                  {readOnlyHint}
                 </BlokliContainer>
               </td>
             </tr>
@@ -370,7 +445,7 @@ function AdminConfigurationPage() {
                     {localRpcUrls.map((url, index) => (
                       <li
                         key={url}
-                        draggable
+                        draggable={editable}
                         className={
                           index === dragRpcIndex
                             ? 'dragging'
@@ -408,6 +483,7 @@ function AdminConfigurationPage() {
                         <IconButton
                           iconComponent={<DeleteIcon />}
                           tooltipText="Remove"
+                          disabled={!editable}
                           onClick={() => set_localRpcUrls(localRpcUrls.filter((_, i) => i !== index))}
                         />
                       </li>
@@ -416,6 +492,7 @@ function AdminConfigurationPage() {
                   <RpcAdd>
                     <TextField
                       value={newRpcUrl}
+                      disabled={!editable}
                       placeholder="https://rpc.example/"
                       onChange={(event) => {
                         set_newRpcUrl(event.target.value);
@@ -428,7 +505,7 @@ function AdminConfigurationPage() {
                     />
                     <Button
                       onClick={handleAddRpc}
-                      disabled={!formattedNewRpcUrl}
+                      disabled={!formattedNewRpcUrl || !editable}
                     >
                       Add
                     </Button>
@@ -443,23 +520,112 @@ function AdminConfigurationPage() {
                     {rpcError ??
                       (rpcBroken
                         ? `${RPC_ERROR}: ${rpcUrls.length ? 'every RPC failed' : 'no RPC'}, spent figures are unknown`
-                        : 'Reads the channel events behind spent. Tried from the top, the next one takes over when one fails.')}
+                        : 'Reads the channel events behind spent and earnings. Tried from the top, the next one takes over when one fails.')}
                   </span>
                   <BlokliButtons>
                     <Button
                       outlined
                       onClick={handleResetRpc}
+                      disabled={!editable || saving}
                     >
                       Reset to default
                     </Button>
                     <Button
                       onClick={handleSaveRpc}
-                      disabled={!canSaveRpcUrls}
+                      disabled={!canSaveRpcUrls || !editable || saving}
                     >
                       Save
                     </Button>
                   </BlokliButtons>
+                  {readOnlyHint}
                 </BlokliContainer>
+              </td>
+            </tr>
+
+            <tr>
+              <th>CT nodes</th>
+              <td>
+                <BlokliContainer>
+                  <RpcList>
+                    {localCtNodes.length === 0 && (
+                      <li className="empty">No CT node, every redeemed ticket counts as traffic</li>
+                    )}
+                    {localCtNodes.map((address, index) => (
+                      <li
+                        key={address}
+                        style={{ cursor: 'default' }}
+                      >
+                        <span className="order">{index + 1}</span>
+                        <span
+                          className="url"
+                          title={address}
+                        >
+                          {address}
+                        </span>
+                        <IconButton
+                          iconComponent={<DeleteIcon />}
+                          tooltipText="Remove"
+                          disabled={!editable}
+                          onClick={() => set_localCtNodes(localCtNodes.filter((_, i) => i !== index))}
+                        />
+                      </li>
+                    ))}
+                  </RpcList>
+                  <RpcAdd>
+                    <TextField
+                      value={newCtNode}
+                      disabled={!editable}
+                      placeholder="0x… node address"
+                      onChange={(event) => {
+                        set_newCtNode(event.target.value);
+                        set_ctError(null);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && newCtNode.trim()) handleAddCtNode();
+                      }}
+                      error={!!ctError}
+                    />
+                    <Button
+                      onClick={handleAddCtNode}
+                      disabled={!newCtNode.trim() || !editable}
+                    >
+                      Add
+                    </Button>
+                  </RpcAdd>
+                  <span
+                    style={{ alignSelf: 'flex-start', fontSize: 12, color: ctError ? 'var(--red)' : 'var(--muted)' }}
+                  >
+                    {ctError ??
+                      'Tickets from the channels of these nodes count as CT earnings on the watchlist, all others as traffic. The default is every node of the CT safe 0x75E7…6C00.'}
+                  </span>
+                  <BlokliButtons>
+                    <Button
+                      outlined
+                      onClick={() => {
+                        set_ctError(null);
+                        set_localCtNodes(CT_NODES);
+                        saveSettings({ ctNodes: CT_NODES }, set_ctError);
+                      }}
+                      disabled={!editable || saving}
+                    >
+                      Reset to default
+                    </Button>
+                    <Button
+                      onClick={() => saveSettings({ ctNodes: localCtNodes }, set_ctError)}
+                      disabled={!canSaveCtNodes || !editable || saving}
+                    >
+                      Save
+                    </Button>
+                  </BlokliButtons>
+                  {readOnlyHint}
+                </BlokliContainer>
+              </td>
+            </tr>
+
+            <tr>
+              <th>Earnings indexer</th>
+              <td>
+                <IndexerStatusLine />
               </td>
             </tr>
           </tbody>

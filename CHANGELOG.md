@@ -1,5 +1,31 @@
 # Changelog
 
+## 5.1.0
+
+Changes since 5.0.4.
+
+### Added
+
+- WATCHLIST: earnings over time under the list of nodes, as stacked bars of CT earnings, traffic earnings above them and what the nodes spent, greyed out blue, on top. The figures above each chart are CT, Traffic, Spent (negative) and Net in wxHOPR; hovering a bar shows them for that bar, Net under a line. Three sections, each hidden and shown with the arrow next to its title like the closed channels tables, with one set of switches on the right of the title for all its charts: ranges of 24h, 7d, 30d, 90d or all, in buckets of 15 minutes, an hour, a day or a week on your own clock. First Earnings of all watched nodes. Then Earnings per safe, a smaller chart for each safe in the watchlist covering all its nodes, and Earnings per node, one for each watched node under its alias and address, A to Z like the table opens (aliases first) whatever the table is sorted by, as many side by side as the screen fits. All are open until hidden; the browser remembers that and the range and bucket picked in each section, so a section opens as it was left. Above the chart of all watched nodes, Indexer status: 63% tells how far the indexer got, refreshed every 5 seconds. While it syncs the charts fill in block by block, and the part of the range not indexed yet is shaded with Syncing in the middle.
+- An earnings indexer in the desktop app and the Docker image behind the chart. It reads every HoprChannels log of the network through the Gnosis RPCs set in the app and keeps every ticket redemption in a SQLite database, so a node added to the watchlist has its whole history at once. The first sync of piz-palu takes about a minute. Its totals match blokli's Earned exactly, its spent the Spent of the node tables. The database carries its versions: an update that changes how it indexes rebuilds the index from the chain in a minute or two and keeps the settings, and a database from a newer version, after a downgrade, is replaced by a new one.
+- SAFE INFO: Earnings of the safe under the cards, the chart of the watchlist for every node of the safe. The Addresses card is no taller than the Network dashboard card next to it, a safe of many nodes scrolls inside it.
+- NODE INFO: Earnings of the node under the cards, the chart of the watchlist for the connected node, full width.
+- SAFE → NODES: Earnings per node under the table, the charts of the watchlist for every node of the safe.
+- NODE ADMIN → CONFIGURATION: CT nodes. Tickets from the channels of these nodes count as CT earnings, all others as traffic; changing the list re-splits the whole history at once. By default these are the 5 nodes of the piz-palu CT safe `0x75E78c4ef91d567F63c5cBD5c5919e7c40436C00`, the only ones paying tickets to some 300 nodes each. And Indexer status: 63%, from the network's first block to its newest, 100% once caught up.
+- Docker: the image runs the indexer next to nginx and keeps its database in `/data`. Run it with `-v hopr-admin-data:/data`; without a volume the UI warns that the settings and the history are lost when the container is recreated. `INDEXER_RPC_URLS`, `INDEXER_BLOKLI_URL` and `INDEXER_CT_NODES` set the first settings of a new database, `INDEXER_ENABLED=false` leaves the indexer out.
+
+### Changed
+
+- The Gnosis RPCs and the Blokli URL are saved in the indexer's database instead of the browser, so in Docker every browser shares them. Your current ones move there the first time you open the app. The browser keeps a copy and puts it back into a database that has never been saved to, e.g. after a container was recreated without a volume.
+- Without an indexer (the web deploys) the app uses the default RPCs and blokli, and their settings can only be changed in the desktop app or the Docker image.
+- The update commands for Docker in the header add the `/data` volume.
+- Two more default Gnosis RPCs, last in the list: `https://gnosis.drpc.org` and `https://rpc.swiftnodes.io/rpc/gnosis`. Their free plans read at most 100 blocks of channel events per request, so they take over block numbers, balances and the newest blocks when the others fail, and the earnings indexer keeps syncing through them in small steps.
+- The "Safe received … wxHopr / xDai" notifications are off by default. Every redeemed ticket raises the safe's balance, so they came all the time. Turn them back on with Safe received funds in NODE ADMIN → CONFIGURATION → Notifications.
+
+### Fixed
+
+- WATCHLIST and SAFE → NODES: the columns keep their width while scrolling. Only the rows on screen were laid out, so a column grew or shrank with the widest cell in view.
+
 ## 5.0.4
 
 Changes since 5.0.3.

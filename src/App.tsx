@@ -8,6 +8,10 @@ import store from './store';
 import { ToastContainer } from 'react-toastify';
 import theme from './theme';
 import packageJson from '../package.json';
+import { indexerActionsAsync } from './store/slices/indexer';
+
+// the RPC, blokli and CT settings live in the earnings indexer, every page waits for them
+store.dispatch(indexerActionsAsync.loadSettingsThunk());
 
 const VersionComponent = styled.div`
   position: fixed;

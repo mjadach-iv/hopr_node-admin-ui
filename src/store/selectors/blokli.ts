@@ -3,7 +3,9 @@ import { formatEther } from 'viem';
 import type { RootState } from '..';
 import type { SafeNodeType, TokenValueType } from '../../blokli/types';
 
-export const selectBlokliUrl = (state: RootState): string | null => state.app.configuration.blokli.url || null;
+// null until the settings are loaded, so nothing is fetched from the default blokli first
+export const selectBlokliUrl = (state: RootState): string | null =>
+  (state.app.configuration.settingsLoaded && state.app.configuration.blokli.url) || null;
 
 // Gnosis RPCs in the order they are tried
 export const selectRpcUrls = (state: RootState): string[] => state.app.configuration.rpc.urls;

@@ -21,6 +21,8 @@ import { BreakdownTooltip, FiguresChip, type WalletItem } from '../../components
 import { AddressLinks, SafeWalletLink } from '../node/info/ui';
 import { SafeNodesModal } from '../../components/Modal/watchlist/SafeNodesModal';
 import { AddToWatchlistModal } from '../../components/Modal/watchlist/AddToWatchlistModal';
+import { WatchlistEarnings } from '../../components/EarningsChart';
+import { IndexerNotice } from '../../components/IndexerNotice';
 
 // Mui
 import Button from '@mui/material/Button';
@@ -381,6 +383,7 @@ function WatchlistPage() {
           </>
         }
       />
+      <IndexerNotice />
       {watchlist.length === 0 ? (
         <Empty>
           <h3>Nothing watched yet</h3>
@@ -408,6 +411,14 @@ function WatchlistPage() {
           }
         />
       )}
+      <WatchlistEarnings
+        nodes={watchlist}
+        // the whole safe, like its row in the table, the watched nodes alone until blokli lists its nodes
+        safes={listedSafes.map((safe) => ({
+          safe,
+          nodes: Array.from(new Set([...(data?.nodesBySafe[safe] ?? []), ...watchedNodesOf(safe)])),
+        }))}
+      />
       <SafeNodesModal
         safeAddress={safeInModal}
         nodes={safeInModal ? added?.nodes ?? data?.nodesBySafe[safeInModal] : undefined}

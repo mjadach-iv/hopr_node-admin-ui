@@ -6,6 +6,8 @@
 node_modules
 build
 dist-electron
+dist-indexer
+.indexer
 release
 *.log
 .env*

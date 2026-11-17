@@ -1,27 +1,11 @@
-import { createPublicClient, fallback, http, toEventSelector, type Hex } from 'viem';
+import { createPublicClient, fallback, http, type Hex } from 'viem';
+import { channelsFirstBlock, TICKET_REDEEMED, unpack } from './channelState';
 
-const TICKET_REDEEMED = toEventSelector('TicketRedeemed(bytes32,bytes32)');
-const BALANCE_MASK = (BigInt(1) << BigInt(96)) - BigInt(1);
-const EPOCH_MASK = (BigInt(1) << BigInt(24)) - BigInt(1);
-const EPOCH_SHIFT = BigInt(176);
 // keeps the OR list of channel ids in one eth_getLogs topic within what public RPCs accept
 const CHANNELS_PER_REQUEST = 200;
 // the largest range the capped public RPCs accept per eth_getLogs (publicnode: 10k without its log index)
 const BLOCKS_PER_WINDOW = BigInt(10_000);
 const WINDOWS_IN_PARALLEL = 5;
-// where the windowed scan starts: the HoprChannels deployments, lowercase
-const CHANNELS_FIRST_BLOCK: Record<string, number> = {
-  '0x75ce59332721e3ae3064cb9652bce35ffce3f8e6': 48530952, // piz-palu-prod
-  '0x3480caf9bc8874f4c7e3fc4a62eab681b643b137': 47638474, // piz-palu-staging
-  '0xced2bbe29c66b40e17eca63214c58506c53f1686': 47637970, // piz-palu-dev
-  '0xe3322b0601a2ff1402801ebb22a2a7be599d9620': 47637970, // piz-palu-dev
-  '0x860f50b24ba6a862736c5045747323e03aa52aa4': 47415377, // jura-prod
-  '0x9ff5bc389a7f8096c9e3a27897c470970f4b595c': 48060435, // jura-staging
-  '0x01be530efb04dc7919d77722e647ce4b5c26a5db': 48060435, // jura-staging
-  '0xd8c91008c68cd87e7c52ea1a2c6f6dc6a5236008': 47415331, // jura-dev
-};
-// before every v5 deployment, for a channels contract missing above
-const HOPR_FIRST_BLOCK = 47_400_000;
 
 type RpcLog = {
   topics: string[];
@@ -29,15 +13,6 @@ type RpcLog = {
   blockNumber: string;
   logIndex: string;
   transactionHash: string;
-};
-
-// every HoprChannels event carries the channel state packed as status | epoch | closureTime | ticketIndex | balance
-const unpack = (data: string) => {
-  const packed = BigInt(data);
-  return {
-    balance: packed & BALANCE_MASK,
-    epoch: (packed >> EPOCH_SHIFT) & EPOCH_MASK,
-  };
 };
 
 /**
@@ -89,11 +64,7 @@ export const getRedeemedPerChannel = async ({
       console.warn('Full range eth_getLogs failed on every RPC, scanning in windows', e);
       const head = await client.getBlockNumber();
       const windows: [bigint, bigint][] = [];
-      for (
-        let from = BigInt(CHANNELS_FIRST_BLOCK[channelsContract.toLowerCase()] ?? HOPR_FIRST_BLOCK);
-        from <= head;
-        from += BLOCKS_PER_WINDOW
-      ) {
+      for (let from = BigInt(channelsFirstBlock(channelsContract)); from <= head; from += BLOCKS_PER_WINDOW) {
         const to = from + BLOCKS_PER_WINDOW - BigInt(1);
         windows.push([from, to < head ? to : head]);
       }

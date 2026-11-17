@@ -2,6 +2,7 @@
 node_modules/
 build/
 dist-electron/
+dist-indexer/
 release/
 public/
 *.min.js

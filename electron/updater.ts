@@ -3,6 +3,7 @@ import log from 'electron-log/main';
 import { autoUpdater } from 'electron-updater';
 import fs from 'node:fs';
 import path from 'node:path';
+import { stopIndexer } from './indexer';
 import { openExternal, RELEASES_URL } from './links';
 import { isAppUrl } from './protocol';
 import { safeAppOrigin } from './safeAppServer';
@@ -50,8 +51,11 @@ const openReleasePage = () => {
 
 const install = () => {
   if (state.status !== 'ready') return;
-  // after the IPC reply, quitAndInstall closes every window
-  setImmediate(() => autoUpdater.quitAndInstall());
+  // after the IPC reply, quitAndInstall closes every window; the indexer database is closed first
+  setImmediate(() => {
+    stopIndexer();
+    autoUpdater.quitAndInstall();
+  });
 };
 
 // a check while one runs or a download is done would only repeat work

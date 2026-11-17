@@ -6,6 +6,7 @@ import { isAddress, getAddress } from 'viem';
 import { buildAliasLinks, saveAliases } from '../../../utils/aliases';
 import { saveWatchlist } from '../../../utils/watchlist';
 import { ChannelsOutgoingType, ChannelsIncomingType } from '../../../store/slices/node/initialState';
+import type { IndexerSettings } from '../../../indexer/types';
 
 // invalid addresses are ignored, kept ones stay in order and new ones go last
 const updateWatchlist = (watchlist: string[], changes: Record<string, boolean>) => {
@@ -39,13 +40,14 @@ const appSlice = createSlice({
         saveStateToLocalStorage('app/configuration/notifications', action.payload);
       }
     },
-    setRpcSettings: (state, action: PayloadAction<typeof initialState.configuration.rpc>) => {
-      state.configuration.rpc = action.payload;
-      saveStateToLocalStorage('app/configuration/rpc', action.payload);
-    },
-    setBlokliSettings: (state, action: PayloadAction<typeof initialState.configuration.blokli>) => {
-      state.configuration.blokli = action.payload;
-      saveStateToLocalStorage('app/configuration/blokli', action.payload);
+    // from the indexer's database, or the defaults when there is no indexer (editable: false)
+    setSettings: (state, action: PayloadAction<IndexerSettings & { editable: boolean }>) => {
+      const { rpcUrls, blokliUrl, ctNodes, editable } = action.payload;
+      state.configuration.rpc = { urls: rpcUrls };
+      state.configuration.blokli = { url: blokliUrl };
+      state.configuration.ctNodes = ctNodes;
+      state.configuration.settingsLoaded = true;
+      state.configuration.settingsEditable = editable;
     },
     // handle aliases
     setAlias: (state, action: PayloadAction<{ peerAddress: string; alias: string }>) => {

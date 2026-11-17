@@ -12,6 +12,8 @@ type SubpageTitleProps = {
   actions?: any;
   // sits right next to the title instead of in the actions on the right
   titleAction?: ReactNode;
+  // on the right, before the actions, without their box, e.g. toggle buttons that have their own
+  controls?: ReactNode;
 };
 
 const Content = styled.div`
@@ -106,7 +108,14 @@ const SIconButton = styled(IconButton)`
   }
 `;
 
-export const SubpageTitle = ({ title, reloading, refreshFunction, actions, titleAction }: SubpageTitleProps) => {
+export const SubpageTitle = ({
+  title,
+  reloading,
+  refreshFunction,
+  actions,
+  titleAction,
+  controls,
+}: SubpageTitleProps) => {
   const [reloadingLocal, set_reloadingLocal] = useState(false);
 
   return (
@@ -116,6 +125,7 @@ export const SubpageTitle = ({ title, reloading, refreshFunction, actions, title
         {titleAction}
       </div>
       <div className="right">
+        {controls}
         {actions && <div className="actions">{actions}</div>}
         {refreshFunction && (
           <Tooltip title="Refresh">

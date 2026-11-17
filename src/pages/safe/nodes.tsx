@@ -9,6 +9,7 @@ import { safeAppLink } from '../../utils/safeApp';
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
 import { NodesTable } from '../../components/NodesTable';
+import { NodesEarnings } from '../../components/EarningsChart';
 import IconButton from '../../future-hopr-lib-components/Button/IconButton';
 
 // Mui
@@ -84,6 +85,10 @@ function SafeNodesPage() {
         nodes={safeNodes.data ?? []}
         stats={dashboardNodes.data}
         loading={safeNodes.data === null && safeNodes.isFetching}
+      />
+      <NodesEarnings
+        nodes={safeNodeAddressesKey ? safeNodeAddressesKey.split(',') : []}
+        id="safe-nodes"
       />
     </Section>
   );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWatcher } from '../../hooks';
+import { useIndexerSync } from '../../hooks/useIndexerSync';
 
 // Mui
 import MuiIconButton from '@mui/material/IconButton';
@@ -87,6 +88,7 @@ const SMenuItem = styled(MenuItem)`
 export default function NotificationBar() {
   // start watching notifications
   useWatcher({});
+  useIndexerSync();
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
