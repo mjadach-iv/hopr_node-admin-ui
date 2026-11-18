@@ -12,7 +12,7 @@ docker run -d --pull always --name hopr-node-admin-ui -p 4677:4677 -v hopr-admin
 
 Open http://localhost:4677 and connect to your node with its API endpoint and token.
 
-The volume at `/data` holds the earnings indexer's database: the earnings history of the network and the RPC, blokli and CT node settings. Without it they are lost whenever the container is recreated, and the UI warns about it.
+The volume at `/data` holds the earnings indexer's database: the earnings history of the network and the RPC, blokli and CT node settings. Without it they are lost whenever the container is recreated, and the indexer warns about it in the container log.
 
 The UI runs in your browser and calls the node's API directly. The API must be reachable from the browser, not just from the container.
 

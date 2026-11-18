@@ -20,7 +20,7 @@ import { RPC_ERROR, GNOSIS_RPC_URLS, DEFAULT_BLOKLI_URL, CT_NODES } from '../../
 import { getAddress, isAddress } from 'viem';
 import { indexerActionsAsync } from '../../store/slices/indexer';
 import type { IndexerSettings } from '../../indexer/types';
-import { IndexerNotice, IndexerStatusLine } from '../../components/IndexerNotice';
+import { IndexerStatusLine } from '../../components/IndexerNotice';
 
 const NotificationsContainer = styled.div`
   display: flex;
@@ -288,7 +288,6 @@ function AdminConfigurationPage() {
       yellow
     >
       <SubpageTitle title="NODE ADMIN SETTINGS" />
-      <IndexerNotice />
       <Paper
         elevation={0}
         style={{

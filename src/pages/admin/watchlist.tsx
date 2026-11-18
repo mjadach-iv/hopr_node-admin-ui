@@ -22,7 +22,6 @@ import { AddressLinks, SafeWalletLink } from '../node/info/ui';
 import { SafeNodesModal } from '../../components/Modal/watchlist/SafeNodesModal';
 import { AddToWatchlistModal } from '../../components/Modal/watchlist/AddToWatchlistModal';
 import { WatchlistEarnings } from '../../components/EarningsChart';
-import { IndexerNotice } from '../../components/IndexerNotice';
 
 // Mui
 import Button from '@mui/material/Button';
@@ -383,7 +382,6 @@ function WatchlistPage() {
           </>
         }
       />
-      <IndexerNotice />
       {watchlist.length === 0 ? (
         <Empty>
           <h3>Nothing watched yet</h3>

@@ -1,5 +1,13 @@
 # Changelog
 
+## 5.1.1
+
+Changes since 5.1.0.
+
+### Changed
+
+- No warning on WATCHLIST and NODE ADMIN → CONFIGURATION about a Docker container without a volume at `/data`. The indexer still warns about it in the container log when it starts.
+
 ## 5.1.0
 
 Changes since 5.0.4.
