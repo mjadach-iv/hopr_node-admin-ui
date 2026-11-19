@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { encodeFunctionData, getAddress, isAddress, type Address } from 'viem';
 import { findHoprModule, isNode, MODULE_ABI } from './module';
-import { isReady, Page, SafeAppGate, sdk, useSafeInfo } from './shared';
+import { isReady, Page, SafeAppGate, SafeName, sdk, useSafeInfo } from './shared';
 
 // HOPR Components
 import Button from '../../future-hopr-lib-components/Button';
@@ -106,7 +106,7 @@ function SafeAppAddNodePage() {
 
   return (
     <Page>
-      <span className="safe">{safe.safeAddress}</span>
+      <SafeName address={safe.safeAddress} />
       <h1>Add a node</h1>
       <AddressField
         value={nodeInput}

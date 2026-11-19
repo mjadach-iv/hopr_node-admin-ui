@@ -10,6 +10,7 @@ import { selectBlokliUrl, selectSafeFunds, sumSafeNodes } from '../../store/sele
 import { utils as dashboardUtils, api as dashboardApi } from '../../networkDashboard';
 import type { NodeStatsType } from '../../networkDashboard';
 import { shortenAddress } from '../../utils/amount';
+import { aliasOf } from '../../utils/aliases';
 import { LOW_ALLOWANCE, safeAppLink } from '../../utils/safeApp';
 
 // HOPR Components
@@ -292,7 +293,7 @@ function SafeInfoPage() {
           maxHeight={dashboardHeight && Math.max(dashboardHeight, ADDRESSES_MIN_HEIGHT)}
         >
           <KV
-            label="Safe"
+            label={aliasOf(aliases, safeAddress) ?? 'Safe'}
             tip="Your safe's Ethereum address"
             mono
             title={safeAddress ?? ''}

@@ -1,5 +1,21 @@
 # Changelog
 
+## 5.1.2
+
+Changes since 5.1.1.
+
+### Added
+
+- Earnings charts open on their own in a popup: click any chart, full width with switches of its own for range and bucket, which the browser remembers. On WATCHLIST a click on the name of a safe or a node in the table opens its chart there too.
+- Aliases for safes. WATCHLIST has the alias button in each safe's row, next to its nodes button. A safe's alias shows in its row, over its chart in Earnings per safe, in the Safe nodes dialog, on the Addresses cards of SAFE INFO and NODE INFO, and in the Safe Apps. ALIASES has a Type column, Node or Safe; a safe has no ping, channel, session or watch box.
+- The desktop app and the Docker image ship a snapshot of the piz-palu index up to 18 November 2026, 23:00 CET (block 49349715), so a new database only reads the blocks since from the chain. An index of the same channels contract that is further behind is brought up to it too, its settings and watched nodes stay.
+
+### Changed
+
+- Each bar of the earnings charts is as tall as its net: CT, traffic and spent share it in proportion to their figures. A bucket where the nodes spent more than they earned hangs below the axis in red as the loss, and Net in its tooltip and in the figures above the chart gets a red swatch. Tickets that cancel out but leave a few wei, e.g. 2 of 5 wxHOPR against 4 of 2.5, count as 0 and no loss.
+- Aliases may contain spaces, only those around them are dropped, and an imported CSV keeps them instead of turning them into underscores. The alias dialog asks for the alias first, then the node or safe address.
+- The copy button next to an address says Copy address.
+
 ## 5.1.1
 
 Changes since 5.1.0.

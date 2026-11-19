@@ -67,7 +67,16 @@ const interpolate = (anchors: Map<number, number>) => {
  * block and keeps the decoded ticket redemptions, so any node's earnings are known the moment it
  * is watched. Each window is committed with the cursor in one transaction and resumed from there.
  */
-export const createSync = ({ db, log }: { db: IndexerDb; log: Log }) => {
+export const createSync = ({
+  db,
+  log,
+  untilBlock,
+}: {
+  db: IndexerDb;
+  log: Log;
+  // stops there instead of at the finalized block, for a snapshot up to a given time
+  untilBlock?: number;
+}) => {
   let stopped = false;
   let running: Promise<void> | null = null;
   let wakeUp: (() => void) | null = null;
@@ -255,12 +264,13 @@ export const createSync = ({ db, log }: { db: IndexerDb; log: Log }) => {
     const finalized = Number(finalizedBlock.number);
     state.finalized = finalized;
     state.latest = Number(latest);
-    if (meta.cursor >= finalized) return false;
+    const target = untilBlock === undefined ? finalized : Math.min(finalized, untilBlock);
+    if (meta.cursor >= target) return false;
     state.phase = 'syncing';
 
     const windows: [number, number][] = [];
-    for (let from = meta.cursor + 1; windows.length < WINDOWS_IN_PARALLEL && from <= finalized; ) {
-      const to = Math.min(from + windowSize - 1, finalized);
+    for (let from = meta.cursor + 1; windows.length < WINDOWS_IN_PARALLEL && from <= target; ) {
+      const to = Math.min(from + windowSize - 1, target);
       windows.push([from, to]);
       from = to + 1;
     }

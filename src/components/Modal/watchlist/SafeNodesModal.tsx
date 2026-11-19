@@ -18,6 +18,15 @@ const Safe = styled.div`
   font-size: 12.5px;
   color: var(--text-2);
   overflow-wrap: anywhere;
+  .alias {
+    margin-right: 6px;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .alias + .address {
+    color: var(--muted);
+  }
 `;
 
 const ROW_HEIGHT = 32;
@@ -78,6 +87,7 @@ type SafeNodesModalProps = {
 export const SafeNodesModal = (props: SafeNodesModalProps) => {
   const dispatch = useAppDispatch();
   const watchlist = useAppSelector((store) => store.app.watchlist);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const [selected, set_selected] = useState<Set<string>>(new Set());
   // snapshot taken on open, so the list stays put while the dialog fades out
   const [shown, set_shown] = useState<Pick<SafeNodesModalProps, 'safeAddress' | 'nodes'> & { all: string[] }>({
@@ -132,7 +142,12 @@ export const SafeNodesModal = (props: SafeNodesModalProps) => {
         </SIconButton>
       </TopBar>
       <SDialogContent>
-        <Safe>{shown.safeAddress}</Safe>
+        <Safe>
+          {shown.safeAddress && aliases[shown.safeAddress] && (
+            <span className="alias">{aliases[shown.safeAddress]}</span>
+          )}
+          <span className="address">{shown.safeAddress}</span>
+        </Safe>
         {shown.nodes === undefined ? (
           <Hint>Blokli did not answer for this safe, only the watched nodes are listed.</Hint>
         ) : shown.nodes.length === 0 ? (

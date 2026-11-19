@@ -1,0 +1,10 @@
+{
+  "indexVersion": 1,
+  "network": "piz-palu-prod",
+  "channelsContract": "0x75ce59332721e3ae3064cb9652bce35ffce3f8e6",
+  "startBlock": 48530952,
+  "cursor": 49349715,
+  "cursorTs": 1795039200,
+  "createdAt": 1795046280,
+  "redemptions": 53512
+}

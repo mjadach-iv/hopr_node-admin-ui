@@ -1,6 +1,6 @@
 {
   "name": "node-admin-ui",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "productName": "HOPR Node Admin",
   "private": true,
   "description": "Admin UI for HOPR nodes, as a web app and a desktop app",
@@ -22,6 +22,7 @@
     "build": "tsc && tsc -p indexer/tsconfig.json && vite build && pnpm build:indexer",
     "build:indexer": "vite build --config indexer/vite.config.ts",
     "indexer:dev": "pnpm build:indexer && INDEXER_DB=.indexer/indexer.sqlite node dist-indexer/server.cjs",
+    "indexer:snapshot": "pnpm build:indexer && node dist-indexer/make-snapshot.cjs",
     "test": "echo \"Error: no test specified\" && exit 0",
     "serve": "vite preview --port 3000",
     "format": "prettier --write src/ electron/ indexer/ .github/ *.ts *.json *.yml *.md",

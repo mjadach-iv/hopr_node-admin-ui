@@ -112,6 +112,8 @@ type NodesTableProps = {
   ) => { label: JSX.Element; balance?: JSX.Element; actions?: JSX.Element; sumOver?: SafeNodeType[] | null };
   // in the middle of the line with the search
   toolbarCenter?: ReactNode;
+  // what a click on a node's alias and address does, e.g. open its earnings chart
+  nodeOpener?: (nodeAddress: string) => (() => void) | undefined;
 };
 
 /**
@@ -152,6 +154,7 @@ export const NodesTable = (props: NodesTableProps) => {
         <PeersInfo
           peerAddress={nodeAddress}
           shortAddress
+          onClick={props.nodeOpener?.(nodeAddress)}
         />
       ),
       peerAddress: nodeAddress,

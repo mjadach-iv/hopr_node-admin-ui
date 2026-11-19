@@ -6,7 +6,7 @@ import { watchlistActionsAsync } from '../../store/slices/watchlist';
 import { appActions } from '../../store/slices/app';
 import { formatEther } from 'viem';
 import type { SafeChannelStatsType, SafeNodeType } from '../../blokli';
-import { shrinkNumber } from '../../utils/amount';
+import { shortenAddress, shrinkNumber } from '../../utils/amount';
 import { exportToCsv } from '../../utils/helpers';
 import { parseWatchlistFile } from '../../utils/watchlist';
 import { sendNotification } from '../../hooks/useWatcher/notifications';
@@ -16,12 +16,14 @@ import { useVisibleInterval } from '../../hooks/usePageVisible';
 import Section from '../../future-hopr-lib-components/Section';
 import { SubpageTitle } from '../../components/SubpageTitle';
 import IconButton from '../../future-hopr-lib-components/Button/IconButton';
+import Tooltip from '../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
 import { NodesTable } from '../../components/NodesTable';
 import { BreakdownTooltip, FiguresChip, type WalletItem } from '../../components/InfoBar';
 import { AddressLinks, SafeWalletLink } from '../node/info/ui';
 import { SafeNodesModal } from '../../components/Modal/watchlist/SafeNodesModal';
 import { AddToWatchlistModal } from '../../components/Modal/watchlist/AddToWatchlistModal';
-import { WatchlistEarnings } from '../../components/EarningsChart';
+import { CreateAliasModal } from '../../components/Modal/node/AddAliasModal';
+import { nodeChartTitle, safeChartTitle, useEarningsPopup, WatchlistEarnings } from '../../components/EarningsChart';
 
 // Mui
 import Button from '@mui/material/Button';
@@ -84,10 +86,32 @@ const GroupHeader = styled.div`
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
+  .name {
+    min-width: 0;
+    &.opens {
+      cursor: pointer;
+      &:hover .alias,
+      &:hover .address {
+        text-decoration: underline;
+      }
+    }
+  }
+  .named {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .alias {
+    font-weight: 600;
+    color: var(--text);
+  }
   .address {
     font-family: var(--font-mono);
     font-size: 12.5px;
     color: var(--text);
+  }
+  .alias + .address {
+    color: var(--muted);
   }
   .links {
     display: inline-flex;
@@ -168,6 +192,7 @@ const noFigures = (nodeAddress: string): SafeNodeType => ({
 function WatchlistPage() {
   const dispatch = useAppDispatch();
   const watchlist = useAppSelector((store) => store.app.watchlist);
+  const aliases = useAppSelector((store) => store.app.aliases);
   const blokliUrl = useAppSelector(selectBlokliUrl);
   const rpcUrls = useAppSelector((store) => store.app.configuration.rpc.urls);
   const connected = useAppSelector((store) => store.auth.status.connected);
@@ -240,6 +265,15 @@ function WatchlistPage() {
   };
 
   const watchedNodesOf = (safeAddress: string) => watchlist.filter((address) => safeOf(address) === safeAddress);
+  // the whole safe, like its row in the table, the watched nodes alone until blokli lists its nodes
+  const chartNodesOf = (safeAddress: string) =>
+    Array.from(new Set([...(data?.nodesBySafe[safeAddress] ?? []), ...watchedNodesOf(safeAddress)]));
+  // a click on a node's or safe's name opens its earnings chart
+  const chartPopup = useEarningsPopup();
+  const openSafeChart = (safeAddress: string) => {
+    const nodes = chartNodesOf(safeAddress);
+    return chartPopup.opener(safeChartTitle(safeAddress, aliases[safeAddress], nodes.length), nodes);
+  };
 
   // Total and Net of every safe in the list, each safe whole as its group row sums it; '-' until all are known
   const listedSafes = Array.from(new Set(watchlist.map(safeOf).filter((safe): safe is string => !!safe)));
@@ -296,6 +330,7 @@ function WatchlistPage() {
     const safeNodes = data?.nodesBySafe[groupId];
     const watched = watchedNodes.length;
     const all = safeNodes?.length;
+    const openChart = openSafeChart(groupId);
     return {
       label: (
         <GroupHeader>
@@ -303,7 +338,22 @@ function WatchlistPage() {
             <span className="links">
               <SafeWalletLink safeAddress={groupId} />
             </span>
-            <span className="address">{groupId}</span>
+            <span
+              className={openChart ? 'name opens' : 'name'}
+              onClick={openChart}
+            >
+              {aliases[groupId] ? (
+                // shortened in the middle under an alias, like the node rows
+                <Tooltip title={groupId}>
+                  <span className="named">
+                    <span className="alias">{aliases[groupId]}</span>
+                    <span className="address">{shortenAddress(groupId)}</span>
+                  </span>
+                </Tooltip>
+              ) : (
+                <span className="address">{groupId}</span>
+              )}
+            </span>
           </span>
           <span className="links">
             <AddressLinks address={groupId} />
@@ -312,14 +362,17 @@ function WatchlistPage() {
       ),
       balance: <SafeBalance funds={data?.safeFunds[groupId]} />,
       actions: (
-        <NodesButton
-          size="small"
-          startIcon={<DnsIcon />}
-          onClick={() => set_safeInModal(groupId)}
-          title="Pick the nodes of this safe to watch"
-        >
-          {all === undefined ? `${watched} ${watched === 1 ? 'node' : 'nodes'}` : `${watched}/${all} nodes`}
-        </NodesButton>
+        <>
+          <CreateAliasModal address={groupId} />
+          <NodesButton
+            size="small"
+            startIcon={<DnsIcon />}
+            onClick={() => set_safeInModal(groupId)}
+            title="Pick the nodes of this safe to watch"
+          >
+            {all === undefined ? `${watched} ${watched === 1 ? 'node' : 'nodes'}` : `${watched}/${all} nodes`}
+          </NodesButton>
+        </>
       ),
       // the whole safe, watched or not, unknown while blokli did not list its nodes
       sumOver: safeNodes
@@ -399,6 +452,7 @@ function WatchlistPage() {
           removable
           groupOf={groupOf}
           renderGroupHeader={renderGroupHeader}
+          nodeOpener={(address) => chartPopup.opener(nodeChartTitle(address, aliases[address]), [address])}
           toolbarCenter={
             listedSafes.length > 0 && (
               <FiguresChip
@@ -411,12 +465,9 @@ function WatchlistPage() {
       )}
       <WatchlistEarnings
         nodes={watchlist}
-        // the whole safe, like its row in the table, the watched nodes alone until blokli lists its nodes
-        safes={listedSafes.map((safe) => ({
-          safe,
-          nodes: Array.from(new Set([...(data?.nodesBySafe[safe] ?? []), ...watchedNodesOf(safe)])),
-        }))}
+        safes={listedSafes.map((safe) => ({ safe, nodes: chartNodesOf(safe) }))}
       />
+      {chartPopup.popup}
       <SafeNodesModal
         safeAddress={safeInModal}
         nodes={safeInModal ? added?.nodes ?? data?.nodesBySafe[safeInModal] : undefined}

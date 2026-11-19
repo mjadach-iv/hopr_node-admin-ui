@@ -5,7 +5,7 @@ import { selectBlokliUrl } from '../../store/selectors/blokli';
 import { api as blokliApi } from '../../blokli';
 import { shortenAddress } from '../../utils/amount';
 import { findHoprModule, getModuleNodes, MODULE_ABI, REGISTRY_ABI, type ModuleNodeType } from './module';
-import { isReady, Page, SafeAppGate, sdk, useSafeInfo } from './shared';
+import { isReady, Page, SafeAppGate, SafeName, sdk, useSafeInfo } from './shared';
 
 // HOPR Components
 import Button from '../../future-hopr-lib-components/Button';
@@ -103,7 +103,7 @@ function SafeAppRemoveNodePage() {
 
   return (
     <Page>
-      <span className="safe">{safe.safeAddress}</span>
+      <SafeName address={safe.safeAddress} />
       <h1>Remove a node</h1>
       <Select
         label="Node"

@@ -3,6 +3,7 @@ import { CT_NODES, DEFAULT_BLOKLI_URL, GNOSIS_RPC_URLS } from '../config';
 import type { EarningsResponse, IndexerSettings, IndexerSettingsResponse, IndexerStatus } from '../src/indexer/types';
 import { openDb } from './db';
 import { aggregate, isBucketSize, isTimeZone } from './earnings';
+import { restoreSnapshot } from './snapshot';
 import { createSync, type Log } from './sync';
 
 export { createHttpListener } from './http';
@@ -83,6 +84,8 @@ export const createIndexer = ({
   dbPath,
   persistent,
   seed = {},
+  snapshotDir = __dirname,
+  untilBlock,
   log = console,
 }: {
   dbPath: string;
@@ -90,12 +93,18 @@ export const createIndexer = ({
   persistent: boolean;
   // overrides the built-in defaults for settings the database does not hold yet
   seed?: Partial<IndexerSettings>;
+  // where the snapshot of the index is (snapshot.ts), next to the bundle the build copied it to; null
+  // starts from the chain
+  snapshotDir?: string | null;
+  // the sync stops there instead of at the finalized block (make-snapshot.ts)
+  untilBlock?: number;
   log?: Log;
 }) => {
   const defaults: IndexerSettings = { ...DEFAULT_SETTINGS, ...seed };
   const db = openDb(dbPath, defaults);
   if (db.replaced) log.warn(`[indexer] ${dbPath} was written by a newer version of the app, started a new one`);
-  const sync = createSync({ db, log });
+  if (snapshotDir !== null) restoreSnapshot({ db, dir: snapshotDir, tmpPath: `${dbPath}.snapshot`, log });
+  const sync = createSync({ db, log, untilBlock });
   let closed = false;
 
   const settingsResponse = (): IndexerSettingsResponse => ({

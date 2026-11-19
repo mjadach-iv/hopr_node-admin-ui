@@ -51,7 +51,9 @@ const appSlice = createSlice({
     },
     // handle aliases
     setAlias: (state, action: PayloadAction<{ peerAddress: string; alias: string }>) => {
-      const { peerAddress, alias } = action.payload;
+      const { peerAddress } = action.payload;
+      // spaces are fine inside an alias, not around it
+      const alias = action.payload.alias?.trim();
       if (!peerAddress || !alias || !isAddress(peerAddress)) return;
       state.aliases[getAddress(peerAddress)] = alias;
       saveAliases(state.aliases);

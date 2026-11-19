@@ -41,6 +41,10 @@ export function loadAliases(): AliasMap {
   return (loadStateFromLocalStorage(ALIASES_KEY) as AliasMap | null) ?? {};
 }
 
+/** The alias of a node or safe, whatever the case of the address; the map is keyed by checksummed ones. */
+export const aliasOf = (aliases: AliasMap, address?: string | null) =>
+  address && isAddress(address) ? aliases[getAddress(address)] : undefined;
+
 /**
  * Row fields a Node column sorts by, as `sortKey: 'nodeSort', sortRank: 'nodeRank'`: nodes with
  * an alias first in both directions, by alias, then the rest by address.

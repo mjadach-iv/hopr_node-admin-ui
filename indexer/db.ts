@@ -23,7 +23,7 @@ const MIGRATIONS = [
 // bump when the index tables or the decoding change, it re-syncs the index and keeps the user data
 export const INDEX_VERSION = 1;
 
-const INDEX_TABLES = ['channels', 'redemptions', 'block_anchors'];
+export const INDEX_TABLES = ['channels', 'redemptions', 'block_anchors'];
 // meta keys that belong to the index
 const INDEX_META = ['index_version', 'channels_contract', 'network', 'start_block', 'cursor'];
 
@@ -139,13 +139,14 @@ export const openDb = (path: string, seed: IndexerSettings) => {
     return value === null ? null : Number(value);
   };
 
-  const resetIndex = () =>
-    transaction(() => {
-      INDEX_TABLES.forEach((table) => db.exec(`DROP TABLE IF EXISTS ${table}`));
-      db.exec(INDEX_SCHEMA);
-      INDEX_META.forEach((key) => db.prepare('DELETE FROM meta WHERE key = ?').run(key));
-      setMeta('index_version', INDEX_VERSION);
-    });
+  // inside a transaction
+  const recreateIndex = () => {
+    INDEX_TABLES.forEach((table) => db.exec(`DROP TABLE IF EXISTS ${table}`));
+    db.exec(INDEX_SCHEMA);
+    INDEX_META.forEach((key) => db.prepare('DELETE FROM meta WHERE key = ?').run(key));
+    setMeta('index_version', INDEX_VERSION);
+  };
+  const resetIndex = () => transaction(recreateIndex);
 
   if (!getMeta('db_id')) setMeta('db_id', randomUUID());
   if (numberMeta('index_version') !== INDEX_VERSION) resetIndex();
@@ -236,6 +237,30 @@ export const openDb = (path: string, seed: IndexerSettings) => {
         setMeta('start_block', startBlock);
         setMeta('cursor', startBlock - 1);
       });
+    },
+    // the index tables of a snapshot file (snapshot.ts) instead of this one's, the user data stays
+    restoreIndex: (
+      file: string,
+      {
+        channelsContract,
+        network,
+        startBlock,
+        cursor,
+      }: { channelsContract: string; network: string; startBlock: number; cursor: number },
+    ) => {
+      db.prepare('ATTACH DATABASE ? AS snapshot').run(file);
+      try {
+        transaction(() => {
+          recreateIndex();
+          INDEX_TABLES.forEach((table) => db.exec(`INSERT INTO ${table} SELECT * FROM snapshot.${table}`));
+          setMeta('channels_contract', channelsContract);
+          setMeta('network', network);
+          setMeta('start_block', startBlock);
+          setMeta('cursor', cursor);
+        });
+      } finally {
+        db.exec('DETACH DATABASE snapshot');
+      }
     },
     setNetwork: (network: string) => setMeta('network', network),
     // where the stored channels contract came from, so it is kept while that blokli is down

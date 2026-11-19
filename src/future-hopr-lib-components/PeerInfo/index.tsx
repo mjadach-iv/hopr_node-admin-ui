@@ -18,6 +18,8 @@ interface Props {
   peerAddress?: string;
   // 0x12345...abcde with the full address in a tooltip
   shortAddress?: boolean;
+  // a click on the alias and address, e.g. to open the node's earnings chart
+  onClick?: () => void;
 }
 
 const Container = styled.div`
@@ -36,6 +38,12 @@ const Container = styled.div`
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    &.opens {
+      cursor: pointer;
+      &:hover > span {
+        text-decoration: underline;
+      }
+    }
   }
   .alias {
     font-weight: 600;
@@ -62,7 +70,7 @@ const Container = styled.div`
 `;
 
 const PeersInfo: React.FC<Props> = (props) => {
-  const { peerAddress, shortAddress, ...rest } = props;
+  const { peerAddress, shortAddress, onClick, ...rest } = props;
   const aliases = useAppSelector((store) => store.app.aliases);
 
   const icon = peerAddress && generateBase64Jazz(peerAddress);
@@ -75,7 +83,10 @@ const PeersInfo: React.FC<Props> = (props) => {
         data-src={peerAddress}
       />
       <Tooltip title={peerAddress}>
-        <span className="label">
+        <span
+          className={onClick ? 'label opens' : 'label'}
+          onClick={onClick}
+        >
           {peerAddress && aliases?.[peerAddress] && <span className="alias">{aliases[peerAddress]}</span>}
           <span className="address">{peerAddress && (shortAddress ? shortenAddress(peerAddress) : peerAddress)}</span>
         </span>
@@ -84,7 +95,7 @@ const PeersInfo: React.FC<Props> = (props) => {
         {clipboardAvailable && (
           <SmallActionButton
             onClick={() => navigator.clipboard.writeText(peerAddress as string)}
-            tooltip={'Copy Node Address'}
+            tooltip={'Copy address'}
           >
             <CopyIcon />
           </SmallActionButton>

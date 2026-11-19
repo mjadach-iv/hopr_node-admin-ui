@@ -17,6 +17,7 @@ import { SubpageTitle } from '../../../components/SubpageTitle';
 import { EarningsSection } from '../../../components/EarningsChart';
 import WithdrawModal from '../../../components/Modal/node/WithdrawModal';
 import { shortenAddress } from '../../../utils/amount';
+import { aliasOf } from '../../../utils/aliases';
 import { useHoprdUpdate } from '../../../hooks/useHoprdUpdate';
 import IconButton from '../../../future-hopr-lib-components/Button/IconButton';
 import Tooltip from '../../../future-hopr-lib-components/Tooltip/tooltip-fixed-width';
@@ -411,7 +412,7 @@ function InfoPage() {
             {addresses?.native ? shortenAddress(addresses.native) : '-'}
           </KV>
           <KV
-            label="Safe"
+            label={aliasOf(aliases, info?.hoprNodeSafe) ?? 'Safe'}
             tip="Your safe's Ethereum address"
             mono
             title={info?.hoprNodeSafe ?? ''}

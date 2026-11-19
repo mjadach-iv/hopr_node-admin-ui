@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import SafeAppsSDK, { type SafeInfoExtended } from '@safe-global/safe-apps-sdk';
 import { getAddress, isAddress } from 'viem';
+import { useAppSelector } from '../../store';
+import { aliasOf } from '../../utils/aliases';
 import { safeAppLink, type SafeAppName } from '../../utils/safeApp';
 
 // HOPR Components
@@ -35,6 +37,17 @@ export const useSafeInfo = () => {
 export const isReady = (safe: SafeInfoExtended | null | undefined): safe is SafeInfoExtended =>
   !!safe && safe.chainId === GNOSIS_CHAIN_ID;
 
+/** The safe the app runs in, its alias in front like a node's. */
+export const SafeName = ({ address }: { address: string }) => {
+  const alias = useAppSelector((store) => aliasOf(store.app.aliases, address));
+  return (
+    <span className="safe">
+      {alias && <span className="alias">{alias}</span>}
+      {address}
+    </span>
+  );
+};
+
 export const Page = styled.div`
   min-height: 100vh;
   box-sizing: border-box;
@@ -58,6 +71,12 @@ export const Page = styled.div`
     font-size: 12.5px;
     color: var(--muted);
     overflow-wrap: anywhere;
+    .alias {
+      margin-right: 6px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      color: var(--text);
+    }
   }
   .hint {
     margin: 0;

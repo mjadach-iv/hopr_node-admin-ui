@@ -5,7 +5,7 @@ import { useAppSelector } from '../../store';
 import { selectBlokliUrl } from '../../store/selectors/blokli';
 import { api as blokliApi, type SafeAllowanceType } from '../../blokli';
 import { short } from '../node/info/ui';
-import { isReady, Page, SafeAppGate, sdk, useSafeInfo } from './shared';
+import { isReady, Page, SafeAppGate, SafeName, sdk, useSafeInfo } from './shared';
 
 // HOPR Components
 import Button from '../../future-hopr-lib-components/Button';
@@ -144,7 +144,7 @@ function SafeAppAllowancePage() {
 
   return (
     <Page>
-      <span className="safe">{safe.safeAddress}</span>
+      <SafeName address={safe.safeAddress} />
       <h1>Set the allowance to</h1>
       <AmountField
         value={groupDigits(amount)}

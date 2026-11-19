@@ -33,13 +33,11 @@ export const CreateAliasModal = (props: CreateAliasModalProps) => {
 
   const aliasesArr = aliases ? Object.keys(aliases) : [];
   const aliaspeerAddresssArr = aliases ? Object.values(aliases) : [];
-  const aliasIncludesASpace = alias.includes(' ');
   const canAddAlias = !(
-    alias.length === 0 ||
+    alias.trim().length === 0 ||
     address.length === 0 ||
     duplicateAlias ||
     duplicateAddress ||
-    aliasIncludesASpace ||
     !isAddressValid
   );
 
@@ -136,33 +134,26 @@ export const CreateAliasModal = (props: CreateAliasModalProps) => {
         <SDialogContent>
           <TextField
             type="text"
-            name="address"
-            label="Node address"
-            placeholder="0x154a...d6D9E7f3"
-            onChange={handleChangeAddress}
-            value={address}
-            error={duplicateAddress}
-            helperText={duplicateAddress ? 'This Peer Id already has an alias!' : ''}
-            style={{ minHeight: '79px' }}
-            autoFocus={address === ''}
-          />
-          <TextField
-            type="text"
             name="alias"
             label="Alias"
             placeholder="Alias"
             onChange={handleChangeAlias}
             value={alias}
-            error={duplicateAlias || alias.includes(' ')}
-            helperText={
-              duplicateAlias
-                ? 'This is a duplicate alias!'
-                : aliasIncludesASpace
-                ? "An alias can't include a space"
-                : ''
-            }
+            error={duplicateAlias}
+            helperText={duplicateAlias ? 'This is a duplicate alias!' : ''}
             style={{ minHeight: '79px' }}
-            autoFocus={address !== ''}
+            autoFocus
+          />
+          <TextField
+            type="text"
+            name="address"
+            label="Node or safe address"
+            placeholder="0x154a...d6D9E7f3"
+            onChange={handleChangeAddress}
+            value={address}
+            error={duplicateAddress}
+            helperText={duplicateAddress ? 'This address already has an alias!' : ''}
+            style={{ minHeight: '79px' }}
           />
         </SDialogContent>
         <DialogActions>

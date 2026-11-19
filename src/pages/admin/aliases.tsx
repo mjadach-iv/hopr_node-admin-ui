@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { appActions } from '../../store/slices/app';
 import { exportToCsv } from '../../utils/helpers';
+import { getAddress, isAddress } from 'viem';
 
 // HOPR Components
 import Section from '../../future-hopr-lib-components/Section';
@@ -32,6 +33,17 @@ function AliasesPage() {
   const peersObject = useAppSelector((store) => store.node.peersConnected.parsed.obj);
   const mypeerAddress = useAppSelector((store) => store.node.addresses.data.native);
   const peerAddressToOutgoingChannelLink = useAppSelector((store) => store.node.links.peerAddressToOutgoingChannel);
+  // the safes the app knows of: the connected node's and those of the watchlist. Pinging, channels,
+  // sessions and watching are for nodes only
+  const nodeSafe = useAppSelector((store) => store.node.info.data?.hoprNodeSafe);
+  const watchlistData = useAppSelector((store) => store.watchlist.data);
+  const safes = new Set<string>(
+    [
+      nodeSafe,
+      ...Object.keys(watchlistData?.nodesBySafe ?? {}),
+      ...Object.values(watchlistData?.safeByNode ?? {}),
+    ].flatMap((address) => (address && isAddress(address) ? [getAddress(address)] : [])),
+  );
 
   const handleExport = () => {
     exportToCsv(
@@ -57,6 +69,7 @@ function AliasesPage() {
 
   const parsedTableData = Object.keys(aliases).map((peerAddress, index) => {
     const alias = aliases[peerAddress];
+    const isSafe = safes.has(peerAddress);
     const lastUpdateNumeric = peerAddress ? peersObject[peerAddress]?.lastUpdate : 0;
     const lastUpdate =
       lastUpdateNumeric > 0
@@ -75,10 +88,11 @@ function AliasesPage() {
       key: index.toString(),
       alias,
       node: <PeersInfo peerAddress={peerAddress} />,
-      lastUpdate: mypeerAddress === peerAddress ? '-' : lastUpdate,
-      lastUpdateValue: mypeerAddress === peerAddress || !lastUpdateNumeric ? null : lastUpdateNumeric,
+      kind: isSafe ? 'Safe' : 'Node',
+      lastUpdate: mypeerAddress === peerAddress || isSafe ? '-' : lastUpdate,
+      lastUpdateValue: mypeerAddress === peerAddress || isSafe || !lastUpdateNumeric ? null : lastUpdateNumeric,
       peerAddress: peerAddress,
-      watch: (
+      watch: isSafe ? null : (
         <WatchCheckbox
           address={peerAddress}
           watched={watchlist.includes(peerAddress)}
@@ -86,7 +100,7 @@ function AliasesPage() {
       ),
       actions: (
         <>
-          {connected && (
+          {connected && !isSafe && (
             <PingModal
               address={peerAddress}
               disabled={peerAddress === mypeerAddress}
@@ -95,6 +109,7 @@ function AliasesPage() {
           )}
           <CreateAliasModal address={peerAddress} />
           {connected &&
+            !isSafe &&
             (peerAddress && peerAddressToOutgoingChannelLink[peerAddress] ? (
               <FundChannelModal address={peerAddress} />
             ) : (
@@ -104,7 +119,7 @@ function AliasesPage() {
                 tooltip={peerAddress === mypeerAddress ? `You can't open a channel to yourself` : undefined}
               />
             ))}
-          {connected && <OpenSessionModal destination={peerAddress} />}
+          {connected && !isSafe && <OpenSessionModal destination={peerAddress} />}
           <IconButton
             iconComponent={<RemoveAliasIcon />}
             aria-label="delete alias"
@@ -133,9 +148,14 @@ function AliasesPage() {
     },
     {
       key: 'node',
-      name: 'Node',
+      name: 'Address',
       grow: true,
       sortKey: 'alias',
+    },
+    {
+      key: 'kind',
+      name: 'Type',
+      search: true,
     },
     // last seen comes from the connected node's peers, meaningless without one
     ...(connected
@@ -149,7 +169,7 @@ function AliasesPage() {
       : []),
     {
       key: 'peerAddress',
-      name: 'Node Address',
+      name: 'Address',
       search: true,
       maxWidth: '60px',
       hidden: true,
@@ -270,7 +290,7 @@ function CSVUploader<T extends ParsedData>({ onParse }: CSVUploaderProps<T>) {
 
         for (let j = 0; j < header.length; j++) {
           const key = expectedObjectKeys[j];
-          const value = values[j]?.trim().replaceAll(' ', '_');
+          const value = values[j]?.trim();
           if (expectedObjectKeys.includes(key)) {
             dataObject[key as keyof T] = value as T[keyof T];
           }
