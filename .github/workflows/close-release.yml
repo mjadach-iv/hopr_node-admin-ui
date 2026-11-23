@@ -205,15 +205,33 @@ jobs:
             # in Privacy & Security, e.g. under Local Network
             args+=(--config.mac.identity=-)
           fi
-          pnpm exec electron-builder --mac --publish never "${args[@]}"
+          # electron-builder downloads Electron and its tools from GitHub, which now and then answers 500
+          for attempt in 1 2 3; do
+            pnpm exec electron-builder --mac --publish never "${args[@]}" && break
+            [ "$attempt" = 3 ] && exit 1
+            echo "::warning::Packaging failed, retrying in 30 s (attempt $attempt of 3)"
+            sleep 30
+          done
 
       - name: Package for Windows
         if: runner.os == 'Windows'
-        run: pnpm exec electron-builder --win --publish never
+        run: |
+          for attempt in 1 2 3; do
+            pnpm exec electron-builder --win --publish never && break
+            [ "$attempt" = 3 ] && exit 1
+            echo "::warning::Packaging failed, retrying in 30 s (attempt $attempt of 3)"
+            sleep 30
+          done
 
       - name: Package for Linux
         if: runner.os == 'Linux'
-        run: pnpm exec electron-builder --linux --publish never
+        run: |
+          for attempt in 1 2 3; do
+            pnpm exec electron-builder --linux --publish never && break
+            [ "$attempt" = 3 ] && exit 1
+            echo "::warning::Packaging failed, retrying in 30 s (attempt $attempt of 3)"
+            sleep 30
+          done
 
       - name: Upload installers
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
